@@ -17,16 +17,25 @@ final class PngTextRenderState implements GuiElementRenderState {
     private final int color;
 
     PngTextRenderState(Matrix3x2f pose,float[] quads,TextureSetup texture,int color,ScreenRectangle clip){
+        this(pose,quads,texture,color,clip,localBounds(quads));
+    }
+    /** {@code local} is {@link #localBounds} of the same quads, so cached layouts skip the per-glyph scan. */
+    PngTextRenderState(Matrix3x2f pose,float[] quads,TextureSetup texture,int color,ScreenRectangle clip,float[] local){
         this.pose=new Matrix3x2f(pose);this.quads=quads;this.texture=texture;this.color=color;this.clip=clip;
+        if(local==null){bounds=null;return;}
+        int x=(int)Math.floor(local[0]),y=(int)Math.floor(local[1]);
+        var area=new ScreenRectangle(x,y,(int)Math.ceil(local[2])-x,(int)Math.ceil(local[3])-y).transformMaxBounds(this.pose);
+        bounds=clip==null?area:clip.intersection(area);
+    }
+    /** minX,minY,maxX,maxY of the quad corners, or null when there are no quads. */
+    static float[] localBounds(float[] quads){
+        if(quads.length==0)return null;
         float minX=Float.POSITIVE_INFINITY,minY=minX,maxX=Float.NEGATIVE_INFINITY,maxY=maxX;
         for(int i=0;i<quads.length;i+=8){
             minX=Math.min(minX,Math.min(quads[i],quads[i+2]));minY=Math.min(minY,Math.min(quads[i+1],quads[i+3]));
             maxX=Math.max(maxX,Math.max(quads[i],quads[i+2]));maxY=Math.max(maxY,Math.max(quads[i+1],quads[i+3]));
         }
-        if(quads.length==0){bounds=null;return;}
-        int x=(int)Math.floor(minX),y=(int)Math.floor(minY);
-        var area=new ScreenRectangle(x,y,(int)Math.ceil(maxX)-x,(int)Math.ceil(maxY)-y).transformMaxBounds(this.pose);
-        bounds=clip==null?area:clip.intersection(area);
+        return new float[]{minX,minY,maxX,maxY};
     }
     @Override public void buildVertices(VertexConsumer out){
         for(int i=0;i<quads.length;i+=8){

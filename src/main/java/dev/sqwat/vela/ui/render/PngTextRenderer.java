@@ -87,6 +87,22 @@ final class PngTextRenderer {
         if(text.indexOf('\n')>=0){for(String line:text.split("\n",-1)){draw(g,line,x,y,color,weight,em);y+=em*1.4f;}return;}
         // Snap baseline to physical pixels; keep horizontal advances fractional for kerning.
         float baseline=VelaDraw.subpixelText()?y*density+size*.82f:Math.round(y*density+offsetY+size*.82f)-offsetY;
+        boolean subpixel=VelaDraw.subpixelText();
+        var key=new LayoutKey(text,weight,em,x,y,density,offsetX,offsetY,subpixel);
+        Layout cached=LAYOUTS.get(key);
+        if(cached==null){cached=layout(metrics,text,x,density,offsetX,scale,baseline);LAYOUTS.put(key,cached);}
+        var texture=net.minecraft.client.Minecraft.getInstance().getTextureManager().getTexture(atlas.texture);
+        g.guiRenderState.addGuiElement(new PngTextRenderState(g.pose(),cached.quads,
+                net.minecraft.client.gui.render.TextureSetup.singleTexture(texture.getTextureView(),texture.getSampler()),color,g.scissorStack.peek(),cached.bounds));
+    }
+    /** Every input of the glyph layout. Static HUD labels repeat the same key each frame; moving text simply misses. */
+    private record LayoutKey(String text,VelaDraw.Weight weight,float em,float x,float y,float density,float offsetX,float offsetY,boolean subpixel){}
+    /** Quads are shared between frames: render states only read them. */
+    record Layout(float[] quads,float[] bounds){}
+    private static final Map<LayoutKey,Layout> LAYOUTS=new LinkedHashMap<>(256,.75f,true){
+        @Override protected boolean removeEldestEntry(Map.Entry<LayoutKey,Layout> entry){return size()>512;}
+    };
+    private static Layout layout(PngFontMetrics metrics,String text,float x,float density,float offsetX,float scale,float baseline){
         var glyphs=metrics.line(text).glyphs();
         float[] quads=new float[glyphs.size()*8];int out=0;
         for(var placed:glyphs){
@@ -99,8 +115,6 @@ final class PngTextRenderer {
             quads[out++]=(float)glyph.x()/metrics.width;quads[out++]=(float)glyph.y()/metrics.height;
             quads[out++]=(float)(glyph.x()+glyph.width())/metrics.width;quads[out++]=(float)(glyph.y()+glyph.height())/metrics.height;
         }
-        var texture=net.minecraft.client.Minecraft.getInstance().getTextureManager().getTexture(atlas.texture);
-        g.guiRenderState.addGuiElement(new PngTextRenderState(g.pose(),quads,
-                net.minecraft.client.gui.render.TextureSetup.singleTexture(texture.getTextureView(),texture.getSampler()),color,g.scissorStack.peek()));
+        return new Layout(quads,PngTextRenderState.localBounds(quads));
     }
 }

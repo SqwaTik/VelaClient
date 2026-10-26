@@ -18,12 +18,12 @@ abstract class ItemScrollerMixin {
     @Unique private boolean vela$sweeping;
     @Unique private boolean vela$allowed(MouseButtonEvent e){
         var services=VelaClient.services();var c=Minecraft.getInstance();
-        return services!=null&&services.modules().byId("item_scroller").enabled()&&e.button()==0&&(e.modifiers()&1)!=0&&c.player!=null&&c.gameMode!=null&&c.isWindowActive()&&c.player.containerMenu.getCarried().isEmpty()&&!((Object)this instanceof CreativeModeInventoryScreen);
+        return services!=null&&dev.sqwat.vela.module.utility.ContainerTools.sweepDelay()>=0&&e.button()==0&&(e.modifiers()&1)!=0&&c.player!=null&&c.gameMode!=null&&c.isWindowActive()&&c.player.containerMenu.getCarried().isEmpty()&&!((Object)this instanceof CreativeModeInventoryScreen);
     }
     @Unique private boolean vela$move(MouseButtonEvent e){
         var slot=getHoveredSlot(e.x(),e.y());var player=Minecraft.getInstance().player;
         if(slot==null||!slot.isActive()||!slot.hasItem()||!slot.mayPickup(player))return false;
-        int delay=VelaClient.services().modules().byId("item_scroller") instanceof dev.sqwat.vela.module.utility.ItemScroller scroller?scroller.delayMs():0;
+        int delay=Math.max(0,dev.sqwat.vela.module.utility.ContainerTools.sweepDelay());
         if(vela$sweep.visit(slot.index,System.nanoTime(),delay))slotClicked(slot,slot.index,0,ContainerInput.QUICK_MOVE);
         return true;
     }

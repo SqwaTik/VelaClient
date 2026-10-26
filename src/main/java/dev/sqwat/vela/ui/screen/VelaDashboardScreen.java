@@ -135,6 +135,24 @@ public final class VelaDashboardScreen extends VelaScreen {
 
     private static VelaSection rememberedSection(VelaServices services){try{return VelaSection.valueOf(services.configs().current().lastSection);}catch(Exception e){return VelaSection.UTILITIES;}}
     private final Map<Rect,String> favoriteHits=new java.util.LinkedHashMap<>();
+    /** Search results show their tab; clicking it opens the tab, scrolls to the card and flashes it. */
+    private final Map<Rect,ClientModule> locationHits=new java.util.LinkedHashMap<>();
+    private String revealModule,flashModule;
+    private long flashUntil;
+    private static final long FLASH_NANOS=1_200_000_000L;
+    private static VelaSection sectionOf(ClientModule module){for(var s:VelaSection.values())if(s.category()==module.category())return s;return VelaSection.UTILITIES;}
+    private void jumpTo(ClientModule module){
+        section=sectionOf(module);sideReveal=sideScroll=sideScrollTarget=0;friendFocused=configKeyFocused=configNameFocused=false;
+        search="";searchEdit.set("");searchFocused=false;targetScroll=scroll=0;
+        revealModule=flashModule=module.id();flashUntil=System.nanoTime()+FLASH_NANOS;
+        dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TAB);persistView();
+    }
+    private float flash(ClientModule module){
+        if(!module.id().equals(flashModule))return 0;
+        float left=(flashUntil-System.nanoTime())/(float)FLASH_NANOS;
+        if(left<=0){flashModule=null;return 0;}
+        return Math.min(1,left*2.5f);
+    }
     private void persistView(){services.configs().current().lastSection=section.name();services.configs().current().expandedModules=new java.util.LinkedHashSet<>(expandedModules);services.configs().current().friendOptionsOpen=friendSettings;services.configs().requestSave();}
     private void saveBind(){if(binding!=null){binding.bind(draftKey,draftLabel,draftMode);services.configs().requestSave();}}
     @Override
@@ -156,7 +174,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         drawSidePanel(g,l);
         drawPopup(g,mouseX,mouseY);
         drawFriendSuggestions(g);
-        boolean clickable=gearHit.contains(mouseX,mouseY)||actionHit.contains(mouseX,mouseY)||navHits.values().stream().anyMatch(r->r.contains(mouseX,mouseY))||cardHits.stream().anyMatch(h->h.card.contains(mouseX,mouseY))||settingHits.stream().anyMatch(h->h.visible.contains(mouseX,mouseY))||popupHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||profileHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||friendHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY));
+        boolean clickable=gearHit.contains(mouseX,mouseY)||actionHit.contains(mouseX,mouseY)||navHits.values().stream().anyMatch(r->r.contains(mouseX,mouseY))||cardHits.stream().anyMatch(h->h.card.contains(mouseX,mouseY))||settingHits.stream().anyMatch(h->h.visible.contains(mouseX,mouseY))||popupHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||profileHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||friendHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||locationHits.keySet().stream().anyMatch(r->r.contains(mouseX,mouseY));
         clickable|=section==VelaSection.FRIENDS&&friendOptionsHit.contains(mouseX,mouseY)||section==VelaSection.CONFIGS&&configOptionsHit.contains(mouseX,mouseY)||sideOpen()&&(sideCloseHit.contains(mouseX,mouseY)||importHit.contains(mouseX,mouseY));
         dev.sqwat.vela.ui.render.UiCursor.hand(clickable);
         if(section==VelaSection.MARKERS){dev.sqwat.vela.ui.render.UiCursor.hand(clickable||markerPanel.hovered(mouseX,mouseY));if(markerPanel.textHovered(mouseX,mouseY))g.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.IBEAM);}
@@ -166,7 +184,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         var chrome=new dev.sqwat.vela.ui.render.DashboardChrome.Layout(l.x,l.y,l.w,l.h,l.sidebar);
         var canvas=new dev.sqwat.vela.ui.render.GameUiCanvas(g);
         float[] hovers=new float[VelaSection.values().length];
-        navHits.clear();cardHits.clear();settingHits.clear();profileHits.clear();friendHits.clear();favoriteHits.clear();
+        navHits.clear();cardHits.clear();settingHits.clear();profileHits.clear();friendHits.clear();favoriteHits.clear();locationHits.clear();
         for(VelaSection entry:VelaSection.values()){
             Rect hit=chrome.navigation(entry.ordinal());navHits.put(entry,hit);
             hovers[entry.ordinal()]=animate("nav-"+entry.name(),hit.contains(mouseX,mouseY),dt);
@@ -224,6 +242,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             float[] p=modulePositions.computeIfAbsent(module.id(),key->new float[]{tx,ty+scroll});
             if(System.nanoTime()<moduleReorderUntil&&!reducedMotion()){p[0]=Motion.approach(p[0],tx,24,frameDt);p[1]=Motion.approach(p[1],ty+scroll,24,frameDt);}else{p[0]=tx;p[1]=ty+scroll;}
             Rect card = new Rect(Math.round(p[0]),Math.round(p[1]-scroll),columnWidth,cardHeight);
+            if(module.id().equals(revealModule)&&search.isBlank()){targetScroll=Math.max(0,ty+Math.round(scroll)-content.y()-8);revealModule=null;}
             if (card.y() + card.height() >= content.y() && card.y() <= content.y() + content.height()) {
                 drawModuleCard(g, module, card, mouseX, mouseY, dt, expanded);
                 cardHits.add(new CardHit(module, card, new Rect(dev.sqwat.vela.ui.hud.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty()), card.y() + 13, 20, 18)));
@@ -260,7 +279,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         boolean hovered=card.contains(mouseX,mouseY);
         float h=animate("card-"+module.id(),hovered,dt);
         VelaDraw.roundedRect(g,card.x(),card.y(),card.width(),card.height(),7,
-            VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h));
+            VelaTheme.mix(VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h),VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.18f),flash(module)));
         dev.sqwat.vela.ui.render.UiClip.enable(g,card.x()+2,card.y()+2,card.x()+card.width()-2,card.y()+card.height()-2);
         int toggleX=dev.sqwat.vela.ui.hud.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty());
         Rect favorite=new Rect(toggleX-18,card.y()+14,15,16);
@@ -269,9 +288,19 @@ public final class VelaDashboardScreen extends VelaScreen {
         int labelX=card.x()+8,labelWidth=toggleX-card.x()-41;
         String key=(services.configs().current().alwaysShowBinds||hovered&&!expanded)&&module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):"";
         float keyWidth=key.isEmpty()?0:VelaDraw.textWidth(key,VelaDraw.Weight.REGULAR,7)+6;
-        String title=VelaDraw.ellipsize(module.name(),labelWidth-keyWidth,VelaDraw.Weight.MEDIUM);
+        String location=search.isBlank()?"":"в "+sectionOf(module).title();
+        float locationWidth=location.isEmpty()?0:VelaDraw.textWidth(location,VelaDraw.Weight.REGULAR,7)+6;
+        String title=VelaDraw.ellipsize(module.name(),labelWidth-keyWidth-locationWidth,VelaDraw.Weight.MEDIUM);
         dev.sqwat.vela.ui.render.SearchText.draw(g,title,search,labelX,card.y()+8,module.enabled()?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,28f/3);
-        if(!key.isEmpty())VelaDraw.text(g,key,labelX+VelaDraw.textWidth(title,VelaDraw.Weight.MEDIUM)+6,card.y()+10,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
+        float afterTitle=labelX+VelaDraw.textWidth(title,VelaDraw.Weight.MEDIUM)+6;
+        if(!key.isEmpty()){VelaDraw.text(g,key,afterTitle,card.y()+10,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);afterTitle+=keyWidth;}
+        if(!location.isEmpty()){
+            int lw=Math.round(locationWidth-6);Rect hit=new Rect(Math.round(afterTitle)-2,card.y()+7,lw+4,12);
+            boolean over=hit.contains(mouseX,mouseY);int color=over?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED;
+            VelaDraw.text(g,location,Math.round(afterTitle),card.y()+10,color,VelaDraw.Weight.REGULAR,7);
+            if(over)g.fill(Math.round(afterTitle),card.y()+18,Math.round(afterTitle)+lw,card.y()+19,color);
+            locationHits.put(hit,module);
+        }
         String remaining=module.description().strip();int split=remaining.length();
         while(split>0&&VelaDraw.textWidth(remaining.substring(0,split),VelaDraw.Weight.REGULAR,8)>labelWidth)split=remaining.offsetByCodePoints(split,-1);
         if(split<remaining.length()){
@@ -302,8 +331,9 @@ public final class VelaDashboardScreen extends VelaScreen {
         }
         g.disableScissor();
         // Submit the complete frame outside the content clip, after its contents.
+        float flash=flash(module);
         new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(card.x(),card.y(),card.width(),card.height(),7,
-            VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,h));
+            VelaTheme.mix(VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,h),VelaTheme.PRIMARY,flash));
     }
 
     private void drawSettings(GuiGraphicsExtractor g, ClientModule module, int x, int y, int width) {
@@ -679,6 +709,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         if(section==VelaSection.HUD&&dragModeHit.contains(mx,my)){minecraft.gui.setScreen(new HudPositionScreen(this,services.hudLayout()));return true;}
         if (section.category() != null) {
             if(!moduleContentHit.contains(mx,my))return true;
+            for(var location:locationHits.entrySet())if(location.getKey().contains(mx,my)){jumpTo(location.getValue());return true;}
             for(var favorite:favoriteHits.entrySet())if(favorite.getKey().contains(mx,my)){var f=services.configs().current().favorites;if(!f.add(favorite.getValue()))f.remove(favorite.getValue());moduleReorderUntil=System.nanoTime()+400_000_000L;services.configs().requestSave();dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.FAVORITE);return true;}
             for (SettingHit hit : settingHits) {
                 if (!hit.visible().contains(mx, my)) continue;

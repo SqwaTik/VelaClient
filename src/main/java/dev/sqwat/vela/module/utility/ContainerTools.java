@@ -3,20 +3,34 @@ package dev.sqwat.vela.module.utility;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
 import dev.sqwat.vela.module.setting.BooleanSetting;
+import dev.sqwat.vela.module.setting.NumberSetting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import java.util.Locale;
 
-/** Search box on container screens (ui.screen.ContainerSearchBox): matching slots get an accent frame, the rest dim. */
-public final class ContainerSearch extends ClientModule {
+/**
+ * Container screen tools: the search box (ui.screen.ContainerSearchBox, highlight in ContainerSearchMixin) and
+ * Shift+LMB sweeping (ItemScrollerMixin).
+ */
+public final class ContainerTools extends ClientModule {
+    private final BooleanSetting search=setting(new BooleanSetting("search","Поиск","Поле поиска над окном; Ctrl+F",true));
     private final BooleanSetting remember=setting(new BooleanSetting("remember","Запоминать запрос","Сохранять текст поиска между окнами",false));
+    private final BooleanSetting scroller=setting(new BooleanSetting("scroller","Быстрый перенос","Shift + ЛКМ с протягиванием переносит предметы",true));
+    private final NumberSetting delay=setting(new NumberSetting("delay_ms","Задержка, мс","Пауза между переносом соседних слотов",20,0,100,1));
     private String query="";
-    public ContainerSearch(){super("container_search","Container Search","Поиск предметов в инвентаре и сундуках; Ctrl+F",ModuleCategory.UTILITIES);}
-    public static ContainerSearch current(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("container_search") instanceof ContainerSearch m&&m.enabled()?m:null;
+    public ContainerTools(){
+        super("container_tools","Container Tools","Поиск предметов (Ctrl+F) и быстрый перенос Shift + ЛКМ",ModuleCategory.UTILITIES);
+        remember.visibleWhen(search::value);delay.visibleWhen(scroller::value);
     }
+    private static ContainerTools module(){
+        var s=dev.sqwat.vela.VelaClient.services();
+        return s!=null&&s.modules().byId("container_tools") instanceof ContainerTools m&&m.enabled()?m:null;
+    }
+    /** The module when the search box is on, otherwise null. */
+    public static ContainerTools search(){var m=module();return m!=null&&m.search.value()?m:null;}
+    /** Sweep delay in ms, or -1 when sweeping is off. */
+    public static int sweepDelay(){var m=module();return m!=null&&m.scroller.value()?m.delay.value().intValue():-1;}
     public String initialQuery(){if(!remember.value())query="";return query;}
     public void query(String value){query=value==null?"":value;}
     /** Case-insensitive match on the shown name and the item id (so English ids work in a Russian client). */

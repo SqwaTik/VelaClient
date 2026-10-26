@@ -110,6 +110,7 @@
     "screen.WastedDeathScreenStyleMixin",
     "screen.AutoReconnectMixin",
     "screen.ChatTweaksMixin",
+    "hud.ChatKeepMixin",
     "screen.ContainerSearchMixin",
     "screen.ContainerScreenAccessor",
     "screen.WastedHoldScreenMixin"

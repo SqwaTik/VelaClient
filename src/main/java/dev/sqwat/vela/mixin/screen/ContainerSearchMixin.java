@@ -1,5 +1,5 @@
 package dev.sqwat.vela.mixin.screen;
-import dev.sqwat.vela.module.utility.ContainerSearch;
+import dev.sqwat.vela.module.utility.ContainerTools;
 import dev.sqwat.vela.ui.render.VelaTheme;
 import dev.sqwat.vela.ui.screen.ContainerSearchBox;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -30,7 +30,7 @@ abstract class ContainerSearchMixin extends Screen {
         for(var slot:menu.slots){
             if(!slot.isActive())continue;
             int x=slot.x,y=slot.y;
-            if(ContainerSearch.matches(slot.getItem(),query)){
+            if(ContainerTools.matches(slot.getItem(),query)){
                 g.fill(x-1,y-1,x+17,y,accent);g.fill(x-1,y+16,x+17,y+17,accent);
                 g.fill(x-1,y,x,y+16,accent);g.fill(x+16,y,x+17,y+16,accent);
             }else g.fill(x,y,x+16,y+16,0xB80B0D12);

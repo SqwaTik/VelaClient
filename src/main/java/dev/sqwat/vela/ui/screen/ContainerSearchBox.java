@@ -1,7 +1,7 @@
 package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.mixin.screen.ContainerScreenAccessor;
-import dev.sqwat.vela.module.utility.ContainerSearch;
+import dev.sqwat.vela.module.utility.ContainerTools;
 import dev.sqwat.vela.ui.input.GameTextInput;
 import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.render.Rect;
@@ -46,9 +46,9 @@ public final class ContainerSearchBox {
             ScreenEvents.remove(screen).register(s->{if(s==owner){owner=null;focused=false;}});
         });
     }
-    private static String initial(){var module=ContainerSearch.current();return module==null?"":module.initialQuery();}
-    private static boolean active(){return owner!=null&&ContainerSearch.current()!=null;}
-    private static void changed(){var module=ContainerSearch.current();if(module!=null)module.query(EDIT.text());}
+    private static String initial(){var module=ContainerTools.search();return module==null?"":module.initialQuery();}
+    private static boolean active(){return owner!=null&&ContainerTools.search()!=null;}
+    private static void changed(){var module=ContainerTools.search();if(module!=null)module.query(EDIT.text());}
     /** The query to highlight for this screen, or blank. */
     public static String query(Screen screen){return screen==owner&&active()?EDIT.text():"";}
 
@@ -68,7 +68,7 @@ public final class ContainerSearchBox {
         VelaIcons.draw(g,"search",r.x()+6,r.y()+5,8,focused?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED);
         int textRight=r.x()+r.width()-6;
         if(!EDIT.text().isBlank()){
-            String count=String.valueOf(ContainerSearch.count(((AbstractContainerScreen<?>)screen).getMenu(),EDIT.text()));
+            String count=String.valueOf(ContainerTools.count(((AbstractContainerScreen<?>)screen).getMenu(),EDIT.text()));
             int width=(int)Math.ceil(VelaDraw.textWidth(count,VelaDraw.Weight.MEDIUM,8f));
             VelaDraw.text(g,count,r.x()+r.width()-6f-width,r.y()+5f,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,8f);
             textRight-=width+4;

@@ -24,6 +24,7 @@ public final class ChatTweaks extends ClientModule {
     private final BooleanSetting stack=setting(new BooleanSetting("stack","Объединять повторы","Одинаковые сообщения подряд — одна строка со счётчиком",true));
     private final NumberSetting window=setting(new NumberSetting("window","Окно повторов","Объединять повторы не старше, секунд",60,5,600,5));
     private final NumberSetting history=setting(new NumberSetting("history","История","Сколько сообщений хранит чат (в игре — 100)",500,100,2000,100));
+    private final BooleanSetting keep=setting(new BooleanSetting("keep","Сохранять при выходе","Не очищать чат при отключении от сервера",true));
     private String lastText;
     private GuiMessage lastLine;
     private long lastTime;
@@ -58,6 +59,8 @@ public final class ChatTweaks extends ClientModule {
     }
     /** Remembers the line that was just added, so only a repeat of the newest line stacks. */
     public static void added(List<GuiMessage> lines){var module=current();if(module!=null)module.lastLine=lines.isEmpty()?null:lines.get(0);}
+    /** Whether leaving a server keeps the chat; a divider line then marks where the session ended. */
+    public static boolean keepOnDisconnect(){var module=current();return module!=null&&module.keep.value();}
     /** How many messages the chat keeps; vanilla's 100 while the module is off. */
     public static int historyLimit(){var module=current();return module==null?VANILLA_HISTORY:module.history.value().intValue();}
     private static ChatTweaks current(){

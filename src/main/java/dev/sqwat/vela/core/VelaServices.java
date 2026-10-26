@@ -49,7 +49,6 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.Shaders());
         modules.register(new dev.sqwat.vela.module.utility.AutoSprint());
         modules.register(new dev.sqwat.vela.module.utility.ClickPearl());
-        modules.register(new dev.sqwat.vela.module.utility.ItemScroller());
         modules.register(new dev.sqwat.vela.module.utility.Pinger());
         modules.register(new dev.sqwat.vela.module.utility.Trajectories());
         modules.register(new dev.sqwat.vela.module.utility.FakePlayer());
@@ -78,10 +77,9 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.BrewViewer());
         modules.register(new dev.sqwat.vela.module.utility.AutoReconnect());
         modules.register(new dev.sqwat.vela.module.utility.ChatTweaks());
-        modules.register(new dev.sqwat.vela.module.utility.ContainerSearch());
-        modules.register(new dev.sqwat.vela.module.utility.DeathCoords());
+        modules.register(new dev.sqwat.vela.module.utility.ContainerTools());
+        modules.register(new dev.sqwat.vela.module.utility.Death());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());
-        modules.register(new dev.sqwat.vela.module.utility.AutoRespawn());
         modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
         modules.register(new dev.sqwat.vela.module.utility.Gamma());

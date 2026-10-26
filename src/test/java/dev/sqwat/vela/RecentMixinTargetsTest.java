@@ -49,6 +49,8 @@ class RecentMixinTargetsTest {
             assertTrue(java.util.stream.StreamSupport.stream(queue.instructions.spliterator(),false)
                 .anyMatch(i->i instanceof org.objectweb.asm.tree.IntInsnNode n&&n.operand==100),m+" history cap");
         }
+        var disconnect=method(load("net.minecraft.client.gui.Hud"),"onDisconnected","()V");
+        assertNotNull(disconnect);assertTrue(calls(disconnect,"net/minecraft/client/gui/components/ChatComponent","clearMessages"));
         var screen=load("net.minecraft.client.gui.screens.inventory.AbstractContainerScreen");
         for(String f:new String[]{"menu","leftPos","topPos","imageWidth"})assertTrue(field(screen,f),f);
         var contents=method(screen,"extractContents","(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V");

@@ -13,7 +13,10 @@ function sources(base){
      text=text.replaceAll(from,to).replaceAll(from.replaceAll('.','/'),to.replaceAll('.','/'));
    }
    text=text.replaceAll('zako.opt','dev.sqwat.vela.zako').replaceAll('zako/opt','dev/sqwat/vela/zako');
-   map.set(key,text);
+   // Local layout: feature subpackages and bench/cpu are flattened (mixin subpackages are kept, MixinPlugin keys on them).
+   text=text.replace(/dev([.\/])sqwat\1vela\1zako\1feature\1(?:blocks|items|particles|render|spawners|ui)\b/g,(m,s)=>['dev','sqwat','vela','zako','feature'].join(s))
+     .replace(/dev([.\/])sqwat\1vela\1zako\1(?:bench|cpu)\b/g,(m,s)=>['dev','sqwat','vela','zako'].join(s));
+   map.set(key.replace(/^feature\/(?:blocks|items|particles|render|spawners|ui)\//,'feature/').replace(/^(?:bench|cpu)\//,''),text);
  }
  return map;
 }
@@ -21,7 +24,7 @@ const old=sources(oldRoot),next=sources(newRoot);
 const dir=path.join(reference,'merge');fs.mkdirSync(dir,{recursive:true});
 const records=[];
 for(const [key,incoming] of next){
- const target=path.join(root,'src/zako/java/dev/sqwat/vela/zako',key);
+ const target=path.join(root,'src/main/java/dev/sqwat/vela/zako',key);
  const current=fs.existsSync(target)?fs.readFileSync(target,'utf8').replaceAll('\r\n','\n'):null;
  const base=old.get(key);
  if(!current&&base)continue; // Previously omitted optional UI/entrypoints stay omitted.

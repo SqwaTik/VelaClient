@@ -66,3 +66,5 @@ Sodium, Iris и ImmediatelyFast не упакованы в Vela и не обяз
 
 Изменённые исходники включены в META-INF/zakoopt-source клиентского JAR, полный sources JAR
 и архив проекта vela-client-source.zip. Инструкции пересборки: SOURCE_BUILD.md.
+
+Изменение раскладки (2026-10-26): подпакеты feature.* и bench/cpu перенесены в feature и корневой пакет zako; подпакеты mixin сохранены.

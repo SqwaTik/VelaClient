@@ -10,7 +10,7 @@
   "environment": "client",
   "entrypoints": {
     "client": ["dev.sqwat.vela.VelaClient"],
-    "voicechat": ["dev.sqwat.vela.integration.VelaVoicePlugin"]
+    "voicechat": ["dev.sqwat.vela.core.VelaVoicePlugin"]
   },
   "mixins": ["velaclient.mixins.json", "vela-zako.mixins.json"],
   "jars": [{"file":"META-INF/jars/bobby-5.2.15+mc26.2.jar"}],

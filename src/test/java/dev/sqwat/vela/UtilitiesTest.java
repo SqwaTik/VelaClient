@@ -40,7 +40,7 @@ class UtilitiesTest {
     @Test void mixinsAreRegistered()throws Exception{
         String json=java.nio.file.Files.readString(Path.of("src/main/resources/velaclient.mixins.json"));
         assertFalse(json.contains("HoldMyItemsMixin"));
-        for(String id:List.of("camera.AspectRatioMixin","input.TeleportCombatMixin","world.BlockOverlayMixin","entity.NameTagTextCacheMixin","resource.FontCacheInvalidationMixin","input.MinecraftActions","world.RenderFireMixin","world.RenderParticlesMixin","world.DistanceFogMixin","entity.ItemPhysicsMixin","entity.ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
+        for(String id:List.of("camera.AspectRatioMixin","input.TeleportCombatMixin","world.BlockOverlayMixin","entity.NameTagTextCacheMixin","perf.FontCacheInvalidationMixin","input.MinecraftActions","world.RenderFireMixin","world.RenderParticlesMixin","world.DistanceFogMixin","entity.ItemPhysicsMixin","entity.ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
     }
     @Test void aspectPresetsAndColorValidation(){
         assertEquals(16f/9,AspectRatio.value("16:9"));assertEquals(4f/3,AspectRatio.value("4:3"));

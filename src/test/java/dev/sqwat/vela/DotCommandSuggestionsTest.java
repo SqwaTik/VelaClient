@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.command.DotCommandSuggestions;
+import dev.sqwat.vela.core.DotCommandSuggestions;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

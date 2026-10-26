@@ -1,6 +1,6 @@
 package dev.sqwat.vela.ui.input;
 
-import dev.sqwat.vela.module.command.CommandEntries;
+import dev.sqwat.vela.module.utility.CommandEntries;
 import java.util.UUID;
 
 /** Explicit selection distinguishes editing from successive creations. */

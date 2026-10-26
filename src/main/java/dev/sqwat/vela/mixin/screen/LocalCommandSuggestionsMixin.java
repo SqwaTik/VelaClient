@@ -3,7 +3,7 @@ package dev.sqwat.vela.mixin.screen;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.suggestion.Suggestions;
 import dev.sqwat.vela.VelaClient;
-import dev.sqwat.vela.command.DotCommandSuggestions;
+import dev.sqwat.vela.core.DotCommandSuggestions;
 import net.minecraft.client.gui.components.CommandSuggestions;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;

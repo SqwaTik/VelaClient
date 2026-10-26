@@ -1,5 +1,5 @@
 package dev.sqwat.vela.mixin.hud;
-import dev.sqwat.vela.mixin.resource.ReloadPreparationAccessor;
+import dev.sqwat.vela.mixin.perf.ReloadPreparationAccessor;
 import dev.sqwat.vela.ui.animation.Motion;
 import dev.sqwat.vela.ui.render.*;
 import net.minecraft.client.Minecraft;

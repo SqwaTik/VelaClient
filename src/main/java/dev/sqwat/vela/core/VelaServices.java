@@ -1,7 +1,7 @@
 package dev.sqwat.vela.core;
 
 import dev.sqwat.vela.account.AccountService;
-import dev.sqwat.vela.config.ConfigService;
+import dev.sqwat.vela.core.ConfigService;
 import dev.sqwat.vela.friend.FriendService;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
@@ -24,13 +24,13 @@ public final class VelaServices implements AutoCloseable {
     private final ConfigService configs;
     private final HudLayoutService hudLayout;
     private final dev.sqwat.vela.marker.MarkerService markers;
-    private final dev.sqwat.vela.module.command.CommandEntries commands;
-    public dev.sqwat.vela.module.command.CommandEntries commands(){return commands;}
+    private final dev.sqwat.vela.module.utility.CommandEntries commands;
+    public dev.sqwat.vela.module.utility.CommandEntries commands(){return commands;}
     public dev.sqwat.vela.marker.MarkerService markers(){return markers;}
 
     public VelaServices(Path configRoot) {
         registerFoundationModules();
-        commands=new dev.sqwat.vela.module.command.CommandEntries(configRoot);
+        commands=new dev.sqwat.vela.module.utility.CommandEntries(configRoot);
         friends = new FriendService(configRoot);
         accounts = new AccountService(configRoot);
         configs = new ConfigService(configRoot, modules,zakoOptimization);
@@ -86,8 +86,8 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
         modules.register(new dev.sqwat.vela.module.utility.Gamma());
-        modules.register(new dev.sqwat.vela.module.command.CommandModule(false));
-        modules.register(new dev.sqwat.vela.module.command.CommandModule(true));
+        modules.register(new dev.sqwat.vela.module.utility.CommandModule(false));
+        modules.register(new dev.sqwat.vela.module.utility.CommandModule(true));
         modules.register(renderTweaks);
         modules.register(far);
         modules.register(new dev.sqwat.vela.module.visual.ItemPhysics());

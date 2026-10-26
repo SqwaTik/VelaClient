@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.command.CommandEntries;
+import dev.sqwat.vela.module.utility.CommandEntries;
 import dev.sqwat.vela.ui.input.CommandDraft;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

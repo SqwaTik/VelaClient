@@ -64,7 +64,6 @@ public final class ChatTweaks extends ClientModule {
     /** How many messages the chat keeps; vanilla's 100 while the module is off. */
     public static int historyLimit(){var module=current();return module==null?VANILLA_HISTORY:module.history.value().intValue();}
     private static ChatTweaks current(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("chat") instanceof ChatTweaks m&&m.enabled()?m:null;
+        return dev.sqwat.vela.module.Modules.active(ChatTweaks.class);
     }
 }

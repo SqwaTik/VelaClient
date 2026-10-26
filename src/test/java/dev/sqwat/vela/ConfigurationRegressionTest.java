@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
 import dev.sqwat.vela.module.visual.Shaders;
-import dev.sqwat.vela.config.ConfigService;
+import dev.sqwat.vela.core.ConfigService;
 import dev.sqwat.vela.module.*;
 import dev.sqwat.vela.module.setting.*;
 import org.junit.jupiter.api.Test;

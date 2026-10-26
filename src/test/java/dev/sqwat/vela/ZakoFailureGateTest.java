@@ -1,9 +1,9 @@
 package dev.sqwat.vela;
 
 import dev.sqwat.vela.zako.feature.Features;
-import dev.sqwat.vela.zako.feature.blocks.MicroOptsFeature;
-import dev.sqwat.vela.zako.feature.particles.ParallelParticlesFeature;
-import dev.sqwat.vela.zako.feature.render.ImmediateRingFeature;
+import dev.sqwat.vela.zako.feature.MicroOptsFeature;
+import dev.sqwat.vela.zako.feature.ParallelParticlesFeature;
+import dev.sqwat.vela.zako.feature.ImmediateRingFeature;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

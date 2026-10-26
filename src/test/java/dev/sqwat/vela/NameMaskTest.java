@@ -13,9 +13,9 @@ class NameMaskTest {
     }
     @Test void aliasPersistsInNormalProfiles()throws Exception{
         var registry=new dev.sqwat.vela.module.ModuleRegistry();var first=new TestModule();registry.register(first);
-        try(var configs=new dev.sqwat.vela.config.ConfigService(root,registry)){first.alias.set("Live Guest");configs.flush();}
+        try(var configs=new dev.sqwat.vela.core.ConfigService(root,registry)){first.alias.set("Live Guest");configs.flush();}
         var other=new dev.sqwat.vela.module.ModuleRegistry();var second=new TestModule();other.register(second);
-        try(var configs=new dev.sqwat.vela.config.ConfigService(root,other)){assertEquals("Live Guest",second.alias.value());}
+        try(var configs=new dev.sqwat.vela.core.ConfigService(root,other)){assertEquals("Live Guest",second.alias.value());}
     }
     @Test void exactNamesNotOtherPlayers(){
         var mask=new NameMask("Alice","Guest");

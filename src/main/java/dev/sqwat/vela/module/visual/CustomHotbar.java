@@ -20,8 +20,7 @@ public final class CustomHotbar extends ClientModule {
     public CustomHotbar(){super("custom_hotbar","Custom Hotbar","Стеклянный хотбар в стиле клиента",ModuleCategory.VISUALS);}
 
     public static CustomHotbar current(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("custom_hotbar") instanceof CustomHotbar h&&h.enabled()?h:null;
+        return dev.sqwat.vela.module.Modules.active(CustomHotbar.class);
     }
     private int background(){return (Math.round(255*opacity.value().floatValue()/100)<<24)|(VelaTheme.SURFACE&0xFFFFFF);}
 

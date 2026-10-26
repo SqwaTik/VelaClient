@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.module.command.CommandEntries;
-import dev.sqwat.vela.module.command.CommandSchedule;
+import dev.sqwat.vela.module.utility.CommandEntries;
+import dev.sqwat.vela.module.utility.CommandSchedule;
 import dev.sqwat.vela.module.utility.Gamma;
 import dev.sqwat.vela.module.*;
 import dev.sqwat.vela.module.setting.BooleanSetting;

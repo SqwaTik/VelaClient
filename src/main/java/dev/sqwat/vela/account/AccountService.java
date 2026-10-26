@@ -1,7 +1,7 @@
 package dev.sqwat.vela.account;
 
 import com.google.gson.reflect.TypeToken;
-import dev.sqwat.vela.config.JsonFileStore;
+import dev.sqwat.vela.core.JsonFileStore;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -31,8 +31,7 @@ public final class FakePlayer extends ClientModule {
         return true;
     }
     public static FakePlayer current(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("fake_player") instanceof FakePlayer f&&f.enabled()?f:null;
+        return dev.sqwat.vela.module.Modules.active(FakePlayer.class);
     }
     public Boolean receiveLocalHit(Entity entity,net.minecraft.world.damagesource.DamageSource source,float amount){
         return localAttack&&entity==dummy?dummy.receive(source,amount):null;

@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.config.JsonFileStore;
+import dev.sqwat.vela.core.JsonFileStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.*;

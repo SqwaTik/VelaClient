@@ -14,8 +14,7 @@ public final class FoodInfo extends ClientModule {
     public FoodInfo(){super("food_info","Food Info","Сытость и насыщение в подсказке еды",ModuleCategory.UTILITIES);}
     public static void initialize(){
         net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register((stack,context,flag,lines)->{
-            var s=dev.sqwat.vela.VelaClient.services();
-            if(s!=null&&s.modules().byId("food_info") instanceof FoodInfo m&&m.enabled())decorate(stack,lines);
+            if(dev.sqwat.vela.module.Modules.active(FoodInfo.class)!=null)decorate(stack,lines);
         });
     }
     static void decorate(ItemStack stack,List<Component> lines){

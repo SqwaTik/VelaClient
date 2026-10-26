@@ -3,7 +3,7 @@ package dev.sqwat.vela.ui.hud;
 import dev.sqwat.vela.ui.Notifications;
 import dev.sqwat.vela.ui.input.KeyLabels;
 import com.google.gson.reflect.TypeToken;
-import dev.sqwat.vela.config.JsonFileStore;
+import dev.sqwat.vela.core.JsonFileStore;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleRegistry;
 import dev.sqwat.vela.ui.render.VelaDraw;
@@ -94,8 +94,8 @@ public final class HudLayoutService {
         }
     }
     private static final List<String> VANILLA_IDS = List.of("bossbar", "scoreboard", "tablist","chat","hotbar");
-    private final JsonFileStore<dev.sqwat.vela.config.HudConfig> store;
-    private final dev.sqwat.vela.config.HudConfig hudConfig;
+    private final JsonFileStore<dev.sqwat.vela.core.HudConfig> store;
+    private final dev.sqwat.vela.core.HudConfig hudConfig;
     private final ModuleRegistry modules;
     private final Map<String, HudPosition> positions;
     private final Map<String,HudPosition> defaultPositions;
@@ -118,7 +118,7 @@ public final class HudLayoutService {
     public HudLayoutService(Path root, ModuleRegistry modules) {
         this.modules = modules;
         this.moduleList = new ModuleListHud(modules);
-        store=new JsonFileStore<>(root.resolve("hud.vela"),dev.sqwat.vela.config.HudConfig.class,dev.sqwat.vela.config.HudConfig::new);
+        store=new JsonFileStore<>(root.resolve("hud.vela"),dev.sqwat.vela.core.HudConfig.class,dev.sqwat.vela.core.HudConfig::new);
         boolean migrate=!java.nio.file.Files.exists(root.resolve("hud.vela"));
         hudConfig=store.load();
         if(migrate){

@@ -15,7 +15,7 @@ public final class Ambience extends ClientModule {
     private final ColorSetting skyColor=setting(new ColorSetting("sky_color","Свой цвет неба",0x756CFF));
     public Ambience(){super("ambience","Ambience","Настройка времени суток, погоды и неба",ModuleCategory.VISUALS);hour.visibleWhen(time::value);skyTheme.visibleWhen(sky::value);skyColor.visibleWhen(()->sky.value()&&!skyTheme.value());}
     public int skyColor(int original){return sky.value()?(skyTheme.value()?dev.sqwat.vela.ui.render.VelaTheme.PRIMARY:0xFF000000|skyColor.value()):original;}
-    public static Ambience current(){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.modules().byId("ambience") instanceof Ambience a&&a.enabled()?a:null;}
+    public static Ambience current(){return dev.sqwat.vela.module.Modules.active(Ambience.class);}
     public long clock(long original){return time.value()?Math.floorDiv(original,24000)*24000+clockAtHour(hour.value()):original;}
     public static long clockAtHour(double hour){return Math.floorMod(Math.round(hour*1000)-6000,24000);}
     public float rain(float original){return switch(weather.value()){case "Ясно"->0;case "Дождь","Гроза"->1;default->original;};}

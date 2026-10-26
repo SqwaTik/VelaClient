@@ -36,7 +36,6 @@ dependencies {
 }
 
 processResources {
-    exclude 'recording/**'
     // Resource identifiers must be lowercase; retain bundled attribution notices.
     filesMatching(['assets/**/INTER_LICENSE.txt', 'assets/**/Kenney-License.txt']) {
         name = name.toLowerCase(java.util.Locale.ROOT)
@@ -55,16 +54,14 @@ tasks.withType(JavaCompile).configureEach {
 java {
     withSourcesJar()
 }
-sourceSets.main.java.srcDir('src/zako/java')
 
-tasks.named('sourcesJar') { exclude 'recording/**' }
+
 
 tasks.register('sourceBundle', Zip) {
     archiveFileName = 'vela-client-source.zip'
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(projectDir) {
-        include 'src/**', 'gradle/**', 'gradlew', 'gradlew.bat', 'build.gradle', 'settings.gradle', 'gradle.properties', 'LICENSE', 'THIRD_PARTY.md', 'SOURCE_BUILD.md', 'tools/CompactFontPng.java', 'tools/GenerateAccountSurfaces.java', 'tools/GenerateStartupLabels.java'
-        exclude 'src/main/resources/recording/**'
+        include 'src/**', 'gradle/**', 'gradlew', 'gradlew.bat', 'build.gradle', 'settings.gradle', 'gradle.properties', 'LICENSE', 'THIRD_PARTY.md', 'docs/SOURCE_BUILD.md', 'tools/CompactFontPng.java', 'tools/GenerateAccountSurfaces.java', 'tools/GenerateStartupLabels.java'
     }
 }
 
@@ -74,7 +71,8 @@ test {
 
 
 jar {
-    from('src/zako/java') { into 'META-INF/zakoopt-source' }
+    // LGPL: ship the adapted ZakoOpt sources with the binary.
+    from('src/main/java') { include 'dev/sqwat/vela/zako/**'; into 'META-INF/zakoopt-source' }
     from('src/main/java') {
         include 'dev/sqwat/vela/module/ZakoOptimization.java'
         into 'META-INF/zakoopt-source'

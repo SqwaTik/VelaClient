@@ -1,6 +1,6 @@
 package dev.sqwat.vela.mixin.entity;
 
-import dev.sqwat.vela.cosmetics.LocalAppearanceService;
+import dev.sqwat.vela.friend.LocalAppearanceService;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.spongepowered.asm.mixin.Mixin;

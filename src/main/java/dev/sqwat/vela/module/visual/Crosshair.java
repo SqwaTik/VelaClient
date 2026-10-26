@@ -29,7 +29,7 @@ public final class Crosshair extends ClientModule {
         if(mc.level!=world||mc.gui.screen()!=screen||!mc.options.getCameraType().isFirstPerson()){motion.reset();clock.reset();}
         world=mc.level;screen=mc.gui.screen();
     }
-    public static Crosshair current(){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.modules().byId("crosshair") instanceof Crosshair c&&c.enabled()?c:null;}
+    public static Crosshair current(){return dev.sqwat.vela.module.Modules.active(Crosshair.class);}
     public static float attackGap(double base,double amount,float cooldown){return (float)(base+amount*(1-Math.clamp(cooldown,0,1)));}
     public static int reactionColor(int base){
         int danger=VelaTheme.DANGER;

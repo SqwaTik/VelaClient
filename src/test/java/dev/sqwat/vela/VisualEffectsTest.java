@@ -33,9 +33,9 @@ class VisualEffectsTest {
         for(String file:new String[]{"target.png","glow.png","near_arrow.png"})try(var in=getClass().getResourceAsStream("/assets/velaclient/textures/effects/"+file)){assertNotNull(in);assertNotNull(javax.imageio.ImageIO.read(in));}
     }
     @Test void friendEffectsDefaultOnAndPersistIndependently(){
-        var gson=new com.google.gson.Gson();var cfg=gson.fromJson("{}",dev.sqwat.vela.config.ClientConfig.class);
+        var gson=new com.google.gson.Gson();var cfg=gson.fromJson("{}",dev.sqwat.vela.core.ClientConfig.class);
         assertTrue(cfg.friendVisuals&&cfg.friendChinaHat&&cfg.friendDashTrail&&cfg.friendJumpCircle);
-        cfg.friendDashTrail=false;var restored=gson.fromJson(gson.toJson(cfg),dev.sqwat.vela.config.ClientConfig.class);
+        cfg.friendDashTrail=false;var restored=gson.fromJson(gson.toJson(cfg),dev.sqwat.vela.core.ClientConfig.class);
         assertTrue(restored.friendChinaHat&&restored.friendJumpCircle);assertFalse(restored.friendDashTrail);
     }
 }

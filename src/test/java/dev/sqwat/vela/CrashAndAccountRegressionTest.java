@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.config.*;
+import dev.sqwat.vela.core.*;
 import dev.sqwat.vela.ui.render.*;
 import org.junit.jupiter.api.Test;
 import java.nio.file.*;

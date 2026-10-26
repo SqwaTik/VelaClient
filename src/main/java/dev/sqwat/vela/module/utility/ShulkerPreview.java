@@ -29,7 +29,7 @@ public final class ShulkerPreview extends ClientModule {
     public ShulkerPreview(){super("shulker_preview","Shulker Preview","Содержимое шалкера; удерживайте Ctrl для просмотра предметов",ModuleCategory.UTILITIES);}
     @Override protected void onDisable(){cached=null;preview=null;candidate=pinned=null;screen=world=null;seen=false;}
     @Override public void onClientTick(){var mc=net.minecraft.client.Minecraft.getInstance();if(mc.level!=world){onDisable();world=mc.level;}if(mc.level==null||mc.gui.screen()==null)onDisable();}
-    public static ShulkerPreview current(){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.modules().byId("shulker_preview") instanceof ShulkerPreview p&&p.enabled()?p:null;}
+    public static ShulkerPreview current(){return dev.sqwat.vela.module.Modules.active(ShulkerPreview.class);}
     public void frame(Object owner,boolean control){
         if(screen!=owner){candidate=pinned=null;seen=false;screen=owner;}
         if(!control)pinned=null;else if(pinned==null&&seen)pinned=candidate;

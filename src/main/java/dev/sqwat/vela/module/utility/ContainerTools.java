@@ -24,8 +24,7 @@ public final class ContainerTools extends ClientModule {
         remember.visibleWhen(search::value);delay.visibleWhen(scroller::value);
     }
     private static ContainerTools module(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("container_tools") instanceof ContainerTools m&&m.enabled()?m:null;
+        return dev.sqwat.vela.module.Modules.active(ContainerTools.class);
     }
     /** The module when the search box is on, otherwise null. */
     public static ContainerTools search(){var m=module();return m!=null&&m.search.value()?m:null;}

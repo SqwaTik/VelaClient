@@ -1,6 +1,6 @@
 package dev.sqwat.vela.marker;
 
-import dev.sqwat.vela.config.JsonFileStore;
+import dev.sqwat.vela.core.JsonFileStore;
 import java.nio.file.Path;
 import java.util.*;
 

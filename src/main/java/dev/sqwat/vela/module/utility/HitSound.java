@@ -1,6 +1,6 @@
 package dev.sqwat.vela.module.utility;
 
-import dev.sqwat.vela.audio.SoundClips;
+import dev.sqwat.vela.core.SoundClips;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
 import dev.sqwat.vela.module.setting.ActionSetting;
@@ -104,8 +104,7 @@ public final class HitSound extends ClientModule {
     static boolean attackSound(String path){return path.startsWith("entity.player.attack.");}
     static boolean hurtSound(String path){return path.endsWith(".hurt")||path.contains(".hurt_")||path.endsWith("_hurt");}
     private static HitSound current(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("hit_sound") instanceof HitSound module&&module.enabled()?module:null;
+        return dev.sqwat.vela.module.Modules.active(HitSound.class);
     }
     public void close(){clips.close();}
 }

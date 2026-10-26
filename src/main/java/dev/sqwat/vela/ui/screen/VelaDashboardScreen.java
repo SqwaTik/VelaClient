@@ -727,7 +727,7 @@ public final class VelaDashboardScreen extends VelaScreen {
                     if(services.modules().byId("view_model") instanceof dev.sqwat.vela.module.visual.ViewModel model&&model.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new ViewModelEditorScreen(this,services,model));return true;
                     }
-                    for(var module:services.modules().all())if(module instanceof dev.sqwat.vela.module.command.CommandModule commands&&module.settings().contains(hit.setting())){
+                    for(var module:services.modules().all())if(module instanceof dev.sqwat.vela.module.utility.CommandModule commands&&module.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new CommandEditorScreen(this,services,commands.interval()));break;
                     }
                 }

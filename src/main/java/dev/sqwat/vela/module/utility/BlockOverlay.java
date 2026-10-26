@@ -16,7 +16,7 @@ public final class BlockOverlay extends ClientModule {
     private final ColorSetting color=setting(new ColorSetting("color","Цвет",0x8877FF));
     public BlockOverlay(){super("block_overlay","Block Overlay","Выделение блока под прицелом",ModuleCategory.UTILITIES);color.visibleWhen(this::customColor);}
     public boolean customColor(){return !theme.value();}
-    public static BlockOverlay active(){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.modules().byId("block_overlay") instanceof BlockOverlay m&&m.enabled()?m:null;}
+    public static BlockOverlay active(){return dev.sqwat.vela.module.Modules.active(BlockOverlay.class);}
     public void submit(BlockOutlineRenderState state){
         if(state==null)return;
         int rgb=theme.value()?dev.sqwat.vela.ui.render.VelaTheme.parseHex(dev.sqwat.vela.VelaClient.services().configs().current().accentColor):color.value();

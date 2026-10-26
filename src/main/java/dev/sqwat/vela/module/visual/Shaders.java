@@ -61,5 +61,5 @@ public final class Shaders extends ClientModule {
     public float fogFalloff(){return falloff.value().floatValue()*.0009f;}
     public float fogHaze(){return haze.value().floatValue()/100;}
     public int fogColor(){return theme.value()?VelaTheme.PRIMARY:color.value();}
-    public static Shaders current(){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.modules().byId("shaders") instanceof Shaders a&&a.enabled()?a:null;}
+    public static Shaders current(){return dev.sqwat.vela.module.Modules.active(Shaders.class);}
 }

@@ -6,7 +6,7 @@ import dev.sqwat.vela.ui.*;
 import dev.sqwat.vela.ui.animation.HudMotion;
 import dev.sqwat.vela.marker.MarkerService;
 import dev.sqwat.vela.module.ModuleRegistry;
-import dev.sqwat.vela.config.ConfigService;
+import dev.sqwat.vela.core.ConfigService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;

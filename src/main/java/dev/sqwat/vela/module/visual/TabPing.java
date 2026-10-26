@@ -7,8 +7,7 @@ import dev.sqwat.vela.module.ModuleCategory;
 public final class TabPing extends ClientModule {
     public TabPing(){super("tab_ping","Tab Ping","Точный пинг игроков в списке Tab вместо делений",ModuleCategory.VISUALS);}
     public static boolean active(){
-        var s=dev.sqwat.vela.VelaClient.services();
-        return s!=null&&s.modules().byId("tab_ping") instanceof TabPing m&&m.enabled();
+        return dev.sqwat.vela.module.Modules.active(TabPing.class)!=null;
     }
     /** Green under 80 ms, yellow to 150, orange to 300, red above; grey before the server reports a value. */
     public static int color(int ping){

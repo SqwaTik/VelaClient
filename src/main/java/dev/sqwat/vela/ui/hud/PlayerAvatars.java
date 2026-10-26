@@ -1,7 +1,7 @@
 package dev.sqwat.vela.ui.hud;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
-import dev.sqwat.vela.cosmetics.LocalAppearanceService;
+import dev.sqwat.vela.friend.LocalAppearanceService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerFaceExtractor;

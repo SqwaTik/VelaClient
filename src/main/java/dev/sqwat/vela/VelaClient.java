@@ -36,11 +36,11 @@ public final class VelaClient implements ClientModInitializer {
             var accept=dev.sqwat.vela.module.utility.AutoTpAccept.instance();
             if(accept!=null)accept.message(message.getString(),overlay);
         });
-        dev.sqwat.vela.cosmetics.LocalAppearanceService.initialize();
+        dev.sqwat.vela.friend.LocalAppearanceService.initialize();
         dev.sqwat.vela.ui.screen.ContainerSearchBox.initialize();
         dev.sqwat.vela.module.utility.FoodInfo.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
-        net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.command.LocalCommands.send(message,services));
+        net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.core.LocalCommands.send(message,services));
         services.zakoOptimization().require(()->!FabricLoader.getInstance().isModLoaded("zakoopt"));
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> dev.sqwat.vela.zako.IntegrationRuntime.clear());
         dev.sqwat.vela.marker.MarkerNotices.initialize(services.markers());
@@ -77,7 +77,7 @@ public final class VelaClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             var watermark=services.modules().byId("watermark");
             dev.sqwat.vela.ui.hud.HudTelemetry.tickPing(client,watermark!=null&&watermark.enabled()&&watermark.settings().stream().anyMatch(s->s.id().equals("ping")&&Boolean.TRUE.equals(s.value())));
-            dev.sqwat.vela.module.command.CommandAutomation.tick(client,services);
+            dev.sqwat.vela.module.utility.CommandAutomation.tick(client,services);
             dev.sqwat.vela.module.utility.Far.clearDisabledTerrain();
             if(client.level!=null)dev.sqwat.vela.ui.SessionPresentation.visit();
             services.hudLayout().viewport(client.getWindow().getGuiScale());

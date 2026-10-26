@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.config.*;
+import dev.sqwat.vela.core.*;
 import dev.sqwat.vela.module.ModuleRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

@@ -1,7 +1,7 @@
 package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.module.command.CommandEntries;
+import dev.sqwat.vela.module.utility.CommandEntries;
 import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.animation.*;
 import dev.sqwat.vela.ui.render.*;

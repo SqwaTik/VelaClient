@@ -12,11 +12,16 @@ public final class ModuleRegistry {
     // Read on every frame from render hooks; registration is rare, so publish immutable copies.
     private volatile Map<String,ClientModule> lookup=Map.of();
     private volatile List<ClientModule> snapshot=List.of();
+    private volatile Map<Class<?>,ClientModule> types=Map.of();
     private final Map<String,List<ClientModule>> searches=new LinkedHashMap<>();
 
     public synchronized <T extends ClientModule> T register(T module) {
         if (modules.putIfAbsent(module.id(), module) != null) throw new IllegalArgumentException("Duplicate module: " + module.id());
         snapshot=List.copyOf(modules.values());lookup=Map.copyOf(modules);searches.clear();
+        // Typed lookup only for classes registered once (FoundationModule instances share a class).
+        var byType=new java.util.HashMap<Class<?>,ClientModule>();var shared=new java.util.HashSet<Class<?>>();
+        for(var m:modules.values())if(byType.putIfAbsent(m.getClass(),m)!=null)shared.add(m.getClass());
+        shared.forEach(byType::remove);types=Map.copyOf(byType);
         return module;
     }
 
@@ -47,6 +52,8 @@ public final class ModuleRegistry {
     private void cache(String key,List<ClientModule> result){if(searches.size()>=64)searches.remove(searches.keySet().iterator().next());searches.put(key,result);}
 
     public ClientModule byId(String id) { return lookup.get(id); }
+    /** The registered module of this class, or null. Lock-free; safe from render hooks. */
+    public <T extends ClientModule> T get(Class<T> type){return type.cast(types.get(type));}
 
     public void tickEnabled() {
         for (ClientModule module : snapshot) if (module.enabled()&&module.available()) module.onClientTick();

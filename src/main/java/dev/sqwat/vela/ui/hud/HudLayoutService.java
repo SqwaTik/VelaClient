@@ -35,7 +35,6 @@ public final class HudLayoutService {
             case "armor"->java.util.Arrays.stream(ARMOR_SLOTS).anyMatch(slot->!c.player.getItemBySlot(slot).isEmpty());
             case "hotkeys"->hotkeyCount()>0;
             case "module_list"->!moduleList.empty();
-            case "info"->!info.empty();
             case "target"->target!=null&&target.level()==c.level&&target.isAlive()&&System.nanoTime()<=targetUntil;
             default->true;
         };
@@ -43,7 +42,6 @@ public final class HudLayoutService {
     private java.util.List<ClientModule> shownHotkeys=java.util.List.of();
     private final KeyStrokesHud keyStrokes=new KeyStrokesHud();
     private ModuleListHud moduleList;
-    private final InfoHud info=new InfoHud();
     private boolean keyFlag(String setting){return flag("keystrokes",setting);}
     private int hotkeyCount(){int count=0;for(var m:modules.all())if(m.enabled()&&m.boundKey()>=0&&m.available())count++;return count;}
     private net.minecraft.world.entity.LivingEntity target;
@@ -78,7 +76,7 @@ public final class HudLayoutService {
             &&!target.isInvisible()&&System.nanoTime()<=targetUntil?target:null;
     }
     public void tickTarget(Minecraft client){
-        if(modules.byId("info") instanceof ClientModule infoModule&&infoModule.enabled())info.tick(client);
+        if(flag("watermark","bps"))watermark.tick(client);
         if(client.player==null||client.level==null){target=null;targetUntil=targetHitUntil=0;nearArrows.clear();return;}
         long now=System.nanoTime();
         if(target!=null&&(target.level()!=client.level||!target.isAlive())){target=null;targetHitUntil=0;}
@@ -139,7 +137,6 @@ public final class HudLayoutService {
         positions.putIfAbsent("cooldowns",new HudPosition(320,155));
         positions.putIfAbsent("keystrokes",new HudPosition(10,240));
         positions.putIfAbsent("module_list",new HudPosition(420,10));
-        positions.putIfAbsent("info",new HudPosition(10,300));
         var defaults=new JsonFileStore<Map<String,HudPosition>>(root.resolve("hud-default-layout.json"),new TypeToken<Map<String,HudPosition>>(){}.getType(),()->new LinkedHashMap<>(positions));
         var sizeDefaults=new JsonFileStore<Map<String,Float>>(root.resolve("hud-default-scale.json"),new TypeToken<Map<String,Float>>(){}.getType(),()->new LinkedHashMap<>(scales));
         defaultPositions=migrate?new LinkedHashMap<>(defaults.load()):hudConfig.defaultPositions==null?new LinkedHashMap<>(positions):hudConfig.defaultPositions;
@@ -271,8 +268,6 @@ public final class HudLayoutService {
             drawChip(g,client,"notifications",pos.x(),pos.y());
         }
         if(modules.byId("keystrokes") instanceof ClientModule strokes&&strokes.enabled())keyStrokes.sample(client);
-        if(modules.byId("info") instanceof ClientModule infoModule&&infoModule.enabled())
-            info.update(client,flag("info","bps"),flag("info","tps"),flag("info","ping"),flag("info","coords"));
         if(modules.byId("module_list") instanceof ClientModule list&&list.enabled()){var config=dev.sqwat.vela.VelaClient.services().configs().current();moduleList.update(modules,!config.animations||config.reducedMotion);}
         if(motionLevel!=client.level){hudMotion.clear();for(var state:panels.values())state.height=Float.NaN;motionLevel=client.level;}
         // Rendering runs much more often than ticks: avoid constructing a stream/list every frame.
@@ -415,11 +410,6 @@ public final class HudLayoutService {
                 watermark.drawContent(g,client);
                 return;
             }
-            if(id.equals("info")){
-                drawPanel(g,id,info.width(),info.height(),panel);
-                info.draw(g);
-                return;
-            }
             if(id.equals("module_list")){
                 // Rows carry their own pill backgrounds; the side follows where the box sits on screen.
                 boolean rightSide=x+moduleList.width()*scale/2f>g.guiWidth()/2f;
@@ -492,7 +482,6 @@ public final class HudLayoutService {
             case "cooldowns" -> new RectSize(Math.round(160*scale(id)),Math.round((24+CooldownTracker.snapshot().size()*21)*scale(id)));
             case "hotkeys" -> new RectSize(Math.round(160*scale(id)),Math.round((24+hotkeyCount()*21)*scale(id)));
             case "scoreboard" -> new RectSize(132, 72);
-            case "info" -> new RectSize(Math.round(info.width()*scale(id)),Math.round(info.height()*scale(id)));
             case "module_list" -> new RectSize(Math.round(moduleList.width()*scale(id)),Math.round(moduleList.height()*scale(id)));
             case "keystrokes" -> new RectSize(Math.round(KeyStrokesHud.WIDTH*scale(id)),Math.round(KeyStrokesHud.height(keyFlag("mouse"),keyFlag("space"))*scale(id)));
             default -> new RectSize(Math.round((labelWidth(label(client, id)) + 16)*scale(id)), Math.round(22*scale(id)));
@@ -603,7 +592,9 @@ public final class HudLayoutService {
         state.time=now;state.alpha=alpha;return (Math.round(184.5f*alpha)<<24)|0x10141C;
     }
     private final WatermarkHud watermark=new WatermarkHud();
-    private String watermark(Minecraft client){return watermark.text(client,flag("watermark","fps"),flag("watermark","tps"),flag("watermark","ping"));}
+    private String watermark(Minecraft client){
+        return watermark.text(client,flag("watermark","fps"),flag("watermark","bps"),flag("watermark","tps"),flag("watermark","ping"),flag("watermark","time"),flag("watermark","online"));
+    }
     private java.util.List<net.minecraft.world.entity.player.Player> nearby(Minecraft client){
         if(client.player==null||client.level==null){nearPresence.clear();nearbyLabels.clear();nearbyDistances.clear();nearbyLevel=null;nearbyTick=Integer.MIN_VALUE;return nearbyCache=java.util.List.of();}
         if(nearbyLevel==client.level&&nearbyTick==client.player.tickCount)return nearbyCache;

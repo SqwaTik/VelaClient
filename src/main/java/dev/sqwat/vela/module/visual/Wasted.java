@@ -111,6 +111,8 @@ public final class Wasted extends ClientModule {
         return a*a*(3-2*a);
     }
     public static boolean presenting(){return presenting!=null;}
+    /** First button row under the centred caption and the cause line, in GUI pixels. */
+    public static int buttonTop(int height){return Math.round(height/2f+28*.55f+26);}
 
     private void paint(GuiGraphicsExtractor g,float darkness,float ease,float alphaScale,net.minecraft.network.chat.Component cause){
         int width=g.guiWidth(),height=g.guiHeight();
@@ -121,8 +123,8 @@ public final class Wasted extends ClientModule {
         if(ease<=0)return;
         float size=28*(1.45f-.45f*ease);int alpha=Math.round(255*ease*alphaScale);
         String text=caption.value();
-        // Same anchor as the vanilla title, so the buttons below keep their layout.
-        float y=height/4f-size*.3f;
+        // Centred on screen; the scale-in keeps the same centre. Death screen buttons are moved below (buttonTop).
+        float y=height/2f-size*.45f;
         g.pose().pushMatrix();
         try{
             g.pose().translate(width/2f,y);

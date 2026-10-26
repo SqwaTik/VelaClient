@@ -26,6 +26,8 @@ abstract class WastedDeathScreenStyleMixin {
     @Inject(method="extractRenderState",at=@At("HEAD"))
     private void vela$fadeButtons(GuiGraphicsExtractor g,int mouseX,int mouseY,float partial,CallbackInfo ci){
         float alpha=Wasted.buttonAlpha();
-        for(var button:exitButtons)button.setAlpha(alpha);
+        if(!Wasted.presenting()){for(var button:exitButtons)button.setAlpha(alpha);return;}
+        int y=Wasted.buttonTop(((net.minecraft.client.gui.screens.Screen)(Object)this).height);
+        for(var button:exitButtons){button.setAlpha(alpha);button.setY(y);y+=24;}
     }
 }

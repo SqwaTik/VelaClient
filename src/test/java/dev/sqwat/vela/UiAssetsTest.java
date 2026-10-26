@@ -7,11 +7,12 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UiAssetsTest {
+    /** The 18 px atlas supplies metrics for every size; it must cover the UI alphabet. */
     @Test void pngFontsCoverEnglishRussianAndFitAtlas() throws Exception {
         for(String weight:List.of("regular","medium","semibold")){
             String base="/assets/velaclient/";
-            var image=ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream(base+"textures/gui/font_"+weight+".png")));
-            String metrics=new String(Objects.requireNonNull(getClass().getResourceAsStream(base+"ui/font_"+weight+".csv")).readAllBytes(),StandardCharsets.UTF_8);
+            var image=ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream(base+"textures/gui/font_"+weight+"_18.png")));
+            String metrics=new String(Objects.requireNonNull(getClass().getResourceAsStream(base+"ui/font_"+weight+"_18.csv")).readAllBytes(),StandardCharsets.UTF_8);
             Set<Integer> chars=new HashSet<>();
             for(String line:metrics.lines().skip(1).toList()){
                 String[] v=line.split(",");chars.add(Integer.parseInt(v[0]));
@@ -20,7 +21,7 @@ class UiAssetsTest {
                 assertTrue(Float.parseFloat(v[7])>=0,"Negative advance for "+v[0]);
             }
             "Vela Visuals HUD Utilities Markers Friends Configs Поиск Настройки Ёё йЙ Щщ Ыы 0123456789 …".codePoints().forEach(cp->assertTrue(chars.contains(cp),weight+" missing "+cp));
-            assertEquals(2048,image.getWidth());
+            assertEquals(1024,image.getWidth());
         }
     }
     @Test void iconsAndChromeHaveAntialiasedTransparency() throws Exception {

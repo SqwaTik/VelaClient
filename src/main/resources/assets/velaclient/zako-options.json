@@ -101,8 +101,6 @@
   "zakoopt.option.entity_anim_freeze.tooltip": "Дальние мобы и игроки меняют позу 20 раз в секунду, а не каждый кадр. Вдали движения рывками.",
   "zakoopt.option.entity_anim_distance": "Дистанция анимации раз в тик",
   "zakoopt.option.entity_anim_distance.tooltip": "С какого расстояния анимировать реже.",
-  "zakoopt.option.update_check": "Проверка обновлений",
-  "zakoopt.option.update_check.tooltip": "При запуске проверяет на GitHub, вышла ли новая версия.",
   "zakoopt.update.title": "Вышла ZakoOpt %s",
   "zakoopt.update.message": "У вас %s. Скачать новую версию можно на странице релиза:",
   "zakoopt.update.later": "Позже",

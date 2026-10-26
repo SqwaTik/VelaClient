@@ -1,6 +1,5 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.effect.HandOriginGuide;
 import dev.sqwat.vela.render.effect.NeonGeometry;
 import dev.sqwat.vela.render.effect.TrailHistory;
 import net.minecraft.gizmos.*;
@@ -24,18 +23,6 @@ class VisualGeometryTest {
         }
         assertTrue((((RectGizmo)shapes.getFirst()).style().fill()>>>24)<40);
         assertEquals(255,((RectGizmo)shapes.getLast()).style().fill()>>>24);
-    }
-    @Test void originalGuidesAreMirroredAndStayInsideViewport(){
-        for(int width:new int[]{610,1280,1920}){
-            int height=720;
-            var projection=new Matrix4f().perspective((float)Math.toRadians(70),(float)width/height,.05f,100);
-            var right=HandOriginGuide.bounds(projection,true,width,height);
-            var left=HandOriginGuide.bounds(projection,false,width,height);
-            assertEquals(width-right.x()-right.width(),left.x(),1);
-            assertEquals(left.y(),right.y());assertEquals(left.height(),right.height());
-            assertTrue(right.width()>0&&right.height()>0);
-            assertTrue(right.y()+right.height()<=height&&left.x()>=0);
-        }
     }
     @Test void trailExpiresDoesNotBridgeTeleportsAndIsBounded(){
         var history=new TrailHistory();

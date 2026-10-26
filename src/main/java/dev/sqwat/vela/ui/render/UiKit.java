@@ -49,6 +49,18 @@ public final class UiKit {
     public static void caption(GuiGraphicsExtractor g,String text,float x,float y){
         VelaDraw.text(g,text.toUpperCase(java.util.Locale.ROOT),x,y,VelaTheme.TEXT_MUTED,VelaDraw.Weight.SEMIBOLD,SMALL);
     }
+    /** Word-wraps {@code text} (translated) to lines no wider than {@code width}. */
+    public static java.util.List<String> wrap(String text,float width,VelaDraw.Weight weight,float size){
+        text=dev.sqwat.vela.ui.Lang.tr(text);
+        var lines=new java.util.ArrayList<String>();var line=new StringBuilder();
+        for(String word:text.split(" ")){
+            String next=line.isEmpty()?word:line+" "+word;
+            if(!line.isEmpty()&&VelaDraw.textWidth(next,weight,size)>width){lines.add(line.toString());line=new StringBuilder(word);}
+            else line=new StringBuilder(next);
+        }
+        if(!line.isEmpty())lines.add(line.toString());
+        return lines;
+    }
     public static void divider(GuiGraphicsExtractor g,int x,int y,int width){g.fill(x,y,x+width,y+1,VelaTheme.BORDER);}
     /** Centred icon, title and hint for empty lists. */
     public static void empty(GuiGraphicsExtractor g,Rect r,String icon,String title,String hint){

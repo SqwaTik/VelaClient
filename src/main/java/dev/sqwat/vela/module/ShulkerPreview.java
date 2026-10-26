@@ -11,7 +11,13 @@ import java.util.List;
 
 /** Uses only container contents already supplied to the client. */
 public final class ShulkerPreview extends ClientModule {
-    public record Contents(List<ItemStack> items) implements TooltipComponent {}
+    /** Undyed shulker boxes use the vanilla purple. */
+    public static final int UNDYED=0x8F5E9C;
+    public record Contents(List<ItemStack> items,int color) implements TooltipComponent {
+        public Contents(List<ItemStack> items){this(items,UNDYED);}
+    }
+    private final dev.sqwat.vela.module.setting.BooleanSetting tint=setting(new dev.sqwat.vela.module.setting.BooleanSetting("tint","Цвет шалкера","Окрашивать превью в цвет красителя шалкера",true));
+    public boolean tinted(){return tint.value();}
     private ItemContainerContents cached;
     private Contents preview;
     private Contents candidate,pinned;
@@ -38,9 +44,15 @@ public final class ShulkerPreview extends ClientModule {
     public void drawPinned(net.minecraft.client.gui.GuiGraphicsExtractor g,int mx,int my){
         if(pinned==null)return;var mc=net.minecraft.client.Minecraft.getInstance();
         x=Math.clamp(x,5,Math.max(5,g.guiWidth()-171));y=Math.clamp(y,5,Math.max(5,g.guiHeight()-63));
-        g.nextStratum();dev.sqwat.vela.ui.render.VelaDraw.roundedOutline(g,x-5,y-5,176,68,5,dev.sqwat.vela.ui.render.VelaTheme.BORDER,dev.sqwat.vela.ui.render.VelaTheme.SURFACE);
-        new dev.sqwat.vela.ui.render.ShulkerTooltip(pinned).extractImage(mc.font,x,y,166,58,g);
+        int border=dev.sqwat.vela.ui.render.VelaTheme.BORDER,surface=dev.sqwat.vela.ui.render.VelaTheme.SURFACE;
+        if(tint.value()){
+            int rgb=pinned.color()&0xFFFFFF;
+            border=(border&0xFF000000)|(dev.sqwat.vela.ui.render.VelaTheme.mix(border,0xFF000000|rgb,.65f)&0xFFFFFF);
+            surface=(surface&0xFF000000)|(dev.sqwat.vela.ui.render.VelaTheme.mix(surface,0xFF000000|rgb,.18f)&0xFFFFFF);
+        }
         int slot=slotAt(x,y,mx,my);
+        g.nextStratum();dev.sqwat.vela.ui.render.VelaDraw.roundedOutline(g,x-5,y-5,176,68,5,border,surface);
+        new dev.sqwat.vela.ui.render.ShulkerTooltip(pinned,slot).extractImage(mc.font,x,y,166,58,g);
         if(slot>=0&&slot<pinned.items().size()){
             var item=pinned.items().get(slot);
             if(!item.isEmpty())g.setTooltipForNextFrame(mc.font,item,mx,my);
@@ -53,7 +65,8 @@ public final class ShulkerPreview extends ClientModule {
         var contents=item.get(DataComponents.CONTAINER);if(contents==null)return null;
         if(module.cached!=contents){
             var items=NonNullList.withSize(27,ItemStack.EMPTY);contents.copyInto(items);
-            module.preview=new Contents(List.copyOf(items));module.cached=contents;
+            var dye=((ShulkerBoxBlock)block.getBlock()).getColor();
+            module.preview=new Contents(List.copyOf(items),dye==null?UNDYED:dye.getTextureDiffuseColor()&0xFFFFFF);module.cached=contents;
         }
         return module.preview;
     }

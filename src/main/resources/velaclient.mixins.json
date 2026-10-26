@@ -100,7 +100,9 @@
     "OccludedRenderStateMixin",
     "EntityOcclusionMixin",
     "OccludedExtractMixin",
-    "OccludedModelMixin"
+    "OccludedModelMixin",
+    "FreelookMouseMixin",
+    "FreelookCameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1

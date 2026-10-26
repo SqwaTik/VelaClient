@@ -106,6 +106,7 @@
     "screen.WastedDeathScreenMixin",
     "resource.ProfiledReloadMixin",
     "world.AttackSoundMuteMixin",
+    "world.EntitySoundMuteMixin",
     "screen.WastedDeathScreenStyleMixin",
     "screen.AutoReconnectMixin",
     "screen.ChatTimestampMixin",

@@ -1,20 +1,17 @@
 package dev.sqwat.vela.mixin.world;
 import dev.sqwat.vela.module.utility.HitSound;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-/** Drops vanilla attack sounds the server plays at the local player while Hit Sound replaces them. */
-@Mixin(ClientPacketListener.class)
+/** Positional sounds, whether sent by the server or played locally, all end in ClientLevel.playSound. */
+@Mixin(ClientLevel.class)
 abstract class AttackSoundMuteMixin {
-    @Inject(method="handleSoundEvent",at=@At("HEAD"),cancellable=true)
-    private void vela$muteAttack(ClientboundSoundPacket packet,CallbackInfo ci){
-        if(HitSound.mutes(packet.getSound().value(),packet.getX(),packet.getY(),packet.getZ()))ci.cancel();
-    }
-    @Inject(method="handleSoundEntityEvent",at=@At("HEAD"),cancellable=true)
-    private void vela$muteEntitySound(net.minecraft.network.protocol.game.ClientboundSoundEntityPacket packet,CallbackInfo ci){
-        if(HitSound.mutesEntity(packet.getSound().value(),packet.getId()))ci.cancel();
+    @Inject(method="playSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V",at=@At("HEAD"),cancellable=true)
+    private void vela$muteAttack(double x,double y,double z,SoundEvent sound,SoundSource source,float volume,float pitch,boolean distanceDelay,long seed,CallbackInfo ci){
+        if(HitSound.mutes(sound,x,y,z))ci.cancel();
     }
 }

@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Plays a sound when the player attacks a living entity: one of Vela's built-in sounds (synthesized, shipped in the
@@ -32,11 +30,6 @@ public final class HitSound extends ClientModule {
     static{
         BUILT_IN.put("Хитмаркер","hit.marker");BUILT_IN.put("Клик","hit.click");BUILT_IN.put("Пульс","hit.pulse");
         BUILT_IN.put("Кристалл","hit.crystal");BUILT_IN.put("Бас","hit.bass");BUILT_IN.put("Неон","hit.neon");BUILT_IN.put("Стекло","hit.glass");
-    }
-    /** Initialised on first use: SoundEvents needs a bootstrapped registry, which unit tests do not have. */
-    private static final class Vanilla {
-        static final Set<SoundEvent> ATTACK=Set.of(SoundEvents.PLAYER_ATTACK_STRONG,SoundEvents.PLAYER_ATTACK_WEAK,SoundEvents.PLAYER_ATTACK_CRIT,
-            SoundEvents.PLAYER_ATTACK_KNOCKBACK,SoundEvents.PLAYER_ATTACK_SWEEP,SoundEvents.PLAYER_ATTACK_NODAMAGE);
     }
     private static final String FILE_PREFIX="Файл: ";
     private final SoundClips clips=new SoundClips(folder());
@@ -54,7 +47,7 @@ public final class HitSound extends ClientModule {
     private static volatile int lastTarget=Integer.MIN_VALUE;
     private static volatile double targetX,targetY,targetZ;
     private static volatile long targetUntil;
-    private static final long HURT_WINDOW=400_000_000L;
+    private static final long HURT_WINDOW=800_000_000L; // covers server round trip at typical ping
     public HitSound(){
         super("hit_sound","Hit Sound","Свой звук при ударе по цели",ModuleCategory.UTILITIES);
         setting(new ActionSetting("open_folder","Открыть папку звуков",()->{
@@ -87,25 +80,29 @@ public final class HitSound extends ClientModule {
         module.clips.play(file,vol*Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER));
     }
     /**
-     * True for sounds the module replaces: vanilla attack sounds at the local player, and the hurt sound of the entity
-     * the player just hit (servers play it at the target; many PvP servers disable attack sounds and only this remains).
+     * True for sounds the module replaces: vanilla attack sounds (whoosh, strong, weak, crit, sweep, knockback, no-damage)
+     * near the local player, and the hurt sound of the entity the player just hit. Matched by sound name, not object
+     * identity: servers behind protocol translators send these as direct sound holders.
      */
     public static boolean mutes(SoundEvent event,double x,double y,double z){
         var module=current();var player=Minecraft.getInstance().player;
         if(module==null||!module.muteVanilla.value()||player==null)return false;
-        if(Vanilla.ATTACK.contains(event)&&player.distanceToSqr(x,y,z)<=2.5*2.5)return true;
-        if(!hurtSound(event)||System.nanoTime()>targetUntil)return false;
+        String path=event.location().getPath();
+        if(attackSound(path)&&player.distanceToSqr(x,y,z)<=4*4)return true;
+        if(!hurtSound(path)||System.nanoTime()>targetUntil)return false;
         double dx=x-targetX,dy=y-targetY,dz=z-targetZ;
-        return dx*dx+dy*dy+dz*dz<=3*3;
+        return dx*dx+dy*dy+dz*dz<=4*4;
     }
     /** Entity-attached variant of {@link #mutes}. */
     public static boolean mutesEntity(SoundEvent event,int entityId){
         var module=current();
         if(module==null||!module.muteVanilla.value())return false;
-        if(Vanilla.ATTACK.contains(event)){var p=Minecraft.getInstance().player;return p!=null&&p.getId()==entityId;}
-        return entityId==lastTarget&&System.nanoTime()<=targetUntil&&hurtSound(event);
+        String path=event.location().getPath();
+        if(attackSound(path)){var p=Minecraft.getInstance().player;return p!=null&&(p.getId()==entityId||entityId==lastTarget);}
+        return entityId==lastTarget&&System.nanoTime()<=targetUntil&&hurtSound(path);
     }
-    static boolean hurtSound(SoundEvent event){String path=event.location().getPath();return path.endsWith(".hurt")||path.contains(".hurt_")||path.endsWith("_hurt");}
+    static boolean attackSound(String path){return path.startsWith("entity.player.attack.");}
+    static boolean hurtSound(String path){return path.endsWith(".hurt")||path.contains(".hurt_")||path.endsWith("_hurt");}
     private static HitSound current(){
         var s=dev.sqwat.vela.VelaClient.services();
         return s!=null&&s.modules().byId("hit_sound") instanceof HitSound module&&module.enabled()?module:null;

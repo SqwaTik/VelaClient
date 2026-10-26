@@ -27,8 +27,8 @@ import java.util.Map;
 public final class BrewViewer extends ClientModule {
     private static final int BREW_TICKS=400,LIMIT=64,FUEL_CHARGES=20;
     static final int W=148,H=36;
-    record Snapshot(ItemStack[] bottles,ItemStack ingredient,ItemStack fuelItem,int fuel,int brewTicks,long capturedAt){}
-    private static final Snapshot EMPTY=new Snapshot(new ItemStack[]{ItemStack.EMPTY,ItemStack.EMPTY,ItemStack.EMPTY},ItemStack.EMPTY,ItemStack.EMPTY,0,0,0);
+    record Snapshot(ItemStack[] bottles,ItemStack ingredient,ItemStack fuelItem,int fuel,int brewTicks,long capturedAt,boolean done){}
+    private static final Snapshot EMPTY=new Snapshot(new ItemStack[]{ItemStack.EMPTY,ItemStack.EMPTY,ItemStack.EMPTY},ItemStack.EMPTY,ItemStack.EMPTY,0,0,0,false);
     private final KeySetting pinKey=setting(new KeySetting("pin_key","Закрепить",org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL));
     private final Map<BlockPos,Snapshot> stands=new LinkedHashMap<>(16,.75f,true){
         @Override protected boolean removeEldestEntry(Map.Entry<BlockPos,Snapshot> e){return size()>LIMIT;}
@@ -54,12 +54,46 @@ public final class BrewViewer extends ClientModule {
         }
         if(menuPos==null)return;
         var bottles=new ItemStack[3];for(int i=0;i<3;i++)bottles[i]=brewing.getSlot(i).getItem().copy();
-        stands.put(menuPos,new Snapshot(bottles,brewing.getSlot(3).getItem().copy(),brewing.getSlot(4).getItem().copy(),brewing.getFuel(),brewing.getBrewingTicks(),mc.level.getGameTime()));
+        stands.put(menuPos,new Snapshot(bottles,brewing.getSlot(3).getItem().copy(),brewing.getSlot(4).getItem().copy(),brewing.getFuel(),brewing.getBrewingTicks(),mc.level.getGameTime(),false));
     }
     private static BlockPos target(Minecraft mc){
         return mc.level!=null&&mc.hitResult instanceof BlockHitResult hit&&mc.level.getBlockState(hit.getBlockPos()).getBlock() instanceof BrewingStandBlock?hit.getBlockPos().immutable():null;
     }
-    private Snapshot snapshot(BlockPos pos){var s=stands.get(pos);return s==null?EMPTY:s;}
+    private Snapshot snapshot(BlockPos pos){
+        var s=stands.get(pos);if(s==null)return EMPTY;
+        var mc=Minecraft.getInstance();
+        return mc.level==null?s:project(s,mc.level.getGameTime(),mc.level.potionBrewing());
+    }
+    /**
+     * What the stand holds now, from the snapshot taken when it was last open: finished brews apply Minecraft's own
+     * brewing rules (each bottle = mix(ingredient, bottle), ingredient shrinks by one), and the stand keeps brewing
+     * while the ingredient still fits, spending a fuel charge per brew and a blaze powder per 20 charges. Without this
+     * a finished stand still showed the water bottles from before the brew.
+     */
+    static Snapshot project(Snapshot s,long now,net.minecraft.world.item.alchemy.PotionBrewing brewing){
+        if(s.brewTicks<=0)return s;
+        long elapsed=Math.max(0,now-s.capturedAt);
+        if(elapsed<s.brewTicks)return new Snapshot(s.bottles,s.ingredient,s.fuelItem,s.fuel,(int)(s.brewTicks-elapsed),now,false);
+        var bottles=new ItemStack[3];for(int i=0;i<3;i++)bottles[i]=s.bottles[i].copy();
+        var ingredient=s.ingredient.copy();var fuelItem=s.fuelItem.copy();int fuel=s.fuel;
+        long left=elapsed-s.brewTicks;
+        for(int guard=0;guard<64;guard++){
+            for(int i=0;i<3;i++)if(!bottles[i].isEmpty())bottles[i]=brewing.mix(ingredient,bottles[i]);
+            ingredient.shrink(1);
+            if(!brewable(brewing,ingredient,bottles))return new Snapshot(bottles,ingredient,fuelItem,fuel,0,now,true);
+            if(fuel<=0&&!fuelItem.isEmpty()){fuel=FUEL_CHARGES;fuelItem.shrink(1);}
+            if(fuel<=0)return new Snapshot(bottles,ingredient,fuelItem,fuel,0,now,true);
+            fuel--;
+            if(left<BREW_TICKS)return new Snapshot(bottles,ingredient,fuelItem,fuel,(int)(BREW_TICKS-left),now,false);
+            left-=BREW_TICKS;
+        }
+        return new Snapshot(bottles,ingredient,fuelItem,fuel,0,now,true);
+    }
+    private static boolean brewable(net.minecraft.world.item.alchemy.PotionBrewing brewing,ItemStack ingredient,ItemStack[] bottles){
+        if(ingredient.isEmpty()||!brewing.isIngredient(ingredient))return false;
+        for(var bottle:bottles)if(!bottle.isEmpty()&&brewing.hasMix(bottle,ingredient))return true;
+        return false;
+    }
 
     /** World-anchored card while aiming at a stand; drawn with the live HUD effects. */
     public void draw(GuiGraphicsExtractor g){
@@ -85,8 +119,10 @@ public final class BrewViewer extends ClientModule {
         var mc=Minecraft.getInstance();
         long elapsed=mc.level==null?0:Math.max(0,mc.level.getGameTime()-shot.capturedAt);
         int remaining=shot.brewTicks>0?(int)Math.max(0,shot.brewTicks-elapsed):0;
+        boolean finished=shot.done;
         String time;float progress;
-        if(shot.brewTicks<=0){time="—";progress=0;}
+        if(finished){time="готово";progress=1;}
+        else if(shot.brewTicks<=0){time="—";progress=0;}
         else if(remaining<=0){time="готово";progress=1;}
         else{time=(remaining+19)/20+"с";progress=1-remaining/(float)BREW_TICKS;}
         VelaDraw.roundedOutline(g,0,0,W,H,7,(0x55<<24)|(VelaTheme.BORDER&0xFFFFFF),(0xE0<<24)|(VelaTheme.SURFACE&0xFFFFFF));

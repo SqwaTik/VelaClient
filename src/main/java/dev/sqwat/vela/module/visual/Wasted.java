@@ -52,6 +52,7 @@ public final class Wasted extends ClientModule {
         if(s==null||!(s.modules().byId("wasted") instanceof Wasted module)||!module.enabled()||mc.player==null)return false;
         module.begin(deathScreen,mc);return true;
     }
+    public static boolean effectRunning(){return running!=null;}
     /** A death screen opened while the effect runs is held (replacing the earlier one) instead of shown. */
     public static boolean hold(DeathScreen screen){
         var w=running;if(w==null)return false;
@@ -77,7 +78,9 @@ public final class Wasted extends ClientModule {
         var screen=pending;pending=null;level=null;
         if(!deathContinues||mc.player==null)return;
         if(respawn.value()&&mc.player.isDeadOrDying()){mc.player.respawn();return;}
-        if(screen!=null&&mc.gui.screen()==null){presenting=this;screenOpened=System.nanoTime();mc.gui.setScreen(screen);}
+        // Always end on a death screen, even if chat is open: without one the dead player would have no buttons.
+        presenting=this;screenOpened=System.nanoTime();
+        mc.gui.setScreen(screen); // null: vanilla builds the death screen itself now that the effect is over
     }
     private long elapsed(){return System.nanoTime()-started;}
 

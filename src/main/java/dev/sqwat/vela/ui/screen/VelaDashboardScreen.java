@@ -82,35 +82,9 @@ public final class VelaDashboardScreen extends VelaScreen {
     private ChoiceSetting choice;
     private final RgbPicker rgbPicker=new RgbPicker();
     private float choiceScroll,choiceScrollTarget;
-    private final java.util.Map<String,BooleanGroup> flagGroups=new java.util.HashMap<>();
-    private final ChoiceSetting metricsChoice=new ChoiceSetting("metrics","Показатели","Отображаемые показатели","FPS",List.of("FPS","TPS","Пинг"));
-    private BooleanSetting metric(String name){String id=name.equals("Пинг")?"ping":name.toLowerCase(java.util.Locale.ROOT);return (BooleanSetting)services.modules().byId("watermark").settings().stream().filter(s->s.id().equals(id)).findFirst().orElseThrow();}
-    private List<Setting<?>> visibleSettings(ClientModule module){
-        if(module.id().equals("particles")){
-            var eventIds=java.util.Set.of("hits","jumps","landings","deaths","totems");
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-events","События",module.settings().stream().filter(s->eventIds.contains(s.id())).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!eventIds.contains(setting.id()))result.add(setting);
-            return result;
-        }
-        if(module.id().equals("trajectories")){
-            var itemIds=java.util.Set.of("pearl","snowball","egg","potion","experience");
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-items","Предметы",module.settings().stream().filter(s->itemIds.contains(s.id())).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!itemIds.contains(setting.id()))result.add(setting);
-            return result;
-        }
-        if(module.id().equals("render_tweaks")){
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-flags","Скрывать",module.settings().stream().filter(s->s instanceof BooleanSetting).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!(setting instanceof BooleanSetting))result.add(setting);
-            return result;
-        }
-        if(!module.id().equals("watermark"))return module.settings().stream().filter(s->!s.id().equals("transparent")).toList();
-        List<Setting<?>> result=new ArrayList<>();result.add(metricsChoice);
-        for(var setting:module.settings())if(!List.of("fps","tps","ping","transparent").contains(setting.id()))result.add(setting);
-        return result;
-    }
+    /** How each module's settings are grouped for display (ModuleSettingGroups). */
+    private final ModuleSettingGroups groups;
+    private List<Setting<?>> visibleSettings(ClientModule module){return groups.visible(module);}
     private ClientModule binding, contextModule;
     private boolean capturing;
     private int draftKey;
@@ -129,6 +103,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         this.services = services;
         controls.animate("scrollbar-reveal",0);
         this.markerPanel=new MarkerPanel(services);
+        this.groups=new ModuleSettingGroups(services);
         this.section = initialSection;
         this.expandedModules.addAll(services.configs().current().expandedModules);this.friendSettings=services.configs().current().friendOptionsOpen;
     }
@@ -399,7 +374,7 @@ public final class VelaDashboardScreen extends VelaScreen {
                 }
                 Rect control=new Rect(x,cursor+14,width,21);
                 VelaDraw.roundedRect(g,control.x(),control.y(),control.width(),21,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,.35f));
-                String label=select instanceof BooleanGroup group?group.label():select==metricsChoice?String.join(", ",metricsChoice.options().stream().filter(o->metric(o).value()).toList()):select.value();
+                String label=select instanceof BooleanGroup group?group.label():groups.isMetrics(select)?String.join(", ",groups.metrics().options().stream().filter(o->groups.metric(o).value()).toList()):select.value();
                 if(label.isBlank())label="Не выбраны";
                 dev.sqwat.vela.ui.render.VelaIcons.draw(g,"contact_options",x+6,cursor+19,11,VelaTheme.TEXT_MUTED);
                 VelaDraw.text(g,VelaDraw.ellipsize(label,width-48,VelaDraw.Weight.REGULAR,8),x+23,cursor+20,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);
@@ -980,7 +955,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             for(String option:select.options()){
                 Rect row=new Rect(popupRect.x()+4,y,popupRect.width()-8,18);
                 popupRow(g,row,option,mx,my,()->{
-                    if(select instanceof BooleanGroup group)group.toggle(option);else if(select==metricsChoice)metric(option).toggle();else select.set(option);
+                    if(select instanceof BooleanGroup group)group.toggle(option);else if(groups.isMetrics(select))groups.metric(option).toggle();else select.set(option);
                     if(select==friendEffects){var cfg=services.configs().current();cfg.friendChinaHat=friendEffects.flags().get(0).value();cfg.friendDashTrail=friendEffects.flags().get(1).value();cfg.friendJumpCircle=friendEffects.flags().get(2).value();}
                     services.configs().requestSave();
                 });y+=20;
@@ -1031,7 +1006,7 @@ public final class VelaDashboardScreen extends VelaScreen {
     private void popupRow(GuiGraphicsExtractor g,Rect r,String label,int mx,int my,Runnable action){
         if(label.equals("Назначить клавишу")){controls.button(g,"assign-key",r,label,r.contains(mx,my));popupHits.add(new PopupHit(r,action));return;}
         float h=animate("choice-"+label,r.contains(mx,my),frameDt);
-        boolean selected=choice instanceof BooleanGroup group?group.selected(label):choice==metricsChoice?metric(label).value():choice!=null&&label.equals(choice.value());
+        boolean selected=choice instanceof BooleanGroup group?group.selected(label):groups.isMetrics(choice)?groups.metric(label).value():choice!=null&&label.equals(choice.value());
         float selectedAmount=controls.animate("option-selected-"+(choice==null?"context":choice.id())+"-"+label,selected?1:0);
         VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),3,VelaTheme.mix(VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h),VelaTheme.PRIMARY,selectedAmount*.16f));
         if(selectedAmount>.005f){VelaDraw.roundedRect(g,r.x()+2,r.y()+4,2,r.height()-8,1,(Math.round(255*selectedAmount)<<24)|(VelaTheme.PRIMARY&0xFFFFFF));dev.sqwat.vela.ui.render.VelaIcons.draw(g,"check",r.x()+r.width()-15,r.y()+(r.height()-10)/2,10,(Math.round(255*selectedAmount)<<24)|(VelaTheme.PRIMARY&0xFFFFFF));}

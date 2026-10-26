@@ -504,15 +504,23 @@ public final class HudLayoutService {
 
     private String coordinateText="";
     private int coordinateX,coordinateY,coordinateZ;
-    private boolean coordinateCompact;
+    private boolean coordinateCompact,coordinateOther;
+    private Object coordinateDimension;
     private String coordinateLabel(Minecraft client) {
         var module = modules.byId("coordinates");
-        boolean compact=false;
-        if(module!=null)for(var s:module.settings())if(s.id().equals("format")&&"Compact".equals(s.value())){compact=true;break;}
+        boolean compact=false,other=false;
+        if(module!=null)for(var s:module.settings()){
+            if(s.id().equals("format")&&"Compact".equals(s.value()))compact=true;
+            else if(s.id().equals("other_dimension")&&Boolean.TRUE.equals(s.value()))other=true;
+        }
         int x=client.player.getBlockX(),y=client.player.getBlockY(),z=client.player.getBlockZ();
-        if(coordinateText.isEmpty()||x!=coordinateX||y!=coordinateY||z!=coordinateZ||compact!=coordinateCompact){
-            coordinateX=x;coordinateY=y;coordinateZ=z;coordinateCompact=compact;
+        var dimension=client.level==null?null:client.level.dimension();
+        if(coordinateText.isEmpty()||x!=coordinateX||y!=coordinateY||z!=coordinateZ||compact!=coordinateCompact||other!=coordinateOther||dimension!=coordinateDimension){
+            coordinateX=x;coordinateY=y;coordinateZ=z;coordinateCompact=compact;coordinateOther=other;coordinateDimension=dimension;
             coordinateText=(compact ? "" : "XYZ ") + x + " " + y + " " + z;
+            // Portal maths: one Nether block is eight Overworld blocks. The End has no counterpart.
+            if(other&&dimension==net.minecraft.world.level.Level.OVERWORLD)coordinateText+="  ·  Незер "+Math.floorDiv(x,8)+" "+Math.floorDiv(z,8);
+            else if(other&&dimension==net.minecraft.world.level.Level.NETHER)coordinateText+="  ·  Мир "+x*8+" "+z*8;
         }
         return coordinateText;
     }

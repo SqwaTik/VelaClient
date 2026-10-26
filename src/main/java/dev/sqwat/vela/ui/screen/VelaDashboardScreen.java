@@ -140,6 +140,7 @@ public final class VelaDashboardScreen extends VelaScreen {
     private String revealModule,flashModule;
     private long flashUntil;
     private static final long FLASH_NANOS=1_200_000_000L;
+    private static final int LOCATION_PAD=6,LOCATION_GAP=6;
     private static VelaSection sectionOf(ClientModule module){for(var s:VelaSection.values())if(s.category()==module.category())return s;return VelaSection.UTILITIES;}
     private void jumpTo(ClientModule module){
         section=sectionOf(module);sideReveal=sideScroll=sideScrollTarget=0;friendFocused=configKeyFocused=configNameFocused=false;
@@ -288,18 +289,22 @@ public final class VelaDashboardScreen extends VelaScreen {
         int labelX=card.x()+8,labelWidth=toggleX-card.x()-41;
         String key=(services.configs().current().alwaysShowBinds||hovered&&!expanded)&&module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):"";
         float keyWidth=key.isEmpty()?0:VelaDraw.textWidth(key,VelaDraw.Weight.REGULAR,7)+6;
+        // Search results carry their tab as a chip: same padding on every side, centred on the title line.
         String location=search.isBlank()?"":"в "+sectionOf(module).title();
-        float locationWidth=location.isEmpty()?0:VelaDraw.textWidth(location,VelaDraw.Weight.REGULAR,7)+6;
+        int chipText=location.isEmpty()?0:(int)Math.ceil(VelaDraw.textWidth(location,VelaDraw.Weight.MEDIUM,8)),chipWidth=chipText+LOCATION_PAD*2;
+        float locationWidth=location.isEmpty()?0:chipWidth+LOCATION_GAP;
         String title=VelaDraw.ellipsize(module.name(),labelWidth-keyWidth-locationWidth,VelaDraw.Weight.MEDIUM);
         dev.sqwat.vela.ui.render.SearchText.draw(g,title,search,labelX,card.y()+8,module.enabled()?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,28f/3);
-        float afterTitle=labelX+VelaDraw.textWidth(title,VelaDraw.Weight.MEDIUM)+6;
+        float afterTitle=labelX+VelaDraw.textWidth(title,VelaDraw.Weight.MEDIUM)+LOCATION_GAP;
         if(!key.isEmpty()){VelaDraw.text(g,key,afterTitle,card.y()+10,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);afterTitle+=keyWidth;}
         if(!location.isEmpty()){
-            int lw=Math.round(locationWidth-6);Rect hit=new Rect(Math.round(afterTitle)-2,card.y()+7,lw+4,12);
-            boolean over=hit.contains(mouseX,mouseY);int color=over?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED;
-            VelaDraw.text(g,location,Math.round(afterTitle),card.y()+10,color,VelaDraw.Weight.REGULAR,7);
-            if(over)g.fill(Math.round(afterTitle),card.y()+18,Math.round(afterTitle)+lw,card.y()+19,color);
-            locationHits.put(hit,module);
+            Rect chip=new Rect(Math.round(afterTitle),card.y()+6,chipWidth,14);
+            float over=animate("location-"+module.id(),chip.contains(mouseX,mouseY),dt);
+            VelaDraw.roundedRect(g,chip.x(),chip.y(),chip.width(),chip.height(),5,VelaTheme.mix(0x14FFFFFF,(VelaTheme.PRIMARY&0xFFFFFF)|0x38000000,over));
+            int color=VelaTheme.mix(0xFFDDE3EF,VelaTheme.TEXT,over);
+            VelaDraw.text(g,location,chip.x()+LOCATION_PAD,chip.y()+3,color,VelaDraw.Weight.MEDIUM,8);
+            if(over>.02f)g.fill(chip.x()+LOCATION_PAD,chip.y()+11,chip.x()+LOCATION_PAD+Math.round(chipText*over),chip.y()+12,color);
+            locationHits.put(chip,module);
         }
         String remaining=module.description().strip();int split=remaining.length();
         while(split>0&&VelaDraw.textWidth(remaining.substring(0,split),VelaDraw.Weight.REGULAR,8)>labelWidth)split=remaining.offsetByCodePoints(split,-1);

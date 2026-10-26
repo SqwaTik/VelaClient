@@ -19,8 +19,10 @@ public final class Pinger extends ClientModule {
     private final NumberSetting healthHp=setting(new NumberSetting("health_hp","Порог здоровья, HP","Порог текущего здоровья, где 2 HP равны одному сердцу",6,1,20,1));
     private final BooleanSetting screenWarning=setting(new BooleanSetting("screen_warning","Красное предупреждение","Подсвечивать края экрана при низком здоровье или прочности брони",false));
     private long warningUntil;
+    /** Worst current severity (0 at the threshold, 1 when nothing is left); deepens the red edge. */
+    private float severity;
     public float warningOpacity(long now,boolean reducedMotion){
-        return enabled()&&screenWarning.value()?dev.sqwat.vela.ui.animation.WarningPulse.opacity(now,warningUntil,reducedMotion):0;
+        return enabled()&&screenWarning.value()?dev.sqwat.vela.ui.animation.WarningPulse.opacity(now,warningUntil,reducedMotion)*(.65f+.55f*severity):0;
     }
     public boolean screenWarningActive(){return enabled()&&screenWarning.value()&&System.nanoTime()<warningUntil;}
     private static final EquipmentSlot[] ARMOR={EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET};
@@ -60,16 +62,18 @@ public final class Pinger extends ClientModule {
             if(stack!=warnedStack[i]){warnedStack[i]=stack;warnedPercent[i]=Integer.MAX_VALUE;}
             int percent=Math.max(0,Math.round(100f*(stack.getMaxDamage()-stack.getDamageValue())/stack.getMaxDamage()));
             if(!shouldWarn(percent,armorPercent.value())){warnedPercent[i]=Integer.MAX_VALUE;continue;}
-            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("armor",stack,percent+"%",percent/100f));
+            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("armor",stack,percent+"%",percent/100f,1-percent/armorPercent.value().floatValue()));
             if(due(percent,warnedPercent[i]==Integer.MAX_VALUE?Double.NaN:warnedPercent[i],ARMOR_STEP)){warnedPercent[i]=percent;fresh=true;}
         }
         float hp=player.getHealth();
         if(health.value()&&shouldWarn(hp,healthHp.value())){
-            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("heart",ItemStack.EMPTY,formatHp(hp)+" HP",hp/Math.max(1,player.getMaxHealth())));
+            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("heart",ItemStack.EMPTY,formatHp(hp)+" HP",hp/Math.max(1,player.getMaxHealth()),1-hp/healthHp.value().floatValue()));
             if(due(hp,warnedHp==Float.MAX_VALUE?Double.NaN:warnedHp,HEALTH_STEP)){warnedHp=hp;fresh=true;}
         }else warnedHp=Float.MAX_VALUE;
+        severity=0;for(var value:crossed)severity=Math.max(severity,value.severity());
         if(fresh){dev.sqwat.vela.ui.Notifications.showHudValues(crossed);showing=true;warningUntil=System.nanoTime()+3_500_000_000L;}
         else if(crossed.isEmpty()&&showing){warningUntil=0;dev.sqwat.vela.ui.Notifications.clearHud();showing=false;}
+        else if(showing)dev.sqwat.vela.ui.Notifications.updateHudValues(crossed);
     }
 
     private static String label(EquipmentSlot slot){return switch(slot){case HEAD->"Шлем";case CHEST->"Нагрудник";case LEGS->"Поножи";case FEET->"Ботинки";default->"Броня";};}

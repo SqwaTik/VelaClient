@@ -51,6 +51,8 @@ class RecentMixinTargetsTest {
         }
         var disconnect=method(load("net.minecraft.client.gui.Hud"),"onDisconnected","()V");
         assertNotNull(disconnect);assertTrue(calls(disconnect,"net/minecraft/client/gui/components/ChatComponent","clearMessages"));
+        assertNotNull(method(load("net.minecraft.client.gui.components.PlayerTabOverlay"),"extractPingIcon",
+            "(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIILnet/minecraft/client/multiplayer/PlayerInfo;)V"));
         var screen=load("net.minecraft.client.gui.screens.inventory.AbstractContainerScreen");
         for(String f:new String[]{"menu","leftPos","topPos","imageWidth"})assertTrue(field(screen,f),f);
         var contents=method(screen,"extractContents","(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V");

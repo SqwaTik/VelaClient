@@ -12,17 +12,30 @@ public final class Notifications {
     private record Notice(String title,String detail,String icon,int color,String action,Runnable run,BooleanSupplier valid,long started,int width){}
     private record Hit(Notice notice,Rect rect){}
     private static final Deque<Notice> notices=new ArrayDeque<>();
-    public record HudValue(String icon,net.minecraft.world.item.ItemStack item,String value,float fraction){
-        public HudValue{item=item.copy();fraction=Math.clamp(fraction,0,1);}
+    /** {@code severity}: 0 at the warning threshold, 1 when nothing is left; drives colour and heartbeat. */
+    public record HudValue(String icon,net.minecraft.world.item.ItemStack item,String value,float fraction,float severity){
+        public HudValue{item=item.copy();fraction=Math.clamp(fraction,0,1);severity=Math.clamp(severity,0,1);}
+        public HudValue(String icon,net.minecraft.world.item.ItemStack item,String value,float fraction){this(icon,item,value,fraction,1-fraction);}
     }
     private static List<HudValue> hudValues=List.of();
-    private static long hudStarted;
+    private static long hudStarted,hudPulse;
+    /** Per cell: shown bar, trailing "ghost" bar, time the value last dropped (ms). Animated by wall clock. */
+    private static final Map<String,float[]> bars=new HashMap<>();
+    private static long lastHudDraw;
+    private static final int WARN=0xFFFFA24D;
     private static final List<Hit> hits=new ArrayList<>();
     private static final UiControls controls=new UiControls();
     private static float scale=1;
     private Notifications(){}
-    public static synchronized void showHudValues(List<HudValue> values){hudValues=List.copyOf(values);hudStarted=System.nanoTime()/1_000_000;}
-    public static synchronized void clearHud(){hudValues=List.of();}
+    public static synchronized void showHudValues(List<HudValue> values){
+        long now=System.nanoTime()/1_000_000;
+        if(hudValues.isEmpty()){hudStarted=now;bars.clear();}
+        else hudStarted=now-240; // already open: stay fully in, just restart the lifetime
+        hudValues=List.copyOf(values);hudPulse=now;
+    }
+    /** Live values for an open panel; keeps its lifetime, so the panel still closes on time. */
+    public static synchronized void updateHudValues(List<HudValue> values){if(!hudValues.isEmpty()&&!values.isEmpty())hudValues=List.copyOf(values);}
+    public static synchronized void clearHud(){hudValues=List.of();bars.clear();}
     public static synchronized boolean hudVisible(){
         long elapsed=System.nanoTime()/1_000_000-hudStarted;
         if(elapsed<0||elapsed>=HUD_DURATION)clearHud();return !hudValues.isEmpty();
@@ -32,16 +45,49 @@ public final class Notifications {
         if(!hudVisible())return 128;
         int width=0;for(var value:hudValues)width+=valueWidth(value);return width;
     }
+    private static int alpha(int color,float a){return (Math.round(((color>>>24)&255)*Math.clamp(a,0,1))<<24)|(color&0xFFFFFF);}
+    private static float smooth(float t){t=Math.clamp(t,0,1);return t*t*(3-2*t);}
+    /** Pops in with a slight overshoot, flashes on every new warning, bars slide with a trailing ghost, fades out. */
     public static synchronized void drawHud(GuiGraphicsExtractor g){
         if(!hudVisible())return;int width=hudWidth();var c=new GameUiCanvas(g);
-        c.round(0,0,width,32,7,VelaTheme.SURFACE);c.border(0,0,width,32,7,VelaTheme.BORDER);
-        int x=0;
-        for(var value:hudValues){int cell=valueWidth(value);
-            if(value.item.isEmpty())c.image(value.icon,x+8,7,13,VelaTheme.DANGER);else g.item(value.item,x+6,5);
-            c.text(value.value,x+27,9,9,VelaTheme.TEXT,UiCanvas.Weight.MEDIUM);
-            c.round(x+8,25,cell-16,2,1,VelaTheme.BORDER);
-            c.round(x+8,25,(cell-16)*value.fraction,2,1,VelaTheme.DANGER);x+=cell;
-        }
+        long now=System.nanoTime()/1_000_000;float dt=lastHudDraw==0?0:Math.min(.1f,(now-lastHudDraw)/1000f);lastHudDraw=now;
+        var config=dev.sqwat.vela.VelaClient.services()==null?null:dev.sqwat.vela.VelaClient.services().configs().current();
+        boolean still=config!=null&&(config.reducedMotion||!config.animations);
+        long age=now-hudStarted;
+        float in=still?1:Math.clamp(age/240f,0,1),pop=still?1:1+(float)(Math.sin(in*Math.PI)*.06);
+        float a=still?1:Math.min(smooth(age/180f),smooth((HUD_DURATION-age)/380f));
+        float pulse=still?0:Math.clamp(1-(now-hudPulse)/650f,0,1);
+        g.pose().pushMatrix();
+        g.pose().translate(width/2f,16+(1-smooth(in))*-6);g.pose().scale(.94f+.06f*smooth(in)*pop);g.pose().translate(-width/2f,-16);
+        try{
+            float worst=0;for(var value:hudValues)worst=Math.max(worst,value.severity);
+            int tone=VelaTheme.mix(WARN,VelaTheme.DANGER,worst);
+            c.round(0,0,width,32,7,alpha(VelaTheme.SURFACE,a));
+            c.round(0,0,width,32,7,alpha(tone,a*(.05f+.18f*pulse)));
+            c.border(0,0,width,32,7,alpha(VelaTheme.mix(VelaTheme.BORDER,tone,.35f+.65f*pulse),a));
+            if(pulse>0){float grow=(1-pulse)*5;c.border(-grow,-grow,width+grow*2,32+grow*2,7+grow,alpha(tone,a*pulse*.7f));}
+            int x=0,index=0;
+            for(var value:hudValues){
+                int cell=valueWidth(value);int color=VelaTheme.mix(WARN,VelaTheme.DANGER,value.severity);
+                float[] bar=bars.computeIfAbsent(value.icon+index,k->new float[]{value.fraction,value.fraction,0});
+                if(value.fraction<bar[0]-.001f)bar[2]=now;
+                bar[0]+=(value.fraction-bar[0])*(still?1:1-(float)Math.exp(-14*dt));
+                if(bar[1]<bar[0]||still)bar[1]=bar[0];
+                else if(now-bar[2]>350)bar[1]+=(bar[0]-bar[1])*(1-(float)Math.exp(-4*dt));
+                // Heartbeat once the value is in the lower half of its warning range.
+                float beat=still||value.severity<.5f?0:(float)Math.pow(Math.max(0,Math.sin(now/1000.0*Math.PI*2*(1+value.severity))),6)*value.severity;
+                float bounce=1+.18f*pulse+.12f*beat;
+                g.pose().pushMatrix();g.pose().translate(x+14.5f,13.5f);g.pose().scale(bounce);g.pose().translate(-(x+14.5f),-13.5f);
+                if(value.item.isEmpty())c.image(value.icon,x+8,7,13,alpha(color,a));else if(a>.5f)g.item(value.item,x+6,5);
+                g.pose().popMatrix();
+                c.text(value.value,x+27,9,9,alpha(VelaTheme.mix(VelaTheme.TEXT,color,.35f*beat+.25f*pulse),a),UiCanvas.Weight.MEDIUM);
+                float track=cell-16;
+                c.round(x+8,25,track,2,1,alpha(VelaTheme.BORDER,a));
+                if(bar[1]>bar[0])c.round(x+8,25,track*bar[1],2,1,alpha(0xFFFFFFFF,a*.45f));
+                c.round(x+8,25,track*bar[0],2,1,alpha(color,a));
+                x+=cell;index++;
+            }
+        }finally{g.pose().popMatrix();}
     }
     public static boolean alive(long elapsed){return elapsed>=0&&elapsed<DURATION;}
     public static float reveal(long elapsed){float t=Math.clamp(Math.min(elapsed/150f,(DURATION-elapsed)/150f),0,1);return t*t*(3-2*t);}

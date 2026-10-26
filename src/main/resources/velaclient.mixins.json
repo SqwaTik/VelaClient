@@ -111,6 +111,7 @@
     "screen.AutoReconnectMixin",
     "screen.ChatTweaksMixin",
     "hud.ChatKeepMixin",
+    "hud.TabPingMixin",
     "screen.ContainerSearchMixin",
     "screen.ContainerScreenAccessor",
     "screen.WastedHoldScreenMixin"

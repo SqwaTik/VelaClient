@@ -79,6 +79,8 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.utility.ChatTweaks());
         modules.register(new dev.sqwat.vela.module.utility.ContainerTools());
         modules.register(new dev.sqwat.vela.module.utility.Death());
+        modules.register(new dev.sqwat.vela.module.utility.FoodInfo());
+        modules.register(new dev.sqwat.vela.module.visual.TabPing());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());
         modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
@@ -89,6 +91,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(far);
         modules.register(new dev.sqwat.vela.module.visual.ItemPhysics());
         modules.register(new FoundationModule("coordinates", "Coordinates", "Ваше положение в мире", ModuleCategory.HUD)
+            .add(new BooleanSetting("other_dimension","Другое измерение","Координаты портала в Незере или обычном мире",false))
             .add(new ChoiceSetting("format", "Формат", "Вид записи координат", "XYZ", List.of("XYZ", "Compact"))));
         modules.register(new FoundationModule("armor", "Armor HUD", "Отображение прочности брони", ModuleCategory.HUD));
         modules.register(new FoundationModule("watermark","Watermark","Логотип, FPS, скорость, пинг, тики, время и онлайн",ModuleCategory.HUD)

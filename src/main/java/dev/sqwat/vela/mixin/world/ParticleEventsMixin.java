@@ -21,6 +21,10 @@ abstract class ParticleEventsMixin {
     @Inject(method="handleEntityEvent",at=@At("TAIL"))
     private void vela$totem(ClientboundEntityEventPacket packet,CallbackInfo ci){
         var level=Minecraft.getInstance().level;
-        if(level!=null&&packet.getEventId()==35)Particles.emit(packet.getEntity(level),Particles.Event.TOTEM);
+        if(level!=null&&packet.getEventId()==35){
+            var entity=packet.getEntity(level);
+            Particles.emit(entity,Particles.Event.TOTEM);
+            dev.sqwat.vela.module.utility.TalTracker.popped(entity);
+        }
     }
 }

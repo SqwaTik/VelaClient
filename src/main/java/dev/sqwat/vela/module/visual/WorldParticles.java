@@ -23,7 +23,7 @@ public final class WorldParticles extends ClientModule {
     private final NumberSetting count=setting(new NumberSetting("count","Количество","Максимум частиц вокруг игрока",48,8,128,8));
     private final NumberSetting radius=setting(new NumberSetting("radius","Радиус","Радиус появления в блоках",12,4,24,1));
     private final NumberSetting size=setting(new NumberSetting("size","Размер","Размер фоновых частиц",.2,.1,.5,.05));
-    private final ChoiceSetting shape=setting(new ChoiceSetting("shape","Форма","Вид фоновых частиц","Звезда",List.of("Все","Точка","Звезда","Снежинка")));
+    private final ChoiceSetting shape=setting(new ChoiceSetting("shape","Форма","Вид фоновых частиц","Звезда",List.of("Все","Точка","Звезда","Снежинка","Светлячки")));
     private final BooleanSetting theme=setting(new BooleanSetting("client_color","Цвет клиента","Использовать цвет темы",true));
     private final ColorSetting color=setting(new ColorSetting("color","Цвет",0x91ACFF));
     private final WorldParticleField field=new WorldParticleField();
@@ -57,12 +57,24 @@ public final class WorldParticles extends ClientModule {
         if(!enabled()||mc.level==null||world!=mc.level||field.particles().isEmpty()||!HudVisibility.allowed(mc))return;
         if(sprites==null)sprites=new WorldSprite(true);else sprites.begin();
         long now=System.nanoTime();int rgb=theme.value()?VelaTheme.PRIMARY:color.value();
-        int chosen=switch(shape.value()){case "Точка"->0;case "Звезда"->1;case "Снежинка"->9;default->-1;};
+        boolean fireflies=shape.value().equals("Светлячки");
+        int chosen=switch(shape.value()){case "Точка","Светлячки"->0;case "Звезда"->1;case "Снежинка"->9;default->-1;};
+        // Fireflies: warm glow blended with the theme colour, each blinking on its own phase, with a soft halo.
+        int glow=fireflies?VelaTheme.mix(0xFFFFE27A,0xFF000000|rgb,theme.value()?.35f:.75f)&0xFFFFFF:rgb;
+        float base=size.value().floatValue(),seconds=(now%600_000_000_000L)/1e9f;
         for(var p:field.particles()){
             if(!p.visible)continue;
             double alpha=p.opacity(now);if(alpha<=0)continue;
             int index=chosen<0?p.shape:chosen;
-            sprites.drawRegion(g,ATLAS,128,128,p.position(now),size.value().floatValue(),p.phase,NeonGeometry.tint(rgb,alpha*.85),ParticleAtlas.u(index),ParticleAtlas.v(index),ParticleAtlas.u1(index),ParticleAtlas.v1(index));
+            var position=p.position(now);
+            if(fireflies){
+                float wave=(float)Math.sin(seconds*(1.6f+p.phase*.25f)+p.phase*7);
+                float blink=.2f+.8f*Math.max(0,wave)*Math.max(0,wave);
+                sprites.drawRegion(g,ATLAS,128,128,position,base*2.6f,0,NeonGeometry.tint(glow,alpha*blink*.22),ParticleAtlas.u(index),ParticleAtlas.v(index),ParticleAtlas.u1(index),ParticleAtlas.v1(index));
+                sprites.drawRegion(g,ATLAS,128,128,position,base*(.7f+.3f*blink),0,NeonGeometry.tint(glow,alpha*blink),ParticleAtlas.u(index),ParticleAtlas.v(index),ParticleAtlas.u1(index),ParticleAtlas.v1(index));
+                continue;
+            }
+            sprites.drawRegion(g,ATLAS,128,128,position,base,p.phase,NeonGeometry.tint(rgb,alpha*.85),ParticleAtlas.u(index),ParticleAtlas.v(index),ParticleAtlas.u1(index),ParticleAtlas.v1(index));
         }
         sprites.flush(g);
     }

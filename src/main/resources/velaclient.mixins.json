@@ -103,7 +103,8 @@
     "entity.OccludedModelMixin",
     "camera.FreelookMouseMixin",
     "camera.FreelookCameraMixin",
-    "screen.WastedDeathScreenMixin"
+    "screen.WastedDeathScreenMixin",
+    "resource.ProfiledReloadMixin"
   ],
   "injectors": {
     "defaultRequire": 1

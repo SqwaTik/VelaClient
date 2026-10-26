@@ -20,6 +20,7 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
     @Shadow private float currentProgress;
     @Unique private final dev.sqwat.vela.ui.animation.LoadingProgress vela$progress=new dev.sqwat.vela.ui.animation.LoadingProgress();
     @Unique private long vela$lastFrame;
+    @Unique private long vela$fadeFrom=-1;
     @Unique private boolean vela$departing;
     @Unique private final String vela$farewell=new String[]{"До встречи!","Заходите ещё","Удачной игры!"}[java.util.concurrent.ThreadLocalRandom.current().nextInt(3)];
     @Unique private final dev.sqwat.vela.render.resource.ReloadWorldBinding vela$worldBinding=new dev.sqwat.vela.render.resource.ReloadWorldBinding();
@@ -47,12 +48,14 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
     @Inject(method="extractRenderState",at=@At("HEAD"),cancellable=true)
     private void vela$loading(GuiGraphicsExtractor g,int mx,int my,float delta,CallbackInfo ci){
         ci.cancel();long now=Util.getMillis();if(fadeIn&&fadeInStart==-1L)fadeInStart=now;
-        float out=fadeOutStart<0?-1:(now-fadeOutStart)/90f;
-        float in=fadeInStart<0?1:Motion.clamp01((now-fadeInStart)/500f);
+        long frame=System.nanoTime();float seconds=vela$lastFrame==0?0:(frame-vela$lastFrame)/1_000_000_000f;vela$lastFrame=frame;
+        currentProgress=vela$progress.update(reload.getActualProgress(),fadeOutStart>=0,seconds);
+        // Let the bar visibly reach 100% and rest briefly before fading; capped so a stalled frame never holds the overlay.
+        if(fadeOutStart>=0&&vela$fadeFrom<0&&(vela$progress.finished()||now-fadeOutStart>600))vela$fadeFrom=now+(vela$progress.finished()?120:0);
+        float out=vela$fadeFrom<0||now<vela$fadeFrom?-1:(now-vela$fadeFrom)/90f;
+        if(fadeOutStart>=0&&out<0)out=0; // "ready" state while holding at 100%
         g.nextStratum();
         float alpha=out>=1?1-Motion.clamp01(out-1):1;
-        long frame=System.nanoTime();float seconds=vela$lastFrame==0?0:(frame-vela$lastFrame)/1_000_000_000f;vela$lastFrame=frame;
-        currentProgress=vela$progress.update(reload.getActualProgress(),out>=0,seconds);
         if(out>=2){minecraft.gui.setOverlay(null);return;}
         if(vela$compact()){
             if(minecraft.gui.screen()!=null)minecraft.gui.screen().extractRenderStateWithTooltipAndSubtitles(g,mx,my,delta);

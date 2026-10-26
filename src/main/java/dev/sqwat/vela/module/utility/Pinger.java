@@ -30,31 +30,46 @@ public final class Pinger extends ClientModule {
         armorPercent.visibleWhen(armor::value);healthHp.visibleWhen(health::value);
     }
 
-    @Override protected void onDisable(){warningUntil=0;dev.sqwat.vela.ui.Notifications.clearHud();}
-    public static boolean shouldWarn(double current,double threshold){return Double.isFinite(current)&&current>=0&&current<=threshold;}
+    /** Per armour slot: the stack last warned about and the percent at that warning (MAX: not warned). */
+    private final ItemStack[] warnedStack=new ItemStack[4];
+    private final int[] warnedPercent={Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+    private float warnedHp=Float.MAX_VALUE;
+    private boolean showing;
+    static final int ARMOR_STEP=5;
+    static final float HEALTH_STEP=2;
 
+    @Override protected void onDisable(){warningUntil=0;reset();if(showing){dev.sqwat.vela.ui.Notifications.clearHud();showing=false;}}
+    private void reset(){java.util.Arrays.fill(warnedStack,null);java.util.Arrays.fill(warnedPercent,Integer.MAX_VALUE);warnedHp=Float.MAX_VALUE;}
+    public static boolean shouldWarn(double current,double threshold){return Double.isFinite(current)&&current>=0&&current<=threshold;}
+    /** A new warning is due when nothing was warned yet ({@code lastWarned} = NaN) or the value fell another {@code step}. */
+    public static boolean due(double current,double lastWarned,double step){return Double.isNaN(lastWarned)||current<=lastWarned-step;}
+
+    /**
+     * Shows a warning only when something changed: a piece newly below the threshold, a further drop of 5%
+     * (2 HP for health), or a different piece equipped. Otherwise the notification and the red edge expire on their
+     * own; repairing or removing the item resets it. Previously it was re-shown every tick and never disappeared.
+     */
     @Override public void onClientTick(){
         var player=Minecraft.getInstance().player;
         if(player==null||player.isSpectator()||!player.isAlive()){onDisable();return;}
         var crossed=new java.util.ArrayList<dev.sqwat.vela.ui.Notifications.HudValue>();
-        if(armor.value()){
-            for(var slot:ARMOR){
-                ItemStack stack=player.getItemBySlot(slot);
-                if(stack.isEmpty()||!stack.isDamageableItem())continue;
-                int percent=Math.max(0,Math.round(100f*(stack.getMaxDamage()-stack.getDamageValue())/stack.getMaxDamage()));
-                if(shouldWarn(percent,armorPercent.value())){
-                    crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("armor",stack,percent+"%",percent/100f));
-                }
-            }
+        boolean fresh=false;
+        for(int i=0;i<ARMOR.length;i++){
+            ItemStack stack=player.getItemBySlot(ARMOR[i]);
+            if(!armor.value()||stack.isEmpty()||!stack.isDamageableItem()){warnedStack[i]=null;warnedPercent[i]=Integer.MAX_VALUE;continue;}
+            if(stack!=warnedStack[i]){warnedStack[i]=stack;warnedPercent[i]=Integer.MAX_VALUE;}
+            int percent=Math.max(0,Math.round(100f*(stack.getMaxDamage()-stack.getDamageValue())/stack.getMaxDamage()));
+            if(!shouldWarn(percent,armorPercent.value())){warnedPercent[i]=Integer.MAX_VALUE;continue;}
+            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("armor",stack,percent+"%",percent/100f));
+            if(due(percent,warnedPercent[i]==Integer.MAX_VALUE?Double.NaN:warnedPercent[i],ARMOR_STEP)){warnedPercent[i]=percent;fresh=true;}
         }
-        if(health.value()){
-            float hp=player.getHealth();
-            if(shouldWarn(hp,healthHp.value())){
-                crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("heart",ItemStack.EMPTY,formatHp(hp)+" HP",hp/Math.max(1,player.getMaxHealth())));
-            }
-        }
-        if(!crossed.isEmpty()){dev.sqwat.vela.ui.Notifications.showHudValues(crossed);warningUntil=System.nanoTime()+3_500_000_000L;}
-        else{warningUntil=0;dev.sqwat.vela.ui.Notifications.clearHud();}
+        float hp=player.getHealth();
+        if(health.value()&&shouldWarn(hp,healthHp.value())){
+            crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("heart",ItemStack.EMPTY,formatHp(hp)+" HP",hp/Math.max(1,player.getMaxHealth())));
+            if(due(hp,warnedHp==Float.MAX_VALUE?Double.NaN:warnedHp,HEALTH_STEP)){warnedHp=hp;fresh=true;}
+        }else warnedHp=Float.MAX_VALUE;
+        if(fresh){dev.sqwat.vela.ui.Notifications.showHudValues(crossed);showing=true;warningUntil=System.nanoTime()+3_500_000_000L;}
+        else if(crossed.isEmpty()&&showing){warningUntil=0;dev.sqwat.vela.ui.Notifications.clearHud();showing=false;}
     }
 
     private static String label(EquipmentSlot slot){return switch(slot){case HEAD->"Шлем";case CHEST->"Нагрудник";case LEGS->"Поножи";case FEET->"Ботинки";default->"Броня";};}

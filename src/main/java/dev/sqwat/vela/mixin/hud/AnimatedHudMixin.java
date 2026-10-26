@@ -22,13 +22,20 @@ abstract class AnimatedHudMixin {
     @WrapOperation(method="extractItemHotbar",at=@At(value="INVOKE",target="Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
     private void vela$slot(GuiGraphicsExtractor g,com.mojang.blaze3d.pipeline.RenderPipeline pipeline,net.minecraft.resources.Identifier sprite,int x,int y,int width,int height,Operation<Void> original){
         var player=net.minecraft.client.Minecraft.getInstance().player;
-        if(!sprite.getPath().equals("hud/hotbar_selection")||player==null){original.call(g,pipeline,sprite,x,y,width,height);return;}
+        var custom=dev.sqwat.vela.module.visual.CustomHotbar.current();
+        if(!sprite.getPath().equals("hud/hotbar_selection")||player==null){
+            if(custom==null||!custom.draw(g,sprite.getPath(),x,y,width,height))original.call(g,pipeline,sprite,x,y,width,height);
+            return;
+        }
         int selected=player.getInventory().getSelectedSlot();long now=System.nanoTime();
         if(!Animations.active("hotbar")||vela$slotPlayer!=player||now-vela$lastSlot>250_000_000){vela$slot=selected;vela$slotClock.reset();}
         vela$slotPlayer=player;vela$lastSlot=now;
         vela$slot=Motion.approach(vela$slot,selected,22,vela$slotClock.step());
         if(Math.abs(vela$slot-selected)<.001f)vela$slot=selected;
-        g.pose().pushMatrix();try{g.pose().translate((vela$slot-selected)*20,0);original.call(g,pipeline,sprite,x,y,width,height);}finally{g.pose().popMatrix();}
+        g.pose().pushMatrix();try{
+            g.pose().translate((vela$slot-selected)*20,0);
+            if(custom==null||!custom.draw(g,sprite.getPath(),x,y,width,height))original.call(g,pipeline,sprite,x,y,width,height);
+        }finally{g.pose().popMatrix();}
     }
     @Inject(method="extractTabList",at=@At("HEAD"))
     private void vela$tabTick(GuiGraphicsExtractor g,DeltaTracker delta,CallbackInfo ci){

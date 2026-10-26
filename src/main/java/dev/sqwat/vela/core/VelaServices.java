@@ -77,8 +77,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.utility.TalTracker());
         modules.register(new dev.sqwat.vela.module.visual.BrewViewer());
         modules.register(new dev.sqwat.vela.module.utility.AutoReconnect());
-        modules.register(new dev.sqwat.vela.module.utility.ChatTimestamps());
-        modules.register(new dev.sqwat.vela.module.utility.ChatStack());
+        modules.register(new dev.sqwat.vela.module.utility.ChatTweaks());
         modules.register(new dev.sqwat.vela.module.utility.ContainerSearch());
         modules.register(new dev.sqwat.vela.module.utility.DeathCoords());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());

@@ -37,6 +37,7 @@ public final class VelaClient implements ClientModInitializer {
             if(accept!=null)accept.message(message.getString(),overlay);
         });
         dev.sqwat.vela.cosmetics.LocalAppearanceService.initialize();
+        dev.sqwat.vela.ui.screen.ContainerSearchBox.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.command.LocalCommands.send(message,services));
         services.zakoOptimization().require(()->!FabricLoader.getInstance().isModLoaded("zakoopt"));

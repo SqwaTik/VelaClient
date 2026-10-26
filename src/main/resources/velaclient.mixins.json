@@ -109,8 +109,9 @@
     "world.EntitySoundMuteMixin",
     "screen.WastedDeathScreenStyleMixin",
     "screen.AutoReconnectMixin",
-    "screen.ChatTimestampMixin",
+    "screen.ChatTweaksMixin",
     "screen.ContainerSearchMixin",
+    "screen.ContainerScreenAccessor",
     "screen.WastedHoldScreenMixin"
   ],
   "injectors": {

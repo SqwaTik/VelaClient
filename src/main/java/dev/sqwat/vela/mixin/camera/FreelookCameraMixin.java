@@ -12,10 +12,15 @@ import org.spongepowered.asm.mixin.injection.At;
 abstract class FreelookCameraMixin {
     @WrapOperation(method="alignWithEntity",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/Entity;getViewYRot(F)F"))
     private float vela$yaw(Entity entity,float partial,Operation<Float> original){
-        return Freelook.active()&&entity==Minecraft.getInstance().player?Freelook.yaw():original.call(entity,partial);
+        if(entity!=Minecraft.getInstance().player)return original.call(entity,partial);
+        float orbit=dev.sqwat.vela.module.visual.Wasted.orbitYaw();
+        if(!Float.isNaN(orbit))return orbit;
+        return Freelook.active()?Freelook.yaw():original.call(entity,partial);
     }
     @WrapOperation(method="alignWithEntity",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/Entity;getViewXRot(F)F"))
     private float vela$pitch(Entity entity,float partial,Operation<Float> original){
-        return Freelook.active()&&entity==Minecraft.getInstance().player?Freelook.pitch():original.call(entity,partial);
+        if(entity!=Minecraft.getInstance().player)return original.call(entity,partial);
+        if(!Float.isNaN(dev.sqwat.vela.module.visual.Wasted.orbitYaw()))return dev.sqwat.vela.module.visual.Wasted.orbitPitch();
+        return Freelook.active()?Freelook.pitch():original.call(entity,partial);
     }
 }

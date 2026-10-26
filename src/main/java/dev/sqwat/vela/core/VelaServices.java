@@ -71,6 +71,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.utility.CrystalOptimizer());
         modules.register(new dev.sqwat.vela.module.utility.AspectRatio());
         modules.register(new dev.sqwat.vela.module.utility.Freelook());
+        modules.register(new dev.sqwat.vela.module.visual.Wasted());
         modules.register(new dev.sqwat.vela.module.utility.DeathCoords());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());
         modules.register(new dev.sqwat.vela.module.utility.AutoRespawn());
@@ -112,6 +113,7 @@ public final class VelaServices implements AutoCloseable {
         var strokesCps=new BooleanSetting("cps","CPS","Клики в секунду под кнопками мыши",true);
         var strokesMouse=new BooleanSetting("mouse","Кнопки мыши","Левая и правая кнопки",true);
         strokesCps.visibleWhen(strokesMouse::value);
+        modules.register(new FoundationModule("module_list","Array List","Список включённых функций",ModuleCategory.HUD));
         modules.register(new FoundationModule("keystrokes","Key Strokes","Нажатия клавиш движения и кликов",ModuleCategory.HUD)
             .add(strokesMouse).add(strokesCps).add(new BooleanSetting("space","Пробел","Клавиша прыжка",true)));
         for(ClientModule module:modules.all())if(module.category()==ModuleCategory.HUD)

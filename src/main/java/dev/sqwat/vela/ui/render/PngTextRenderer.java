@@ -80,20 +80,26 @@ final class PngTextRenderer {
     }
     private static void drawRaw(GuiGraphicsExtractor g,String text,float x,float y,int color,VelaDraw.Weight weight,float em){
         if(text.isEmpty()||(color>>>24)==0)return;
+        if(text.indexOf('\n')>=0){for(String line:text.split("\n",-1)){draw(g,line,x,y,color,weight,em);y+=em*1.4f;}return;}
+        var placed=layout(g,text,x,y,weight,em);
+        var texture=net.minecraft.client.Minecraft.getInstance().getTextureManager().getTexture(placed.texture);
+        g.guiRenderState.addGuiElement(new PngTextRenderState(g.pose(),placed.layout.quads,
+                net.minecraft.client.gui.render.TextureSetup.singleTexture(texture.getTextureView(),texture.getSampler()),color,g.scissorStack.peek(),placed.layout.bounds));
+    }
+    /** Cached single-line glyph quads (x0,y0,x1,y1,u0,v0,u1,v1 in pose space) and the atlas they sample. */
+    record Placed(Identifier texture,Layout layout){}
+    static Placed layout(GuiGraphicsExtractor g,String text,float x,float y,VelaDraw.Weight weight,float em){
         float density=VelaDraw.pixelDensity(g);int size=closest(em*density);var atlas=atlas(weight,size);var metrics=atlas.metrics;
         int gameScale=net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale();
         float offsetX=g.pose().m20()*gameScale,offsetY=g.pose().m21()*gameScale;
         float scale=em/size;
-        if(text.indexOf('\n')>=0){for(String line:text.split("\n",-1)){draw(g,line,x,y,color,weight,em);y+=em*1.4f;}return;}
         // Snap baseline to physical pixels; keep horizontal advances fractional for kerning.
-        float baseline=VelaDraw.subpixelText()?y*density+size*.82f:Math.round(y*density+offsetY+size*.82f)-offsetY;
         boolean subpixel=VelaDraw.subpixelText();
+        float baseline=subpixel?y*density+size*.82f:Math.round(y*density+offsetY+size*.82f)-offsetY;
         var key=new LayoutKey(text,weight,em,x,y,density,offsetX,offsetY,subpixel);
         Layout cached=LAYOUTS.get(key);
         if(cached==null){cached=layout(metrics,text,x,density,offsetX,scale,baseline);LAYOUTS.put(key,cached);}
-        var texture=net.minecraft.client.Minecraft.getInstance().getTextureManager().getTexture(atlas.texture);
-        g.guiRenderState.addGuiElement(new PngTextRenderState(g.pose(),cached.quads,
-                net.minecraft.client.gui.render.TextureSetup.singleTexture(texture.getTextureView(),texture.getSampler()),color,g.scissorStack.peek(),cached.bounds));
+        return new Placed(atlas.texture,cached);
     }
     /** Every input of the glyph layout. Static HUD labels repeat the same key each frame; moving text simply misses. */
     private record LayoutKey(String text,VelaDraw.Weight weight,float em,float x,float y,float density,float offsetX,float offsetY,boolean subpixel){}

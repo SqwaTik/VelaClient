@@ -64,33 +64,41 @@ final class ModuleListHud {
      * @param rightSide the box centre is on the right half of the screen
      * @param background panel colour (already includes the transparency animation)
      */
+    private final dev.sqwat.vela.ui.render.QuadBatch batch=new dev.sqwat.vela.ui.render.QuadBatch();
+
+    /**
+     * Whole list as two GUI elements (pills+bars, then text) instead of three per row: with dozens of modules the
+     * per-element cost of vanilla's GUI sort and overlap tests dominated the HUD.
+     */
     void draw(GuiGraphicsExtractor g,boolean rightSide,int background,boolean editing){
         int box=width();
+        batch.begin(g);
         if(rows.isEmpty()){
             // HUD editor: show where the list goes even when nothing is enabled.
-            if(editing)pill(g,"Array List",textWidthOf("Array List"),0,rightSide,box,1,background,0);
-            return;
+            if(editing)pill("Array List",textWidthOf("Array List"),0,rightSide,box,1,background,0);
+        }else{
+            float y=0;int index=0;
+            for(var row:rows){
+                if(row.reveal<.01f)continue;
+                pill(row.module.name(),row.width,y,rightSide,box,row.reveal,background,index);
+                y+=(ROW+GAP)*row.reveal;index++;
+            }
         }
-        float y=0;int index=0;
-        for(var row:rows){
-            if(row.reveal<.01f)continue;
-            pill(g,row.module.name(),row.width,y,rightSide,box,row.reveal,background,index);
-            y+=(ROW+GAP)*row.reveal;index++;
-        }
+        batch.flush();
     }
     private static int textWidthOf(String text){return (int)Math.ceil(VelaDraw.textWidth(text,VelaDraw.Weight.MEDIUM,TEXT));}
-    private static void pill(GuiGraphicsExtractor g,String name,int textWidth,float y,boolean rightSide,int box,float reveal,int background,int index){
+    private void pill(String name,int textWidth,float y,boolean rightSide,int box,float reveal,int background,int index){
         int alpha=Math.round(255*reveal);
         int pill=textWidth+PAD_X*2+BAR;
         float slide=(1-reveal)*(pill*.6f);
         float x=rightSide?box-pill+slide:-slide;
         int bg=(Math.round(((background>>>24)&255)*reveal)<<24)|(background&0xFFFFFF);
-        VelaDraw.roundedRect(g,Math.round(x),Math.round(y),pill,ROW,4,bg);
+        batch.roundedRect(Math.round(x),Math.round(y),pill,ROW,4,bg);
         // Subtle accent fade down the list, from the client colour towards white.
         int accent=VelaTheme.mix(VelaTheme.PRIMARY,0xFFFFFFFF,Math.min(.35f,index*.035f));
         int barX=Math.round(rightSide?x+pill-BAR-1:x+1);
-        VelaDraw.roundedRect(g,barX,Math.round(y+3),BAR,ROW-6,1,(alpha<<24)|(accent&0xFFFFFF));
+        batch.roundedRect(barX,Math.round(y+3),BAR,ROW-6,1,(alpha<<24)|(accent&0xFFFFFF));
         float textX=rightSide?x+PAD_X:x+PAD_X+BAR;
-        VelaDraw.text(g,name,textX,y+(ROW-TEXT)/2f-.5f,(alpha<<24)|(VelaTheme.TEXT&0xFFFFFF),VelaDraw.Weight.MEDIUM,TEXT);
+        batch.text(name,textX,y+(ROW-TEXT)/2f-.5f,(alpha<<24)|(VelaTheme.TEXT&0xFFFFFF),VelaDraw.Weight.MEDIUM,TEXT);
     }
 }

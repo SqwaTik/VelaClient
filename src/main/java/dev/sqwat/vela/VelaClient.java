@@ -48,7 +48,10 @@ public final class VelaClient implements ClientModInitializer {
             "key.velaclient.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, category
         ));
         // Under the HUD cache this layer only runs on refresh frames: panels go into the cached texture, effects stay live.
-        HudElementRegistry.addLast(id("hud"),(g,delta)->{if(dev.sqwat.vela.zako.hud.HudCache.active())services.hudLayout().extractPanels(g,delta);else services.hudLayout().extractRenderState(g,delta);});
+        HudElementRegistry.addLast(id("hud"),(g,delta)->{
+            if(!dev.sqwat.vela.zako.hud.HudCache.active())services.hudLayout().extractRenderState(g,delta);
+            else if(services.zakoOptimization().cachedPanels())services.hudLayout().extractPanels(g,delta);
+        });
         HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.render.shader.TemporalBlur.draw(g);});
         HudElementRegistry.addLast(id("markers"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());});
         HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active()&&Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
@@ -104,7 +107,10 @@ public final class VelaClient implements ClientModInitializer {
     public static VelaServices services() { return services; }
     /** Every frame while the HUD cache is active, below the cached HUD. */
     public static void extractLiveEffects(net.minecraft.client.gui.GuiGraphicsExtractor g,net.minecraft.client.DeltaTracker delta){
-        if(services!=null)services.hudLayout().extractEffects(g,delta);
+        if(services==null)return;
+        // Diagnostics: with cached panels off, the whole Vela HUD is drawn live every frame as before.
+        if(services.zakoOptimization().cachedPanels())services.hudLayout().extractEffects(g,delta);
+        else services.hudLayout().extractRenderState(g,delta);
     }
     public static void extractLiveHud(net.minecraft.client.gui.GuiGraphicsExtractor g,net.minecraft.client.DeltaTracker delta){
         if(services==null)return;

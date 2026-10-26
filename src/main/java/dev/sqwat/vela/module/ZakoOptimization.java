@@ -17,7 +17,7 @@ public final class ZakoOptimization {
         availability=Objects.requireNonNull(condition);
         if(!available())dev.sqwat.vela.zako.IntegrationRuntime.requestReset();
     }
-    private final ChoiceSetting page=setting(new ChoiceSetting("page","Раздел","Группа настроек оптимизации","Рендер",List.of("Рендер","Сущности","Спавнеры","Блоки","Частицы","Интерфейс","Память")));
+    private final ChoiceSetting page=setting(new ChoiceSetting("page","Раздел","Группа настроек оптимизации","Рендер",List.of("Рендер","Сущности","Спавнеры","Блоки","Частицы","Интерфейс","Память","Диагностика")));
     private final ZakoOptConfig.Values values=new ZakoOptConfig.Values();
     private final List<Runnable> bindings=new ArrayList<>();
     // Features are shared; switching service instances must publish again.
@@ -27,7 +27,13 @@ public final class ZakoOptimization {
     private final Map<String,Setting<?>> options=new LinkedHashMap<>();
     public final BooleanSetting entityLod,playerLod,singleCopy,spawnerCull,particleLight,particlePhysics,blockCull,textureBuffer;
     public final NumberSetting entityDistance,spawnerDistance;
-    private final BooleanSetting occludePlayers,occludeHanging,occludeHolograms,occludeMobs;
+    private final BooleanSetting occludePlayers,occludeHanging,occludeHolograms,occludeMobs,cachedPanels,textCache;
+    /** Switches for A/B checks in one session: each turns one recent rendering change back to the previous behaviour. */
+    private BooleanSetting diagnostic(String id,String name,String description){
+        var toggle=setting(new BooleanSetting(id,name,description,true));toggle.visibleWhen(()->page.value().equals("Диагностика"));return toggle;
+    }
+    public boolean cachedPanels(){return cachedPanels.value();}
+    public boolean textCache(){return textCache.value();}
     private BooleanSetting occlusion(String id,String name,String description){
         var toggle=setting(new BooleanSetting(id,name,description,true));toggle.visibleWhen(()->page.value().equals("Сущности"));return toggle;
     }
@@ -56,6 +62,8 @@ public final class ZakoOptimization {
         textureBuffer.visibleWhen(()->page.value().equals("Рендер")&&!dev.sqwat.vela.zako.MixinPlugin.VULKAN);
         bindings.add(()->values.textureBuffer=textureBuffer.value());
         occludePlayers=occlusion("occlusion_players","Игроки за стенами","Не рисовать модели, броню и предметы игроков за блоками. Ники остаются");
+        cachedPanels=diagnostic("diag_cached_panels","Панели HUD в кэше","Рисовать панели Vela в кэш HUD (частота монитора). Выключите, чтобы сравнить FPS с прежним способом");
+        textCache=diagnostic("diag_text_cache","Кэш раскладки текста","Повторно использовать раскладку неподвижного текста. Выключите, чтобы сравнить FPS");
         occludeHanging=occlusion("occlusion_hanging","Картины и рамки за стенами","Не рисовать картины, рамки и карты за блоками");
         occludeHolograms=occlusion("occlusion_holograms","Голограммы за стенами","Не рисовать текстовые дисплеи и стойки за блоками. Дисплеи «сквозь стены» остаются");
         occludeMobs=occlusion("occlusion_mobs","Мобы за стенами","Не рисовать мобов без имени за блоками");

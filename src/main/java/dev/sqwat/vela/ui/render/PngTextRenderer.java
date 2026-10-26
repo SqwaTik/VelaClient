@@ -97,6 +97,8 @@ final class PngTextRenderer {
         boolean subpixel=VelaDraw.subpixelText();
         float baseline=subpixel?y*density+size*.82f:Math.round(y*density+offsetY+size*.82f)-offsetY;
         var key=new LayoutKey(text,weight,em,x,y,density,offsetX,offsetY,subpixel);
+        var services=dev.sqwat.vela.VelaClient.services();
+        if(services!=null&&!services.zakoOptimization().textCache())return new Placed(atlas.texture,layout(metrics,text,x,density,offsetX,scale,baseline));
         Layout cached=LAYOUTS.get(key);
         if(cached==null){cached=layout(metrics,text,x,density,offsetX,scale,baseline);LAYOUTS.put(key,cached);}
         return new Placed(atlas.texture,cached);

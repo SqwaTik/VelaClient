@@ -41,7 +41,7 @@ public final class HudLayoutService {
     }
     private java.util.List<ClientModule> shownHotkeys=java.util.List.of();
     private final KeyStrokesHud keyStrokes=new KeyStrokesHud();
-    private final ModuleListHud moduleList=new ModuleListHud();
+    private ModuleListHud moduleList;
     private boolean keyFlag(String setting){return flag("keystrokes",setting);}
     private int hotkeyCount(){int count=0;for(var m:modules.all())if(m.enabled()&&m.boundKey()>=0&&m.available())count++;return count;}
     private net.minecraft.world.entity.LivingEntity target;
@@ -115,6 +115,7 @@ public final class HudLayoutService {
 
     public HudLayoutService(Path root, ModuleRegistry modules) {
         this.modules = modules;
+        this.moduleList = new ModuleListHud(modules);
         store=new JsonFileStore<>(root.resolve("hud.vela"),dev.sqwat.vela.config.HudConfig.class,dev.sqwat.vela.config.HudConfig::new);
         boolean migrate=!java.nio.file.Files.exists(root.resolve("hud.vela"));
         hudConfig=store.load();
@@ -211,7 +212,16 @@ public final class HudLayoutService {
 
     public synchronized void setEditing(boolean editing) { this.editing = editing; }
 
+    /** Uncached path: everything in one pass, effects below panels. */
     public void extractRenderState(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
+        extractEffects(g,deltaTracker);
+        extractPanels(g,deltaTracker);
+    }
+    /**
+     * World-anchored and camera-dependent drawing (rings, bubbles, particles, trajectories, near arrows, death effect).
+     * Runs every frame, also while the HUD cache is active, so it never lags the camera.
+     */
+    public void extractEffects(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
         if (editing) return;
         Minecraft client = Minecraft.getInstance();
         if(!HudVisibility.allowed(client)){hudMotion.clear();return;}
@@ -240,6 +250,18 @@ public final class HudLayoutService {
                 canvas.fill(i*band,0,band,g.guiHeight(),tint);canvas.fill(g.guiWidth()-(i+1)*band,0,band,g.guiHeight(),tint);
             }
         }
+        if(nearArrows()&&modules.byId("near") instanceof ClientModule near&&near.enabled()&&near.available())
+            drawNearArrows(g,client,deltaTracker.getGameTimeDeltaPartialTick(false));
+    }
+    /**
+     * Screen-anchored panels. With the HUD cache active this runs only on cache refresh frames (monitor rate), which is
+     * all the display can show; panel animations use wall-clock time, so their speed does not depend on the rate.
+     */
+    public void extractPanels(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
+        if (editing) return;
+        Minecraft client = Minecraft.getInstance();
+        if(!HudVisibility.allowed(client)){hudMotion.clear();return;}
+        viewport(client.getWindow().getGuiScale());
         if(Notifications.hudVisible()&&client.gui.overlay()==null){
             HudPosition pos=position("notifications",g.guiWidth(),g.guiHeight());
             drawChip(g,client,"notifications",pos.x(),pos.y());
@@ -251,10 +273,7 @@ public final class HudLayoutService {
         for (ClientModule module : modules.all()) {
             String id=module.id();
             if(module.category()!=dev.sqwat.vela.module.ModuleCategory.HUD||VANILLA_IDS.contains(id))continue;
-            if(id.equals("near")&&nearArrows()){
-                if(module.enabled()&&module.available())drawNearArrows(g,client,deltaTracker.getGameTimeDeltaPartialTick(false));
-                continue;
-            }
+            if(id.equals("near")&&nearArrows())continue; // drawn live by extractEffects
             boolean visible=module.enabled()&&module.available()&&contentVisible(client,id);
             if(hudMotion.skipHidden(id,visible))continue;
             var size=bounds(client,id);
@@ -391,8 +410,9 @@ public final class HudLayoutService {
                 return;
             }
             if(id.equals("module_list")){
-                drawPanel(g,id,moduleList.width(),moduleList.height(),panel);
-                moduleList.draw(g);
+                // Rows carry their own pill backgrounds; the side follows where the box sits on screen.
+                boolean rightSide=x+moduleList.width()*scale/2f>g.guiWidth()/2f;
+                moduleList.draw(g,rightSide,panel,editing);
                 return;
             }
             if(id.equals("keystrokes")){

@@ -40,6 +40,8 @@ public class GameRendererHudMixin {
 			HudInvoker hud = (HudInvoker) minecraft.gui.hud;
 			hud.zakoopt$extractCameraOverlays(graphics, deltaTracker);
 			hud.zakoopt$extractCrosshair(graphics, deltaTracker);
+			// Vela: world-anchored effects stay live and below the cached panels.
+			dev.sqwat.vela.VelaClient.extractLiveEffects(graphics, deltaTracker);
 			HudCache.extractComposite(graphics, ((GameRenderer) (Object) this).gameRenderState().guiRenderState);
 			dev.sqwat.vela.VelaClient.extractLiveHud(graphics, deltaTracker);
 			HudCache.additionalPass = false;

@@ -1,9 +1,9 @@
 package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.module.Shaders;
-import dev.sqwat.vela.render.CustomSkyProgram;
-import dev.sqwat.vela.render.CustomSkySource;
+import dev.sqwat.vela.module.visual.Shaders;
+import dev.sqwat.vela.render.shader.CustomSkyProgram;
+import dev.sqwat.vela.render.shader.CustomSkySource;
 import dev.sqwat.vela.ui.render.*;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.MultiLineEditBox;

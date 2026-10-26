@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.ui.input.TextEdit;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class TextEditTest {

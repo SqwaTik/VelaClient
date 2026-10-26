@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.Far;
+import dev.sqwat.vela.module.utility.Far;
 import dev.sqwat.vela.module.setting.NumberSetting;
-import dev.sqwat.vela.render.FrameSamples;
+import dev.sqwat.vela.render.perf.FrameSamples;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class FarAndPerformanceTest {

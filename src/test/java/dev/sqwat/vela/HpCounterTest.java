@@ -1,11 +1,11 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.HpCounter;
+import dev.sqwat.vela.module.visual.HpCounter;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class HpCounterTest {
     @Test void loginHealthHookDoesNotRequireAssignedEntityId()throws Exception{
-        try(var in=getClass().getResourceAsStream("/dev/sqwat/vela/module/HpCounter.class")){
+        try(var in=getClass().getResourceAsStream("/dev/sqwat/vela/module/visual/HpCounter.class")){
             var node=new org.objectweb.asm.tree.ClassNode();
             new org.objectweb.asm.ClassReader(in).accept(node,0);
             var method=node.methods.stream().filter(m->m.name.equals("current")).findFirst().orElseThrow();

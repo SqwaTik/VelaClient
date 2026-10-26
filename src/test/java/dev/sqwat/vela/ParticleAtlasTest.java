@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.ParticleAtlas;
+import dev.sqwat.vela.render.effect.ParticleAtlas;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

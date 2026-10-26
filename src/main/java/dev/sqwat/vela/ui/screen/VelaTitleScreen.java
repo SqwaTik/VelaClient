@@ -60,7 +60,7 @@ public final class VelaTitleScreen extends VelaScreen {
             float h=buttonHover[i];
             if(i==2){
                 VelaDraw.roundedRect(g,rect.x(),rect.y(),rect.width(),rect.height(),8,dev.sqwat.vela.ui.render.AccountChrome.selection(false,h));
-                dev.sqwat.vela.ui.PlayerAvatars.draw(g,minecraft.getUser().getName(),rect.x()+6,rect.y()+4,22);
+                dev.sqwat.vela.ui.hud.PlayerAvatars.draw(g,minecraft.getUser().getName(),rect.x()+6,rect.y()+4,22);
                 VelaDraw.text(g,VelaDraw.ellipsize(minecraft.getUser().getName(),73,VelaDraw.Weight.MEDIUM,9),rect.x()+33,rect.y()+10,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,9);
                 float accountReveal=minecraft.gui.screen() instanceof VelaAccountScreen account?account.revealProgress():0;
                 g.pose().pushMatrix();g.pose().translate(rect.x()+116,rect.y()+15);

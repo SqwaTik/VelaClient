@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.sqwat.vela.module.SwingAnimations;
+import dev.sqwat.vela.module.visual.SwingAnimations;
 import dev.sqwat.vela.module.setting.*;
 import org.joml.Matrix4f;
 import org.junit.jupiter.api.Test;

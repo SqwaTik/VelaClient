@@ -1,6 +1,6 @@
 package dev.sqwat.vela.config;
 
-import dev.sqwat.vela.ui.HudLayoutService.HudPosition;
+import dev.sqwat.vela.ui.hud.HudLayoutService.HudPosition;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

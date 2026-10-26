@@ -3,7 +3,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class VisualEffectsTest {
     @Test void killEffectExposesModeAndDuration(){
-        var effect=new dev.sqwat.vela.module.KillEffect();
+        var effect=new dev.sqwat.vela.module.visual.KillEffect();
         assertEquals(2,effect.settings().size());
         var mode=(dev.sqwat.vela.module.setting.ChoiceSetting)effect.settings().getFirst();
         assertEquals(java.util.List.of("Луч","Растворение"),mode.options());
@@ -14,16 +14,16 @@ class VisualEffectsTest {
         duration.set(10d);assertEquals(5_000_000_000L,effect.lifetimeNanos());
     }
     @Test void dashTrailOffersParticlesAndContinuousModes(){
-        var trail=new dev.sqwat.vela.module.DashTrail();
+        var trail=new dev.sqwat.vela.module.visual.DashTrail();
         var mode=(dev.sqwat.vela.module.setting.ChoiceSetting)trail.settings().stream().filter(s->s.id().equals("mode")).findFirst().orElseThrow();
         assertEquals(java.util.List.of("Частицы","Лента","Спираль"),mode.options());
         assertEquals("Частицы",mode.value());
     }
     @Test void killEffectHasBoundedLifetime(){
-        assertEquals(0,dev.sqwat.vela.module.KillEffect.opacity(-.1));
-        assertTrue(dev.sqwat.vela.module.KillEffect.opacity(.15)>.5);
-        assertEquals(0,dev.sqwat.vela.module.KillEffect.opacity(1));
-        assertEquals(0,dev.sqwat.vela.module.KillEffect.opacity(2));
+        assertEquals(0,dev.sqwat.vela.module.visual.KillEffect.opacity(-.1));
+        assertTrue(dev.sqwat.vela.module.visual.KillEffect.opacity(.15)>.5);
+        assertEquals(0,dev.sqwat.vela.module.visual.KillEffect.opacity(1));
+        assertEquals(0,dev.sqwat.vela.module.visual.KillEffect.opacity(2));
     }
     @Test void spriteTexturesAreReadableAndComplete()throws Exception{
         for(int i=1;i<=21;i++)try(var in=getClass().getResourceAsStream("/assets/velaclient/textures/effects/dashcubics/dashcubic"+i+".png")){

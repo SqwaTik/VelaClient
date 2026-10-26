@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.HudLayoutService;
+import dev.sqwat.vela.ui.hud.HudLayoutService;
 import dev.sqwat.vela.ui.render.Rect;
 import dev.sqwat.vela.module.ModuleRegistry;
 import org.junit.jupiter.api.Test;

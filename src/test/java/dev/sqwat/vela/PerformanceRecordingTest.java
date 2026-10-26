@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.PerformanceRecording;
+import dev.sqwat.vela.render.perf.PerformanceRecording;
 import jdk.jfr.FlightRecorder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

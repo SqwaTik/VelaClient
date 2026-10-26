@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.TeleportAcceptPolicy;
+import dev.sqwat.vela.module.utility.TeleportAcceptPolicy;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

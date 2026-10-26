@@ -1,6 +1,6 @@
 package dev.sqwat.vela.ui.screen;
 
-import dev.sqwat.vela.ui.HudLayoutService;
+import dev.sqwat.vela.ui.hud.HudLayoutService;
 import dev.sqwat.vela.ui.render.Rect;
 import dev.sqwat.vela.ui.render.VelaDraw;
 import dev.sqwat.vela.ui.render.VelaTheme;
@@ -102,21 +102,21 @@ public final class HudPositionScreen extends Screen {
 
         if(transparencyTarget!=null){
             var options=layout.contextSettings(transparencyTarget);
-            for(ElementHit hit:elements)if(hit.id.equals(transparencyTarget))transparencyMenu=dev.sqwat.vela.ui.HudGeometry.context(hit.rect,width,height,transparencyTarget.equals("target")?176:108,34+options.size()*24);
+            for(ElementHit hit:elements)if(hit.id.equals(transparencyTarget))transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height,transparencyTarget.equals("target")?176:108,34+options.size()*24);
             g.nextStratum();
             dev.sqwat.vela.ui.render.UiClip.enable(g,transparencyMenu.x()-1,transparencyMenu.y()-1,transparencyMenu.x()+transparencyMenu.width()+1,transparencyMenu.y()+Math.round(transparencyMenu.height()*contextReveal)+1);
-            g.pose().pushMatrix();g.pose().translate(transparencyMenu.x(),transparencyMenu.y()-3*(1-contextReveal));g.pose().scale(dev.sqwat.vela.ui.HudGeometry.CONTEXT_SCALE);
+            g.pose().pushMatrix();g.pose().translate(transparencyMenu.x(),transparencyMenu.y()-3*(1-contextReveal));g.pose().scale(dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE);
             int px=0,py=0,pw=transparencyMenu.width();
             VelaDraw.roundedOutline(g,px,py,pw,transparencyMenu.height(),7,VelaTheme.BORDER,VelaTheme.WINDOW);
             dev.sqwat.vela.ui.render.VelaIcons.draw(g,"settings",px+8,py+8,10,VelaTheme.PRIMARY);
             VelaDraw.text(g,VelaDraw.ellipsize(layout.functionName(transparencyTarget),pw-32,VelaDraw.Weight.MEDIUM,8),px+24,py+9,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
             VelaDraw.roundedRect(g,px+7,py+24,pw-14,1,0,VelaTheme.BORDER);
-            float factor=dev.sqwat.vela.ui.HudGeometry.CONTEXT_SCALE;
+            float factor=dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE;
             for(int i=0;i<options.size();i++){
                 var option=options.get(i);int rowY=30+i*24;
                 VelaDraw.roundedRect(g,5,rowY,pw-10,22,4,VelaTheme.SURFACE);
                 VelaDraw.text(g,option.id().equals("transparent")?"Прозрачность":option.name(),10,rowY+7,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);
-                VelaDraw.toggle(g,"hud-context-"+transparencyTarget+"-"+option.id(),pw-29,rowY+5,option.value(),dev.sqwat.vela.ui.HudGeometry.toggleHit(pw-29,rowY+5).contains((mouseX-transparencyMenu.x())/factor,(mouseY-transparencyMenu.y())/factor));
+                VelaDraw.toggle(g,"hud-context-"+transparencyTarget+"-"+option.id(),pw-29,rowY+5,option.value(),dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(pw-29,rowY+5).contains((mouseX-transparencyMenu.x())/factor,(mouseY-transparencyMenu.y())/factor));
             }
             g.pose().popMatrix();
             g.disableScissor();
@@ -149,7 +149,7 @@ public final class HudPositionScreen extends Screen {
                 if(!hit.id.equals(transparencyTarget))contextReveal=0;
                 transparencyTarget=hit.id;
                 dragging=null;resizing=null;
-                transparencyMenu=dev.sqwat.vela.ui.HudGeometry.context(hit.rect,width,height);
+                transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height);
                 return true;
             }
             transparencyTarget=null;
@@ -157,7 +157,7 @@ public final class HudPositionScreen extends Screen {
         }
         if(transparencyTarget!=null){
             if(event.button()==0&&transparencyMenu.contains(event.x(),event.y())){
-                float factor=dev.sqwat.vela.ui.HudGeometry.CONTEXT_SCALE;
+                float factor=dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE;
                 var options=layout.contextSettings(transparencyTarget);
                 for(int i=0;i<options.size();i++)if(contextReveal>.95f&&new Rect(5,30+i*24,transparencyMenu.width()-10,22).contains((event.x()-transparencyMenu.x())/factor,(event.y()-transparencyMenu.y())/factor)){layout.toggleContextSetting(transparencyTarget,options.get(i).id());break;}
                 return true;
@@ -202,15 +202,15 @@ public final class HudPositionScreen extends Screen {
         guides.add(new Rect(width/2,height/2,0,0));guides.add(new Rect(width/2-91,height-22,182,22));
         for(ElementHit other:elements)if(!other.id.equals(dragging))guides.add(other.rect);
         for(Rect guide:guides){
-            int candidateX=dev.sqwat.vela.ui.HudSnap.align(rawX,size.width(),guide.x(),guide.x()+guide.width());
-            int candidateY=dev.sqwat.vela.ui.HudSnap.align(rawY,size.height(),guide.y(),guide.y()+guide.height());
+            int candidateX=dev.sqwat.vela.ui.hud.HudSnap.align(rawX,size.width(),guide.x(),guide.x()+guide.width());
+            int candidateY=dev.sqwat.vela.ui.hud.HudSnap.align(rawY,size.height(),guide.y(),guide.y()+guide.height());
             int dx=Math.abs(candidateX-rawX),dy=Math.abs(candidateY-rawY);
             if(candidateX!=rawX&&dx<bestX){bestX=dx;x=candidateX;}
             if(candidateY!=rawY&&dy<bestY){bestY=dy;y=candidateY;}
         }
-        int hotbarY=dev.sqwat.vela.ui.HudSnap.align(rawY,size.height(),height-22,height);
+        int hotbarY=dev.sqwat.vela.ui.hud.HudSnap.align(rawY,size.height(),height-22,height);
         if(hotbarY!=rawY)y=hotbarY;
-        int hotbarX=dev.sqwat.vela.ui.HudSnap.align(rawX,size.width(),width/2-91,width/2+91);
+        int hotbarX=dev.sqwat.vela.ui.hud.HudSnap.align(rawX,size.width(),width/2-91,width/2+91);
         if(hotbarX!=rawX)x=hotbarX;
         var origin=layout.nativeOrigin(dragging);
         if(origin!=null){

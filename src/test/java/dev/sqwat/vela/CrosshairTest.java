@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.Crosshair;
+import dev.sqwat.vela.module.visual.Crosshair;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class CrosshairTest {

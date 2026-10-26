@@ -3,8 +3,8 @@ package dev.sqwat.vela.ui.screen;
 import dev.sqwat.vela.account.IasIntegration;
 import dev.sqwat.vela.account.SessionIdentity;
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.ui.GameTextInput;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.ui.input.GameTextInput;
+import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.animation.FrameClock;
 import dev.sqwat.vela.ui.animation.Motion;
 import dev.sqwat.vela.ui.render.*;
@@ -108,7 +108,7 @@ public final class VelaAccountScreen extends VelaScreen {
                 AccountChrome.drawProfile(c,l,profile.name(),profile.uuid().toString(),profile.microsoft(),active(profile),
                     controls.animate("account-profile-login",l.profileLogin().contains(mx,my)?1:0));
                 var avatar=l.profileAvatar();
-                dev.sqwat.vela.ui.PlayerAvatars.draw(g,profile.name(),avatar.x(),avatar.y(),avatar.width());
+                dev.sqwat.vela.ui.hud.PlayerAvatars.draw(g,profile.name(),avatar.x(),avatar.y(),avatar.width());
                 if(profile.uuid().equals(loginPending))ProgressSpinner.draw(c,l.profileLogin().x()+l.profileLogin().width()-18,l.profileLogin().y()+16,6,System.nanoTime());
                 g.pose().popMatrix();
             }
@@ -149,7 +149,7 @@ public final class VelaAccountScreen extends VelaScreen {
                     controls.animate("account-hover-" + id, hovered ? 1 : 0),
                     controls.animate("account-login-" + id, hovered && row.login().contains(mx, my) ? 1 : 0),
                     controls.animate("account-delete-" + id, hovered && row.delete().contains(mx, my) ? 1 : 0));
-                dev.sqwat.vela.ui.PlayerAvatars.draw(g, account.name(), row.avatar().x(), row.avatar().y(), row.avatar().width());
+                dev.sqwat.vela.ui.hud.PlayerAvatars.draw(g, account.name(), row.avatar().x(), row.avatar().y(), row.avatar().width());
                 if(!searchEdit.text().isBlank())SearchText.highlight(g,AccountChrome.fit(c,account.name(),row.name().width(),9,UiCanvas.Weight.MEDIUM),searchEdit.text().strip(),row.name().x(),row.name().y(),VelaDraw.Weight.MEDIUM,9);
                 if (account.uuid().equals(loginPending)) {
                     if(l.side()==0)c.round(row.login().x(), row.login().y(), row.login().width(), row.login().height(), 6, VelaTheme.SURFACE);

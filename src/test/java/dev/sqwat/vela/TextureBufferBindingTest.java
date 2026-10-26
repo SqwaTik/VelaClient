@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.TextureBufferBinding;
+import dev.sqwat.vela.render.perf.TextureBufferBinding;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class TextureBufferBindingTest {

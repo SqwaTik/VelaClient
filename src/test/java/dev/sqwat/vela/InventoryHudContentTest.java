@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.InventoryHudContent;
+import dev.sqwat.vela.ui.hud.InventoryHudContent;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class InventoryHudContentTest {

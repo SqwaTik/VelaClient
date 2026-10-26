@@ -31,12 +31,12 @@ import java.util.Map;
 
 public final class VelaDashboardScreen extends VelaScreen {
     private dev.sqwat.vela.module.setting.TextSetting editingText;
-    private final dev.sqwat.vela.ui.TextEdit settingTextEdit=new dev.sqwat.vela.ui.TextEdit();
+    private final dev.sqwat.vela.ui.input.TextEdit settingTextEdit=new dev.sqwat.vela.ui.input.TextEdit();
     private final java.util.Map<dev.sqwat.vela.module.setting.TextSetting,Rect> textSettingHits=new java.util.HashMap<>();
     private void finishTextSetting(){
         if(editingText==null)return;
         editingText.set(settingTextEdit.text());editingText=null;
-        dev.sqwat.vela.module.StreamerMode.refresh();services.configs().requestSave();
+        dev.sqwat.vela.module.utility.StreamerMode.refresh();services.configs().requestSave();
     }
     private final VelaServices services;
     private dev.sqwat.vela.module.setting.KeySetting capturingSetting;
@@ -63,7 +63,7 @@ public final class VelaDashboardScreen extends VelaScreen {
     public boolean isModuleSettingsOpen(String id){return expandedModules.contains(id)&&cardHits.stream().anyMatch(hit->hit.module().id().equals(id));}
     private String search = "";
     private boolean searchFocused;
-    private final dev.sqwat.vela.ui.TextEdit searchEdit=new dev.sqwat.vela.ui.TextEdit(),keyEdit=new dev.sqwat.vela.ui.TextEdit();
+    private final dev.sqwat.vela.ui.input.TextEdit searchEdit=new dev.sqwat.vela.ui.input.TextEdit(),keyEdit=new dev.sqwat.vela.ui.input.TextEdit();
     private float scroll;
     private float targetScroll;
     private float scrollLimit;
@@ -226,7 +226,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             Rect card = new Rect(Math.round(p[0]),Math.round(p[1]-scroll),columnWidth,cardHeight);
             if (card.y() + card.height() >= content.y() && card.y() <= content.y() + content.height()) {
                 drawModuleCard(g, module, card, mouseX, mouseY, dt, expanded);
-                cardHits.add(new CardHit(module, card, new Rect(dev.sqwat.vela.ui.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty()), card.y() + 13, 20, 18)));
+                cardHits.add(new CardHit(module, card, new Rect(dev.sqwat.vela.ui.hud.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty()), card.y() + 13, 20, 18)));
             }
             y[column] += cardHeight + gap;
         }
@@ -262,12 +262,12 @@ public final class VelaDashboardScreen extends VelaScreen {
         VelaDraw.roundedRect(g,card.x(),card.y(),card.width(),card.height(),7,
             VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h));
         dev.sqwat.vela.ui.render.UiClip.enable(g,card.x()+2,card.y()+2,card.x()+card.width()-2,card.y()+card.height()-2);
-        int toggleX=dev.sqwat.vela.ui.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty());
+        int toggleX=dev.sqwat.vela.ui.hud.HudGeometry.toggleX(card.x(),card.width(),!visibleSettings(module).isEmpty());
         Rect favorite=new Rect(toggleX-18,card.y()+14,15,16);
         favoriteHits.put(favorite,module.id());
         controls.favorite(g,"module-favorite-"+module.id(),new Rect(favorite.x()+3,favorite.y()+3,9,9),services.configs().current().favorites.contains(module.id()),favorite.contains(mouseX,mouseY));
         int labelX=card.x()+8,labelWidth=toggleX-card.x()-41;
-        String key=(services.configs().current().alwaysShowBinds||hovered&&!expanded)&&module.boundKey()>=0?dev.sqwat.vela.ui.KeyLabels.of(module.boundKey(),module.keybind()):"";
+        String key=(services.configs().current().alwaysShowBinds||hovered&&!expanded)&&module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):"";
         float keyWidth=key.isEmpty()?0:VelaDraw.textWidth(key,VelaDraw.Weight.REGULAR,7)+6;
         String title=VelaDraw.ellipsize(module.name(),labelWidth-keyWidth,VelaDraw.Weight.MEDIUM);
         dev.sqwat.vela.ui.render.SearchText.draw(g,title,search,labelX,card.y()+8,module.enabled()?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,28f/3);
@@ -279,7 +279,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             VelaDraw.text(g,remaining.substring(0,split),labelX,card.y()+21,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
             VelaDraw.text(g,remaining.substring(split).strip(),labelX,card.y()+31,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
         }else VelaDraw.text(g,remaining,labelX,card.y()+23,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
-        if(module.available())VelaDraw.toggle(g,toggleX,card.y()+16,controls.animate("toggle-"+module.id(),module.enabled()?1:0),dev.sqwat.vela.ui.HudGeometry.toggleHit(toggleX,card.y()+16).contains(mouseX,mouseY));
+        if(module.available())VelaDraw.toggle(g,toggleX,card.y()+16,controls.animate("toggle-"+module.id(),module.enabled()?1:0),dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(toggleX,card.y()+16).contains(mouseX,mouseY));
         else{
             Rect blocked=new Rect(toggleX,card.y()+12,24,20);
             VelaDraw.roundedOutline(g,blocked.x()+5,blocked.y()+4,12,12,6,VelaTheme.TEXT_MUTED,0);
@@ -323,7 +323,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             if(!(setting instanceof dev.sqwat.vela.module.setting.ActionSetting))dev.sqwat.vela.ui.render.VelaIcons.draw(g,dev.sqwat.vela.ui.render.SettingIcons.of(setting),x,cursor-1,10,VelaTheme.TEXT_MUTED);
             if(setting instanceof dev.sqwat.vela.module.setting.KeySetting key){
                 VelaDraw.text(g,key.name(),x+15,cursor,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
-                Rect hit=new Rect(x+width-70,cursor-4,70,18);controls.button(g,"key-setting-"+module.id()+key.id(),hit,capturingSetting==key?"Нажмите…":dev.sqwat.vela.ui.KeyLabels.of(key.value(),"None"),hit.contains(pointerX,pointerY));
+                Rect hit=new Rect(x+width-70,cursor-4,70,18);controls.button(g,"key-setting-"+module.id()+key.id(),hit,capturingSetting==key?"Нажмите…":dev.sqwat.vela.ui.input.KeyLabels.of(key.value(),"None"),hit.contains(pointerX,pointerY));
                 if(setting.visible()&&reveal>.97f)settingHits.add(new SettingHit(key,hit));g.pose().popMatrix();cursor+=Math.round(rowHeight*reveal);continue;
             }
             if(setting instanceof dev.sqwat.vela.module.setting.ActionSetting action){
@@ -334,7 +334,7 @@ public final class VelaDashboardScreen extends VelaScreen {
                 VelaDraw.text(g,text.name(),x+15,cursor,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
                 Rect field=new Rect(x,cursor+14,width,23),inner=new Rect(x+7,cursor+19,width-14,14);
                 VelaDraw.roundedRect(g,field.x(),field.y(),field.width(),field.height(),5,VelaTheme.SURFACE_DEEP);
-                var edit=editingText==text?settingTextEdit:new dev.sqwat.vela.ui.TextEdit();
+                var edit=editingText==text?settingTextEdit:new dev.sqwat.vela.ui.input.TextEdit();
                 if(editingText!=text)edit.set(text.value());
                 dev.sqwat.vela.ui.render.TextFieldDraw.draw(g,edit,inner,editingText==text,"Псевдоним");
                 textSettingHits.put(text,inner);
@@ -432,13 +432,13 @@ public final class VelaDashboardScreen extends VelaScreen {
             var r=new Rect(x+3,y+3+Math.round((index-suggestionVisualOffset)*24),w-9,24);String name=suggestions.get(index);
             float h=controls.animate("suggestion-"+name,r.contains(pointerX,pointerY)||index==suggestionSelection?1:0);
             VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),4,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h));
-            dev.sqwat.vela.ui.PlayerAvatars.draw(g,name,r.x()+4,r.y()+4,16);
+            dev.sqwat.vela.ui.hud.PlayerAvatars.draw(g,name,r.x()+4,r.y()+4,16);
             VelaDraw.text(g,VelaDraw.ellipsize(suggestionLabels.getOrDefault(name,name),w-38,VelaDraw.Weight.REGULAR,8),r.x()+25,r.y()+8,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);if(r.y()>=y+3&&r.y()+24<=y+3+count*24)suggestionHits.put(r,name);
         }
         g.disableScissor();
         if(suggestions.size()>count){int track=count*24,thumb=Math.max(12,track*count/suggestions.size());int sy=y+3+Math.round((track-thumb)*suggestionVisualOffset/(suggestions.size()-count));VelaDraw.roundedRect(g,x+w-5,sy,2,thumb,1,VelaTheme.PRIMARY);}
     }
-    private final dev.sqwat.vela.ui.TextEdit friendEdit=new dev.sqwat.vela.ui.TextEdit();
+    private final dev.sqwat.vela.ui.input.TextEdit friendEdit=new dev.sqwat.vela.ui.input.TextEdit();
     private boolean friendFocused,friendSettings;
     private final BooleanGroup friendEffects=new BooleanGroup("friend-effects","Визуалы",List.of(
         new BooleanSetting("china_hat","ChinaHat","",true),new BooleanSetting("dash_trail","DashTrail","",true),new BooleanSetting("jump_circle","JumpCircle","",true)),false);
@@ -471,7 +471,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             if(!rowIntersects(card,top,bottom))continue;
             float h=animate("friend-"+friend.id(),card.contains(pointerX,pointerY),frameDt);
             VelaDraw.roundedOutline(g,card.x(),card.y(),cw,40,7,VelaTheme.BORDER,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h));
-            dev.sqwat.vela.ui.PlayerAvatars.draw(g,friend.name(),card.x()+8,card.y()+9,22);
+            dev.sqwat.vela.ui.hud.PlayerAvatars.draw(g,friend.name(),card.x()+8,card.y()+9,22);
             boolean online=minecraft.getConnection()!=null&&minecraft.getConnection().getOnlinePlayers().stream().anyMatch(info->info.getProfile().name().equalsIgnoreCase(friend.name()));
             dev.sqwat.vela.ui.render.SearchText.draw(g,VelaDraw.ellipsize(friend.name(),cw-83,VelaDraw.Weight.MEDIUM,9),search,card.x()+37,card.y()+9,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,9);
             VelaDraw.text(g,online?"В сети":"Не в сети",card.x()+37,card.y()+24,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
@@ -486,7 +486,7 @@ public final class VelaDashboardScreen extends VelaScreen {
     
     private String configKey="",configName="",renameSource;
     private boolean configNameFocused;
-    private final dev.sqwat.vela.ui.TextEdit nameEdit=new dev.sqwat.vela.ui.TextEdit();
+    private final dev.sqwat.vela.ui.input.TextEdit nameEdit=new dev.sqwat.vela.ui.input.TextEdit();
     private Rect configNameHit=new Rect(0,0,0,0);
     private boolean configKeyFocused;
     private Rect configKeyHit=new Rect(0,0,0,0),importHit=configKeyHit;
@@ -603,9 +603,9 @@ public final class VelaDashboardScreen extends VelaScreen {
             for(var hit:settingHits)if(hit.setting()==editingText&&hit.visible().contains(event.x(),event.y())){inside=true;break;}
             if(!inside)finishTextSetting();
         }
-        if(capturingSetting!=null){capturingSetting.set(dev.sqwat.vela.ui.BindInput.mouse(event.button()));capturingSetting=null;services.configs().requestSave();return true;}
+        if(capturingSetting!=null){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.mouse(event.button()));capturingSetting=null;services.configs().requestSave();return true;}
         if(section==VelaSection.MARKERS&&markerPanel.captureMouse(event.button()))return true;
-        if(binding!=null&&capturing){draftKey=dev.sqwat.vela.ui.BindInput.mouse(event.button());draftLabel=dev.sqwat.vela.ui.KeyLabels.of(draftKey,"");capturing=false;saveBind();return true;}
+        if(binding!=null&&capturing){draftKey=dev.sqwat.vela.ui.input.BindInput.mouse(event.button());draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,"");capturing=false;saveBind();return true;}
         double mx = event.x(), my = event.y();
         if(rgbPicker.open()){if(event.button()==0&&rgbPicker.click(mx,my))services.configs().requestSave();return true;}
         if(event.button()==0&&section==VelaSection.FRIENDS&&friendFocused){for(var hit:suggestionHits.entrySet())if(hit.getKey().contains(mx,my)){friendInput=hit.getValue();friendEdit.set(friendInput);suggestionHits.clear();return true;}}
@@ -621,7 +621,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         if (event.button()==GLFW.GLFW_MOUSE_BUTTON_MIDDLE && section.category()!=null && moduleContentHit.contains(mx,my)) {
             for(CardHit hit:cardHits) if(hit.card.contains(mx,my)) {
                 binding=hit.module; choice=null; contextModule=null;hover.put("bind-entrance",0f);
-                draftKey=binding.boundKey();draftLabel=dev.sqwat.vela.ui.KeyLabels.of(draftKey,binding.keybind());draftMode=binding.bindMode();capturing=true;
+                draftKey=binding.boundKey();draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,binding.keybind());draftMode=binding.bindMode();capturing=true;
                 searchFocused=false;return true;
             }
         }
@@ -684,13 +684,13 @@ public final class VelaDashboardScreen extends VelaScreen {
                 if (!hit.visible().contains(mx, my)) continue;
                 dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TOGGLE);
                 if(hit.setting() instanceof dev.sqwat.vela.module.setting.ActionSetting){
-                    if(services.modules().byId("shaders") instanceof dev.sqwat.vela.module.Shaders shaders&&shaders.settings().contains(hit.setting())){
+                    if(services.modules().byId("shaders") instanceof dev.sqwat.vela.module.visual.Shaders shaders&&shaders.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new ShaderEditorScreen(this,services,shaders));return true;
                     }
-                    if(services.modules().byId("view_model") instanceof dev.sqwat.vela.module.ViewModel model&&model.settings().contains(hit.setting())){
+                    if(services.modules().byId("view_model") instanceof dev.sqwat.vela.module.visual.ViewModel model&&model.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new ViewModelEditorScreen(this,services,model));return true;
                     }
-                    for(var module:services.modules().all())if(module instanceof dev.sqwat.vela.module.CommandModule commands&&module.settings().contains(hit.setting())){
+                    for(var module:services.modules().all())if(module instanceof dev.sqwat.vela.module.command.CommandModule commands&&module.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new CommandEditorScreen(this,services,commands.interval()));break;
                     }
                 }
@@ -770,9 +770,9 @@ public final class VelaDashboardScreen extends VelaScreen {
     public boolean keyPressed(KeyEvent event) {
         if(editingText!=null){
             if(event.key()==GLFW.GLFW_KEY_ENTER||event.key()==GLFW.GLFW_KEY_ESCAPE){finishTextSetting();return true;}
-            dev.sqwat.vela.ui.GameTextInput.key(settingTextEdit,event,24);return true;
+            dev.sqwat.vela.ui.input.GameTextInput.key(settingTextEdit,event,24);return true;
         }
-        if(capturingSetting!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){capturingSetting.set(dev.sqwat.vela.ui.BindInput.clears(event.key())?-1:event.key());services.configs().requestSave();}capturingSetting=null;return true;}
+        if(capturingSetting!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:event.key());services.configs().requestSave();}capturingSetting=null;return true;}
         if(rgbPicker.open()){if(event.key()==GLFW.GLFW_KEY_ESCAPE)rgbPicker.close();return true;}
         if(friendFocused&&section==VelaSection.FRIENDS&&!suggestions.isEmpty()){
             if(event.key()==GLFW.GLFW_KEY_DOWN||event.key()==GLFW.GLFW_KEY_UP){suggestionSelection=Math.clamp(suggestionSelection+(event.key()==GLFW.GLFW_KEY_DOWN?1:-1),0,suggestions.size()-1);suggestionOffset=Math.clamp(suggestionOffset,Math.max(0,suggestionSelection-4),suggestionSelection);return true;}
@@ -785,7 +785,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         if(configNameFocused&&event.key()==GLFW.GLFW_KEY_ESCAPE){configNameFocused=false;if(renameSource!=null){renameSource=null;configName="";}return true;}
         if(binding==null&&choice==null&&(searchFocused||configKeyFocused||configNameFocused||friendFocused)){
             var edit=friendFocused?friendEdit:searchFocused?searchEdit:configNameFocused?nameEdit:keyEdit;edit.set(friendFocused?friendInput:searchFocused?search:configNameFocused?configName:configKey);
-            boolean handled=dev.sqwat.vela.ui.GameTextInput.key(edit,event,friendFocused?16:searchFocused?256:configNameFocused?32:90000);
+            boolean handled=dev.sqwat.vela.ui.input.GameTextInput.key(edit,event,friendFocused?16:searchFocused?256:configNameFocused?32:90000);
             if(handled){if(friendFocused)friendInput=edit.text();else if(searchFocused)search=edit.text();else if(configNameFocused)configName=edit.text();else configKey=edit.text();return true;}
         }
         if(friendFocused){
@@ -809,7 +809,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         if(binding!=null){
             if(event.key()==GLFW.GLFW_KEY_ESCAPE){capturing=false;binding=null;return true;}
             if(event.key()==GLFW.GLFW_KEY_DELETE){draftKey=-1;draftLabel="None";saveBind();capturing=false;return true;}
-            if(capturing){draftKey=event.key();draftLabel=dev.sqwat.vela.ui.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(draftKey,0));capturing=false;saveBind();}
+            if(capturing){draftKey=event.key();draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(draftKey,0));capturing=false;saveBind();}
             return true;
         }
         if((event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0&&event.key()==services.configs().current().searchKey){searchFocused=true;return true;}
@@ -978,7 +978,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         int y=popupRect.y()+4;
         if(contextModule!=null){
             ClientModule module=contextModule;
-            popupRow(g,new Rect(popupRect.x()+4,y,popupRect.width()-8,23),"Назначить клавишу",mx,my,()->{binding=module;hover.put("bind-entrance",0f);draftKey=module.boundKey();draftLabel=dev.sqwat.vela.ui.KeyLabels.of(draftKey,module.keybind());draftMode=module.bindMode();capturing=false;contextModule=null;});
+            popupRow(g,new Rect(popupRect.x()+4,y,popupRect.width()-8,23),"Назначить клавишу",mx,my,()->{binding=module;hover.put("bind-entrance",0f);draftKey=module.boundKey();draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,module.keybind());draftMode=module.bindMode();capturing=false;contextModule=null;});
             popupRow(g,new Rect(popupRect.x()+4,y+23,popupRect.width()-8,23),"Режим: "+(module.bindMode()==ClientModule.BindMode.HOLD?"Hold":"Toggle"),mx,my,()->{module.bind(module.boundKey(),module.keybind(),module.bindMode()==ClientModule.BindMode.HOLD?ClientModule.BindMode.TOGGLE:ClientModule.BindMode.HOLD);services.configs().requestSave();contextModule=null;});
         }else {
             ChoiceSetting select=choice;

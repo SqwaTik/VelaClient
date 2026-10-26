@@ -1,4 +1,5 @@
 package dev.sqwat.vela.render;
+import dev.sqwat.vela.render.entity.LabelTextKey;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import org.junit.jupiter.api.Test;

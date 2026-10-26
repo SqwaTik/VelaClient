@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.ui.HudGeometry;
+import dev.sqwat.vela.ui.hud.HudGeometry;
 import dev.sqwat.vela.ui.render.Rect;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

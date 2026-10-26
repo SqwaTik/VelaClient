@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.Hitboxes;
+import dev.sqwat.vela.module.visual.Hitboxes;
 import dev.sqwat.vela.module.setting.BooleanSetting;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;

@@ -18,12 +18,12 @@ public final class MarkerRuntime {
         var s=service.state();
         if(nowDead&&!dead&&s.death){try{service.add("Место смерти",world(c),dimension(c),c.player.getX(),c.player.getY(),c.player.getZ(),VelaTheme.PRIMARY,"skull",true);}catch(IllegalArgumentException ignored){}}
         dead=nowDead;
-        boolean down=dev.sqwat.vela.ui.BindInput.down(c.getWindow().handle(),s.key);
+        boolean down=dev.sqwat.vela.ui.input.BindInput.down(c.getWindow().handle(),s.key);
         if(down&&!held&&s.enabled&&s.quick&&!dead&&c.gui.screen()==null&&c.isWindowActive()){var pos=c.player.pick(5,1,false).getLocation();try{service.add(service.nextName(world(c),dimension(c)),world(c),dimension(c),pos.x,pos.y,pos.z,VelaTheme.PRIMARY,"markers",false);}catch(IllegalArgumentException ignored){}}
         held=down;
     }
     public static void draw(GuiGraphicsExtractor g,MarkerService service){
-        var c=Minecraft.getInstance();if(c.player==null||c.level==null||!service.state().enabled||!dev.sqwat.vela.ui.HudVisibility.allowed(c))return;
+        var c=Minecraft.getInstance();if(c.player==null||c.level==null||!service.state().enabled||!dev.sqwat.vela.ui.hud.HudVisibility.allowed(c))return;
         g.pose().pushMatrix();g.pose().identity();
         try {
         var camera=c.gameRenderer.mainCamera();var origin=camera.position();

@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.HudSnap;
-import dev.sqwat.vela.module.TargetESP;
+import dev.sqwat.vela.ui.hud.HudSnap;
+import dev.sqwat.vela.module.visual.TargetESP;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class EditorSnapTest {

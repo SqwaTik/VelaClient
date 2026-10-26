@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.VertexPositions;
+import dev.sqwat.vela.render.perf.VertexPositions;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.joml.*;
 import org.junit.jupiter.api.Test;

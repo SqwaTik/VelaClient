@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.ui.PlayerDisplayLabel;
-import dev.sqwat.vela.ui.NearPlayers;
+import dev.sqwat.vela.ui.hud.PlayerDisplayLabel;
+import dev.sqwat.vela.ui.hud.NearPlayers;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

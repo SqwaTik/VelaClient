@@ -2,7 +2,7 @@ package dev.sqwat.vela.integration;
 
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.*;
-import dev.sqwat.vela.ui.HudTelemetry;
+import dev.sqwat.vela.ui.hud.HudTelemetry;
 
 /** Loaded by Simple Voice Chat only when that mod is present. */
 public final class VelaVoicePlugin implements VoicechatPlugin {

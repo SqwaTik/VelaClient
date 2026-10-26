@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.SelfTag;
+import dev.sqwat.vela.module.visual.SelfTag;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class SelfTagTest {

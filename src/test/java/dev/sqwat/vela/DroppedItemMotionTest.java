@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.DroppedItemMotion;
+import dev.sqwat.vela.render.entity.DroppedItemMotion;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class DroppedItemMotionTest {

@@ -1,6 +1,6 @@
 package dev.sqwat.vela.ui.render;
 
-import dev.sqwat.vela.module.ShulkerPreview;
+import dev.sqwat.vela.module.utility.ShulkerPreview;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;

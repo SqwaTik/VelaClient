@@ -1,8 +1,8 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.HandOriginGuide;
-import dev.sqwat.vela.render.NeonGeometry;
-import dev.sqwat.vela.render.TrailHistory;
+import dev.sqwat.vela.render.effect.HandOriginGuide;
+import dev.sqwat.vela.render.effect.NeonGeometry;
+import dev.sqwat.vela.render.effect.TrailHistory;
 import net.minecraft.gizmos.*;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -57,7 +57,7 @@ class VisualGeometryTest {
         assertFalse(pipeline.isCull());
     }
     @Test void newVisualsAreOptInAndHaveUniqueSettings(){
-        for(var module:java.util.List.of(new dev.sqwat.vela.module.ChinaHat(),new dev.sqwat.vela.module.DashTrail())){
+        for(var module:java.util.List.of(new dev.sqwat.vela.module.visual.ChinaHat(),new dev.sqwat.vela.module.visual.DashTrail())){
             assertFalse(module.enabled());assertEquals(dev.sqwat.vela.module.ModuleCategory.VISUALS,module.category());
             assertEquals(module.settings().size(),module.settings().stream().map(s->s.id()).distinct().count());
         }

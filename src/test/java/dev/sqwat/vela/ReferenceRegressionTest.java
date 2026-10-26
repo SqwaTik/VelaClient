@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.KeyLabels;
+import dev.sqwat.vela.ui.input.KeyLabels;
 import dev.sqwat.vela.ui.render.*;
-import dev.sqwat.vela.render.VisibilityBounds;
+import dev.sqwat.vela.render.entity.VisibilityBounds;
 import dev.sqwat.vela.config.ConfigService;
 import dev.sqwat.vela.module.ModuleRegistry;
 import org.junit.jupiter.api.Test;

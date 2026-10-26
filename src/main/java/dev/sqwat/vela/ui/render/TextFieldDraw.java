@@ -1,5 +1,5 @@
 package dev.sqwat.vela.ui.render;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.ui.input.TextEdit;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 public final class TextFieldDraw {
  private TextFieldDraw(){}

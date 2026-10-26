@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
 import dev.sqwat.vela.module.setting.*;
-import dev.sqwat.vela.ui.NearPresence;
+import dev.sqwat.vela.ui.hud.NearPresence;
 import dev.sqwat.vela.ui.render.ModuleSettingsGeometry;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UpdateControlsTest {
     @Test void legacyHeadTransformMatchesVanillaAndDoesNotMutateParent(){
         var parent=new org.joml.Matrix4f().translation(2,3,4);
-        var result=dev.sqwat.vela.render.LegacyHeadTransform.compose(parent);
+        var result=dev.sqwat.vela.render.entity.LegacyHeadTransform.compose(parent);
         var point=result.transformPosition(new org.joml.Vector3f(0,1,0));
         assertEquals(2.5f,point.x,1e-6);assertEquals(2f,point.y,1e-6);assertEquals(4.5f,point.z,1e-6);
         assertEquals(2f,parent.m30());assertEquals(3f,parent.m31());assertEquals(4f,parent.m32());

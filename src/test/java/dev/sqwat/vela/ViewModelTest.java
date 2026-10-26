@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.sqwat.vela.module.ViewModel;
+import dev.sqwat.vela.module.visual.ViewModel;
 import dev.sqwat.vela.module.setting.*;
 import net.minecraft.world.InteractionHand;
 import org.joml.Matrix4f;

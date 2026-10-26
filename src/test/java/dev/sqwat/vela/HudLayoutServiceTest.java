@@ -3,7 +3,7 @@ package dev.sqwat.vela;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
 import dev.sqwat.vela.module.ModuleRegistry;
-import dev.sqwat.vela.ui.HudLayoutService;
+import dev.sqwat.vela.ui.hud.HudLayoutService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

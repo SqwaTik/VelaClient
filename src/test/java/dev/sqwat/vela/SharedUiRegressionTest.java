@@ -1,4 +1,7 @@
 package dev.sqwat.vela;
+import dev.sqwat.vela.ui.hud.EffectLevels;
+import dev.sqwat.vela.ui.hud.HudLayoutService;
+import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.*;
 import dev.sqwat.vela.ui.animation.HudMotion;
 import dev.sqwat.vela.marker.MarkerService;

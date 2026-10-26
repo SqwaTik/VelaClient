@@ -1,5 +1,7 @@
 package dev.sqwat.vela;
 
+import dev.sqwat.vela.ui.hud.HudLayoutService;
+import dev.sqwat.vela.ui.hud.HudSnap;
 import dev.sqwat.vela.ui.*;
 import dev.sqwat.vela.ui.render.*;
 import dev.sqwat.vela.module.ModuleRegistry;

@@ -42,7 +42,7 @@ public final class VelaMicrosoftLoginScreen extends VelaScreen implements Create
     private boolean codeFocused,draggingCode;
     private volatile int generation;
     private Rect codeBounds=empty();
-    private final dev.sqwat.vela.ui.TextEdit codeSelection=new dev.sqwat.vela.ui.TextEdit();
+    private final dev.sqwat.vela.ui.input.TextEdit codeSelection=new dev.sqwat.vela.ui.input.TextEdit();
     public boolean resumable(){return !cancelled;}
     public void resume(){closing=false;transitionClock.reset();}
     public void cancelPending(){cancelled=true;suspended=false;authClose();}

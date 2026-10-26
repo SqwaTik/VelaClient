@@ -9,28 +9,28 @@ import dev.sqwat.vela.module.ModuleRegistry;
 import dev.sqwat.vela.module.setting.BooleanSetting;
 import dev.sqwat.vela.module.setting.ChoiceSetting;
 import dev.sqwat.vela.module.setting.NumberSetting;
-import dev.sqwat.vela.ui.HudLayoutService;
+import dev.sqwat.vela.ui.hud.HudLayoutService;
 
 import java.nio.file.Path;
 import java.util.List;
 
 public final class VelaServices implements AutoCloseable {
     private final ModuleRegistry modules = new ModuleRegistry();
-    private final dev.sqwat.vela.module.Far far = new dev.sqwat.vela.module.Far();
-    private final dev.sqwat.vela.module.RenderTweaks renderTweaks = new dev.sqwat.vela.module.RenderTweaks();
+    private final dev.sqwat.vela.module.utility.Far far = new dev.sqwat.vela.module.utility.Far();
+    private final dev.sqwat.vela.module.utility.RenderTweaks renderTweaks = new dev.sqwat.vela.module.utility.RenderTweaks();
     private final dev.sqwat.vela.module.ZakoOptimization zakoOptimization = new dev.sqwat.vela.module.ZakoOptimization();
     private final FriendService friends;
     private final AccountService accounts;
     private final ConfigService configs;
     private final HudLayoutService hudLayout;
     private final dev.sqwat.vela.marker.MarkerService markers;
-    private final dev.sqwat.vela.module.CommandEntries commands;
-    public dev.sqwat.vela.module.CommandEntries commands(){return commands;}
+    private final dev.sqwat.vela.module.command.CommandEntries commands;
+    public dev.sqwat.vela.module.command.CommandEntries commands(){return commands;}
     public dev.sqwat.vela.marker.MarkerService markers(){return markers;}
 
     public VelaServices(Path configRoot) {
         registerFoundationModules();
-        commands=new dev.sqwat.vela.module.CommandEntries(configRoot);
+        commands=new dev.sqwat.vela.module.command.CommandEntries(configRoot);
         friends = new FriendService(configRoot);
         accounts = new AccountService(configRoot);
         configs = new ConfigService(configRoot, modules,zakoOptimization);
@@ -39,49 +39,49 @@ public final class VelaServices implements AutoCloseable {
     }
 
     private void registerFoundationModules() {
-        modules.register(new dev.sqwat.vela.module.ShulkerPreview());
-        modules.register(new dev.sqwat.vela.module.Crosshair());
-        modules.register(new dev.sqwat.vela.module.HitColor());
-        modules.register(new dev.sqwat.vela.module.HitBubbles());
-        modules.register(new dev.sqwat.vela.module.Animations());
-        modules.register(new dev.sqwat.vela.module.SwingAnimations());
-        modules.register(new dev.sqwat.vela.module.Ambience());
-        modules.register(new dev.sqwat.vela.module.Shaders());
-        modules.register(new dev.sqwat.vela.module.AutoSprint());
-        modules.register(new dev.sqwat.vela.module.ClickPearl());
-        modules.register(new dev.sqwat.vela.module.ItemScroller());
-        modules.register(new dev.sqwat.vela.module.Pinger());
-        modules.register(new dev.sqwat.vela.module.Trajectories());
-        modules.register(new dev.sqwat.vela.module.FakePlayer());
-        modules.register(new dev.sqwat.vela.module.JumpCircle());
-        modules.register(new dev.sqwat.vela.module.ChinaHat());
-        modules.register(new dev.sqwat.vela.module.DashTrail());
-        modules.register(new dev.sqwat.vela.module.TargetESP());
-        modules.register(new dev.sqwat.vela.module.KillEffect());
-        modules.register(new dev.sqwat.vela.module.WorldParticles());
-        modules.register(new dev.sqwat.vela.module.ItemHighlight());
-        modules.register(new dev.sqwat.vela.module.Hitboxes());
-        modules.register(new dev.sqwat.vela.module.SelfTag());
-        modules.register(new dev.sqwat.vela.module.HpCounter());
-        modules.register(new dev.sqwat.vela.module.ExplosionWave());
-        modules.register(new dev.sqwat.vela.module.StreamerMode());
-        modules.register(new dev.sqwat.vela.module.Particles());
-        modules.register(new dev.sqwat.vela.module.ViewModel());
-        modules.register(new dev.sqwat.vela.module.MotionBlur());
-        modules.register(new dev.sqwat.vela.module.CrystalOptimizer());
-        modules.register(new dev.sqwat.vela.module.AspectRatio());
-        modules.register(new dev.sqwat.vela.module.Freelook());
-        modules.register(new dev.sqwat.vela.module.DeathCoords());
-        modules.register(new dev.sqwat.vela.module.HitSound());
-        modules.register(new dev.sqwat.vela.module.AutoRespawn());
-        modules.register(new dev.sqwat.vela.module.AutoTpAccept());
-        modules.register(new dev.sqwat.vela.module.BlockOverlay());
-        modules.register(new dev.sqwat.vela.module.Gamma());
-        modules.register(new dev.sqwat.vela.module.CommandModule(false));
-        modules.register(new dev.sqwat.vela.module.CommandModule(true));
+        modules.register(new dev.sqwat.vela.module.utility.ShulkerPreview());
+        modules.register(new dev.sqwat.vela.module.visual.Crosshair());
+        modules.register(new dev.sqwat.vela.module.visual.HitColor());
+        modules.register(new dev.sqwat.vela.module.visual.HitBubbles());
+        modules.register(new dev.sqwat.vela.module.visual.Animations());
+        modules.register(new dev.sqwat.vela.module.visual.SwingAnimations());
+        modules.register(new dev.sqwat.vela.module.visual.Ambience());
+        modules.register(new dev.sqwat.vela.module.visual.Shaders());
+        modules.register(new dev.sqwat.vela.module.utility.AutoSprint());
+        modules.register(new dev.sqwat.vela.module.utility.ClickPearl());
+        modules.register(new dev.sqwat.vela.module.utility.ItemScroller());
+        modules.register(new dev.sqwat.vela.module.utility.Pinger());
+        modules.register(new dev.sqwat.vela.module.utility.Trajectories());
+        modules.register(new dev.sqwat.vela.module.utility.FakePlayer());
+        modules.register(new dev.sqwat.vela.module.visual.JumpCircle());
+        modules.register(new dev.sqwat.vela.module.visual.ChinaHat());
+        modules.register(new dev.sqwat.vela.module.visual.DashTrail());
+        modules.register(new dev.sqwat.vela.module.visual.TargetESP());
+        modules.register(new dev.sqwat.vela.module.visual.KillEffect());
+        modules.register(new dev.sqwat.vela.module.visual.WorldParticles());
+        modules.register(new dev.sqwat.vela.module.visual.ItemHighlight());
+        modules.register(new dev.sqwat.vela.module.visual.Hitboxes());
+        modules.register(new dev.sqwat.vela.module.visual.SelfTag());
+        modules.register(new dev.sqwat.vela.module.visual.HpCounter());
+        modules.register(new dev.sqwat.vela.module.visual.ExplosionWave());
+        modules.register(new dev.sqwat.vela.module.utility.StreamerMode());
+        modules.register(new dev.sqwat.vela.module.visual.Particles());
+        modules.register(new dev.sqwat.vela.module.visual.ViewModel());
+        modules.register(new dev.sqwat.vela.module.visual.MotionBlur());
+        modules.register(new dev.sqwat.vela.module.utility.CrystalOptimizer());
+        modules.register(new dev.sqwat.vela.module.utility.AspectRatio());
+        modules.register(new dev.sqwat.vela.module.utility.Freelook());
+        modules.register(new dev.sqwat.vela.module.utility.DeathCoords());
+        modules.register(new dev.sqwat.vela.module.utility.HitSound());
+        modules.register(new dev.sqwat.vela.module.utility.AutoRespawn());
+        modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
+        modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
+        modules.register(new dev.sqwat.vela.module.utility.Gamma());
+        modules.register(new dev.sqwat.vela.module.command.CommandModule(false));
+        modules.register(new dev.sqwat.vela.module.command.CommandModule(true));
         modules.register(renderTweaks);
         modules.register(far);
-        modules.register(new dev.sqwat.vela.module.ItemPhysics());
+        modules.register(new dev.sqwat.vela.module.visual.ItemPhysics());
         modules.register(new FoundationModule("coordinates", "Coordinates", "Ваше положение в мире", ModuleCategory.HUD)
             .add(new ChoiceSetting("format", "Формат", "Вид записи координат", "XYZ", List.of("XYZ", "Compact"))));
         modules.register(new FoundationModule("armor", "Armor HUD", "Отображение прочности брони", ModuleCategory.HUD));
@@ -119,8 +119,8 @@ public final class VelaServices implements AutoCloseable {
     }
 
     public ModuleRegistry modules() { return modules; }
-    public dev.sqwat.vela.module.Far far() { return far; }
-    public dev.sqwat.vela.module.RenderTweaks renderTweaks() { return renderTweaks; }
+    public dev.sqwat.vela.module.utility.Far far() { return far; }
+    public dev.sqwat.vela.module.utility.RenderTweaks renderTweaks() { return renderTweaks; }
     public dev.sqwat.vela.module.ZakoOptimization zakoOptimization() { return zakoOptimization; }
     public FriendService friends() { return friends; }
     public AccountService accounts() { return accounts; }

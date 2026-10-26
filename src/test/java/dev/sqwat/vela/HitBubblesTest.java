@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.HitBubbles;
+import dev.sqwat.vela.module.visual.HitBubbles;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,7 +9,7 @@ class HitBubblesTest {
         ((dev.sqwat.vela.module.setting.ChoiceSetting)m.settings().stream().filter(s->s.id().equals("mode")).findFirst().orElseThrow()).set("Ударная волна");
         assertTrue(m.shockwave());for(int i=0;i<30;i++)m.spawn(Vec3.ZERO,i);
         for(var setting:m.settings())if(java.util.Set.of("color_mode","color","color2").contains(setting.id()))assertFalse(setting.visible());
-        assertEquals(dev.sqwat.vela.render.JumpWaveShape.MAX_WAVES,m.count());
+        assertEquals(dev.sqwat.vela.render.effect.JumpWaveShape.MAX_WAVES,m.count());
         m.setEnabled(false);assertEquals(0,m.count());
     }
     @Test void boundedAndInertWhenDisabled(){

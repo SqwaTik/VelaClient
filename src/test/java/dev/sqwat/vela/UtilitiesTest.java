@@ -1,8 +1,9 @@
 package dev.sqwat.vela;
+import dev.sqwat.vela.module.utility.AspectRatio;
 import dev.sqwat.vela.core.VelaServices;
 import dev.sqwat.vela.module.*;
 import dev.sqwat.vela.module.setting.*;
-import dev.sqwat.vela.ui.NearPlayers;
+import dev.sqwat.vela.ui.hud.NearPlayers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
@@ -39,7 +40,7 @@ class UtilitiesTest {
     @Test void mixinsAreRegistered()throws Exception{
         String json=java.nio.file.Files.readString(Path.of("src/main/resources/velaclient.mixins.json"));
         assertFalse(json.contains("HoldMyItemsMixin"));
-        for(String id:List.of("AspectRatioMixin","TeleportCombatMixin","BlockOverlayMixin","NameTagTextCacheMixin","FontCacheInvalidationMixin","MinecraftActions","RenderFireMixin","RenderParticlesMixin","DistanceFogMixin","ItemPhysicsMixin","ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
+        for(String id:List.of("camera.AspectRatioMixin","input.TeleportCombatMixin","world.BlockOverlayMixin","entity.NameTagTextCacheMixin","resource.FontCacheInvalidationMixin","input.MinecraftActions","world.RenderFireMixin","world.RenderParticlesMixin","world.DistanceFogMixin","entity.ItemPhysicsMixin","entity.ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
     }
     @Test void aspectPresetsAndColorValidation(){
         assertEquals(16f/9,AspectRatio.value("16:9"));assertEquals(4f/3,AspectRatio.value("4:3"));

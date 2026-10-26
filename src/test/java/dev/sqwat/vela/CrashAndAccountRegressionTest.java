@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CrashAndAccountRegressionTest {
     @Test void hudContentCannotCloseTheOuterRevealClip()throws Exception{
-        String source=Files.readString(Path.of("src/main/java/dev/sqwat/vela/ui/HudLayoutService.java"));
+        String source=Files.readString(Path.of("src/main/java/dev/sqwat/vela/ui/hud/HudLayoutService.java"));
         String chip=source.substring(source.indexOf("public void drawChip("),source.indexOf("public String label("));
         assertFalse(chip.contains("disableScissor("),"HUD content must not pop a clip owned by extractRenderState");
         assertFalse(chip.contains("UiClip.enable("),"Nested HUD clipping needs its own balanced scope");

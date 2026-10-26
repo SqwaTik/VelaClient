@@ -27,7 +27,7 @@ class NativeHudTargetsTest {
         // Registration is required: an unregistered optimization has no runtime effect.
         try(var stream=getClass().getResourceAsStream("/velaclient.mixins.json")) {
             assertNotNull(stream);
-            assertTrue(new String(stream.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8).contains("\"MapFramePreparationMixin\""));
+            assertTrue(new String(stream.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8).contains("\"entity.MapFramePreparationMixin\""));
         }
     }
     @Test void hotbarGroupAndFarLimitTargetsExist()throws Exception{

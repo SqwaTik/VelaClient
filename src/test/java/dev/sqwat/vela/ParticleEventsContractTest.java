@@ -61,17 +61,17 @@ class ParticleEventsContractTest {
         var level=read("net/minecraft/world/level/Level");
         assertTrue(read("net/minecraft/client/ClientClockManager").methods.stream().anyMatch(m->m.name.equals("getTotalTicks")&&m.desc.equals("(Lnet/minecraft/core/Holder;)J")));
         for(String method:java.util.List.of("getDefaultClockTime","getRainLevel","getThunderLevel"))assertTrue(level.methods.stream().anyMatch(m->m.name.equals(method)));
-        var tick=read("dev/sqwat/vela/module/FakePlayer$LocalDummy").methods.stream().filter(m->m.name.equals("tick")).findFirst().orElseThrow();
+        var tick=read("dev/sqwat/vela/module/utility/FakePlayer$LocalDummy").methods.stream().filter(m->m.name.equals("tick")).findFirst().orElseThrow();
         assertTrue(java.util.Arrays.stream(tick.instructions.toArray()).anyMatch(i->i instanceof MethodInsnNode call&&call.name.equals("calculateEntityAnimation")));
     }
     @Test void fakePlayerAcceptedDamageEmitsFeedbackAndNativeHideDoesNotBlockIt()throws Exception{
-        var fake=read("dev/sqwat/vela/module/FakePlayer$LocalDummy");
+        var fake=read("dev/sqwat/vela/module/utility/FakePlayer$LocalDummy");
         var receive=fake.methods.stream().filter(m->m.name.equals("receive")).findFirst().orElseThrow();
         int emissions=0;
-        for(var instruction:receive.instructions)if(instruction instanceof MethodInsnNode call&&call.owner.equals("dev/sqwat/vela/module/Particles")&&call.name.equals("emit"))emissions++;
+        for(var instruction:receive.instructions)if(instruction instanceof MethodInsnNode call&&call.owner.equals("dev/sqwat/vela/module/visual/Particles")&&call.name.equals("emit"))emissions++;
         assertEquals(2,emissions,"Confirmed hit and local totem must both emit");
-        var effect=read("dev/sqwat/vela/module/Particles");
+        var effect=read("dev/sqwat/vela/module/visual/Particles");
         for(var method:effect.methods)for(var instruction:method.instructions)
-            if(instruction instanceof MethodInsnNode call)assertNotEquals("dev/sqwat/vela/module/RenderTweaks",call.owner);
+            if(instruction instanceof MethodInsnNode call)assertNotEquals("dev/sqwat/vela/module/utility/RenderTweaks",call.owner);
     }
 }

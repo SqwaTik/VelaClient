@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.ArrowLayout;
+import dev.sqwat.vela.ui.hud.ArrowLayout;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class ArrowLayoutTest {

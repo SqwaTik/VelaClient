@@ -258,7 +258,7 @@ public final class ConfigService implements AutoCloseable {
                     setting.set(parsed);
                 } catch (RuntimeException ignored) { }
             }
-            if(module instanceof dev.sqwat.vela.module.ViewModel viewModel
+            if(module instanceof dev.sqwat.vela.module.visual.ViewModel viewModel
                 &&(state.settings==null||!state.settings.containsKey("off_offset_x")))viewModel.migrateLegacy();
             module.normalizeSettings();
             module.setEnabled(state.enabled);
@@ -267,7 +267,7 @@ public final class ConfigService implements AutoCloseable {
 
     private static boolean settingsMatch(ClientModule module, ClientConfig.ModuleState state) {
         // Legacy ViewModel values still require migration even if their stored subset matches.
-        if (module instanceof dev.sqwat.vela.module.ViewModel
+        if (module instanceof dev.sqwat.vela.module.visual.ViewModel
             && (state.settings == null || !state.settings.containsKey("off_offset_x"))) return false;
         for (Setting<?> setting : module.settings()) {
             JsonElement target = state.settings == null ? null : state.settings.get(setting.id());

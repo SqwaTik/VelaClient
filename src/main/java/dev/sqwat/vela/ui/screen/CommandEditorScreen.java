@@ -1,8 +1,8 @@
 package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.module.CommandEntries;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.module.command.CommandEntries;
+import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.animation.*;
 import dev.sqwat.vela.ui.render.*;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -22,7 +22,7 @@ public final class CommandEditorScreen extends VelaScreen {
     private final TextEdit[] fields={new TextEdit(),new TextEdit(),new TextEdit()};
     private final List<Action> actions=new ArrayList<>();
     private final Map<Rect,Integer> inputs=new LinkedHashMap<>();
-    private final dev.sqwat.vela.ui.CommandDraft draft=new dev.sqwat.vela.ui.CommandDraft();
+    private final dev.sqwat.vela.ui.input.CommandDraft draft=new dev.sqwat.vela.ui.input.CommandDraft();
     private int focus=-1,key=-1;
     private boolean enabled=true,capturing,closing,draggingScroll,scrollToEnd;
     private float reveal,scroll,targetScroll,formReveal=1;
@@ -66,7 +66,7 @@ public final class CommandEditorScreen extends VelaScreen {
             Rect row=new Rect(list.x(),rowY,lw-9,30);float active=controls.animate("entry-"+e.id(),e.id().equals(draft.selected())?1:0);
             VelaDraw.roundedRect(g,row.x(),row.y(),row.width(),30,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY_SOFT,active));
             VelaDraw.text(g,VelaDraw.ellipsize(e.name(),row.width()-12,VelaDraw.Weight.MEDIUM,8),row.x()+6,row.y()+5,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
-            String label=!e.enabled()?"Выключено":interval?e.seconds()+" сек":dev.sqwat.vela.ui.KeyLabels.of(e.key(),"Не назначено");
+            String label=!e.enabled()?"Выключено":interval?e.seconds()+" сек":dev.sqwat.vela.ui.input.KeyLabels.of(e.key(),"Не назначено");
             VelaDraw.text(g,label,row.x()+6,row.y()+18,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
             int visualY=row.y()-Math.round(scroll);
             int top=Math.max(visualY,list.y()),bottom=Math.min(visualY+30,list.y()+list.height());
@@ -87,7 +87,7 @@ public final class CommandEditorScreen extends VelaScreen {
         if(interval)field(g,2,new Rect(formX,thirdField,formW,24),"Интервал, секунды");
         else{
             VelaDraw.text(g,"Клавиша",formX,thirdField-10,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
-            button(g,new Rect(formX,thirdField,formW,24),capturing?"Нажмите клавишу…":key<0?"Назначить клавишу":dev.sqwat.vela.ui.KeyLabels.of(key,""),mx,my,()->{capturing=true;focus=-1;});
+            button(g,new Rect(formX,thirdField,formW,24),capturing?"Нажмите клавишу…":key<0?"Назначить клавишу":dev.sqwat.vela.ui.input.KeyLabels.of(key,""),mx,my,()->{capturing=true;focus=-1;});
         }
         int toggleY=thirdField+(h<246?31:36);
         Rect toggle=new Rect(formX+formW-13,toggleY,11,11);controls.checkbox(g,"entry-enabled",toggle,enabled);
@@ -118,9 +118,9 @@ public final class CommandEditorScreen extends VelaScreen {
     }
     @Override public boolean keyPressed(KeyEvent event){
         if(closing)return true;
-        if(capturing){if(event.key()!=GLFW.GLFW_KEY_ESCAPE)key=dev.sqwat.vela.ui.BindInput.clears(event.key())?-1:event.key();capturing=false;return true;}
+        if(capturing){if(event.key()!=GLFW.GLFW_KEY_ESCAPE)key=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:event.key();capturing=false;return true;}
         if(event.key()==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}
-        if(focus>=0){dev.sqwat.vela.ui.GameTextInput.key(fields[focus],event,focus==0?40:focus==1?256:5);return true;}return true;
+        if(focus>=0){dev.sqwat.vela.ui.input.GameTextInput.key(fields[focus],event,focus==0?40:focus==1?256:5);return true;}return true;
     }
     @Override public boolean charTyped(CharacterEvent event){if(!closing&&focus>=0&&event.isAllowedChatCharacter())fields[focus].insert(event.codepointAsString(),focus==0?40:focus==1?256:5);return true;}
     @Override protected boolean scrollVela(double x,double y,double horizontal,double vertical){if(list.contains(x,y))targetScroll=Math.clamp(targetScroll-(float)vertical*28,0,scrollLimit);return true;}

@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.ThrowPhysics;
+import dev.sqwat.vela.render.effect.ThrowPhysics;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.module.ShulkerPreview;
+import dev.sqwat.vela.module.utility.ShulkerPreview;
 import dev.sqwat.vela.module.ModuleCategory;
 import java.util.List;
 import org.junit.jupiter.api.Test;

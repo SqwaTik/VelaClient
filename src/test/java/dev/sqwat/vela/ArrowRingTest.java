@@ -1,4 +1,6 @@
 package dev.sqwat.vela;
+import dev.sqwat.vela.ui.hud.ArrowRing;
+import dev.sqwat.vela.ui.hud.NearPresence;
 import dev.sqwat.vela.ui.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

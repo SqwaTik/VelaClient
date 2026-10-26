@@ -45,7 +45,7 @@ public final class VelaFormScreen extends VelaScreen {
         if(e.key()==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}
         if(e.key()==GLFW.GLFW_KEY_ENTER){save();return true;}
         if(!focused)return true;
-        if(e.key()==GLFW.GLFW_KEY_BACKSPACE&&(e.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){var edit=new dev.sqwat.vela.ui.TextEdit();edit.set(value);if(selectedAll)edit.selectAll();edit.eraseWord();value=edit.text();selectedAll=false;return true;}
+        if(e.key()==GLFW.GLFW_KEY_BACKSPACE&&(e.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){var edit=new dev.sqwat.vela.ui.input.TextEdit();edit.set(value);if(selectedAll)edit.selectAll();edit.eraseWord();value=edit.text();selectedAll=false;return true;}
         if((e.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){
             if(e.key()==GLFW.GLFW_KEY_A){selectedAll=true;return true;}
             if(e.key()==GLFW.GLFW_KEY_V){String pasted=minecraft.keyboardHandler.getClipboard().replaceAll("[\\p{Cntrl}]","");value=(selectedAll?"":value)+pasted;value=value.substring(0,Math.min(value.length(),32));selectedAll=false;return true;}

@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.module.ClickPearl;
+import dev.sqwat.vela.module.utility.ClickPearl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;

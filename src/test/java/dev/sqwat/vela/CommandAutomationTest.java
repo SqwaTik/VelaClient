@@ -1,5 +1,8 @@
 package dev.sqwat.vela;
 
+import dev.sqwat.vela.module.command.CommandEntries;
+import dev.sqwat.vela.module.command.CommandSchedule;
+import dev.sqwat.vela.module.utility.Gamma;
 import dev.sqwat.vela.module.*;
 import dev.sqwat.vela.module.setting.BooleanSetting;
 import org.junit.jupiter.api.Test;
@@ -43,6 +46,6 @@ class CommandAutomationTest {
     @Test void smartGammaIsBoundedAndHookRegistered() throws Exception {
         assertEquals(.95f,Gamma.target(true,0));assertEquals(0,Gamma.target(true,15));
         assertEquals(1,Gamma.target(false,15));
-        assertTrue(Files.readString(Path.of("src/main/resources/velaclient.mixins.json")).contains("\"GammaMixin\""));
+        assertTrue(Files.readString(Path.of("src/main/resources/velaclient.mixins.json")).contains("\"world.GammaMixin\""));
     }
 }

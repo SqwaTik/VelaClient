@@ -1,4 +1,6 @@
 package dev.sqwat.vela;
+import dev.sqwat.vela.module.visual.Ambience;
+import dev.sqwat.vela.module.visual.Animations;
 import dev.sqwat.vela.module.*;
 import dev.sqwat.vela.module.setting.*;
 import org.junit.jupiter.api.Test;

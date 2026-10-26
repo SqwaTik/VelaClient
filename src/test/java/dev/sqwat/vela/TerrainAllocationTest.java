@@ -28,7 +28,7 @@ class TerrainAllocationTest {
                 &&m.desc.equals("(Lnet/minecraft/util/FormattedCharSequence;)I")).count());
     }
     @Test void blockVisibilityHooksDoNotRequestPerEntityCallbacks() throws Exception {
-        for(String name:java.util.List.of("dev/sqwat/vela/mixin/StorageVisibilityMixin",
+        for(String name:java.util.List.of("dev/sqwat/vela/mixin/entity/StorageVisibilityMixin",
                 "dev/sqwat/vela/zako/mixin/block/BlockEntityRenderDispatcherCullMixin")){
             var node=read(name);
             assertTrue(node.methods.stream().noneMatch(m->m.desc.contains("CallbackInfo")));
@@ -45,7 +45,7 @@ class TerrainAllocationTest {
                 &&m.owner.equals("org/joml/Matrix4f")&&m.name.equals("<init>")&&m.desc.equals("(Lorg/joml/Matrix4fc;)V")));
         var uniform=read("net/minecraft/client/renderer/DynamicUniforms$ChunkSectionInfo");
         assertTrue(uniform.fields.stream().anyMatch(f->f.name.equals("modelView")&&f.desc.equals("Lorg/joml/Matrix4fc;")));
-        read("dev/sqwat/vela/mixin/TerrainAllocationMixin");
+        read("dev/sqwat/vela/mixin/perf/TerrainAllocationMixin");
         var gui=read("net/minecraft/client/gui/render/GuiRenderer");
         var guiPrepare=gui.methods.stream().filter(m->m.name.equals("prepare")).findFirst().orElseThrow();
         assertEquals(1,calls(guiPrepare,"net/minecraft/client/renderer/state/gui/GuiRenderState","sortElements"));

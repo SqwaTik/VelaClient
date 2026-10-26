@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.ArrowPlacement;
+import dev.sqwat.vela.ui.hud.ArrowPlacement;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.*;

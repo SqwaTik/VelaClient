@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.RenderTweaks;
+import dev.sqwat.vela.module.utility.RenderTweaks;
 import dev.sqwat.vela.module.setting.BooleanSetting;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

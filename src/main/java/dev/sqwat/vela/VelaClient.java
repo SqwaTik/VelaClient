@@ -25,15 +25,15 @@ public final class VelaClient implements ClientModInitializer {
     public void onInitializeClient() {
         dev.sqwat.vela.zako.hud.HudCache.initialize();
         dev.sqwat.vela.ui.render.GlassSurface.initialize();
-        dev.sqwat.vela.render.WorldSprite.initialize();
+        dev.sqwat.vela.render.effect.WorldSprite.initialize();
         dev.sqwat.vela.ui.render.DissolveBody.initialize();
-        dev.sqwat.vela.render.TemporalBlur.initialize();
-        dev.sqwat.vela.render.WorldShaderRenderer.initialize();
-        dev.sqwat.vela.render.HandShaderRenderer.initialize();
-        dev.sqwat.vela.render.SkyShaderRenderer.initialize();
-        dev.sqwat.vela.render.PerformanceCapture.initialize();
+        dev.sqwat.vela.render.shader.TemporalBlur.initialize();
+        dev.sqwat.vela.render.shader.WorldShaderRenderer.initialize();
+        dev.sqwat.vela.render.shader.HandShaderRenderer.initialize();
+        dev.sqwat.vela.render.shader.SkyShaderRenderer.initialize();
+        dev.sqwat.vela.render.perf.PerformanceCapture.initialize();
         net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message,overlay)->{
-            var accept=dev.sqwat.vela.module.AutoTpAccept.instance();
+            var accept=dev.sqwat.vela.module.utility.AutoTpAccept.instance();
             if(accept!=null)accept.message(message.getString(),overlay);
         });
         dev.sqwat.vela.cosmetics.LocalAppearanceService.initialize();
@@ -48,21 +48,21 @@ public final class VelaClient implements ClientModInitializer {
             "key.velaclient.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, category
         ));
         HudElementRegistry.addLast(id("hud"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())services.hudLayout().extractRenderState(g,delta);});
-        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.render.TemporalBlur.draw(g);});
+        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.render.shader.TemporalBlur.draw(g);});
         HudElementRegistry.addLast(id("markers"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());});
         HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active()&&Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
         net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->{
             if(player==Minecraft.getInstance().player&&services.configs().current().protectFriends
                 &&entity instanceof net.minecraft.world.entity.player.Player friend
                 &&services.friends().contains(friend.getGameProfile().name()))return net.minecraft.world.InteractionResult.FAIL;
-            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.HitBubbles.attacked(entity);
-            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.HitSound.attacked(entity);
-            if(player==Minecraft.getInstance().player&&services.modules().byId("fake_player") instanceof dev.sqwat.vela.module.FakePlayer fake&&fake.hit(entity)){
+            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.visual.HitBubbles.attacked(entity);
+            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.utility.HitSound.attacked(entity);
+            if(player==Minecraft.getInstance().player&&services.modules().byId("fake_player") instanceof dev.sqwat.vela.module.utility.FakePlayer fake&&fake.hit(entity)){
                 if(entity instanceof net.minecraft.world.entity.LivingEntity living)services.hudLayout().attacked(living);
                 player.swing(hand);
                 return net.minecraft.world.InteractionResult.FAIL;
             }
-            if(player==Minecraft.getInstance().player)dev.sqwat.vela.render.PerformanceCapture.attacked();
+            if(player==Minecraft.getInstance().player)dev.sqwat.vela.render.perf.PerformanceCapture.attacked();
             if(player==Minecraft.getInstance().player&&entity instanceof net.minecraft.world.entity.LivingEntity living)
                 services.hudLayout().attacked(living);
             return net.minecraft.world.InteractionResult.PASS;
@@ -70,16 +70,16 @@ public final class VelaClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             var watermark=services.modules().byId("watermark");
-            dev.sqwat.vela.ui.HudTelemetry.tickPing(client,watermark!=null&&watermark.enabled()&&watermark.settings().stream().anyMatch(s->s.id().equals("ping")&&Boolean.TRUE.equals(s.value())));
-            dev.sqwat.vela.module.CommandAutomation.tick(client,services);
-            dev.sqwat.vela.module.Far.clearDisabledTerrain();
+            dev.sqwat.vela.ui.hud.HudTelemetry.tickPing(client,watermark!=null&&watermark.enabled()&&watermark.settings().stream().anyMatch(s->s.id().equals("ping")&&Boolean.TRUE.equals(s.value())));
+            dev.sqwat.vela.module.command.CommandAutomation.tick(client,services);
+            dev.sqwat.vela.module.utility.Far.clearDisabledTerrain();
             if(client.level!=null)dev.sqwat.vela.ui.SessionPresentation.visit();
             services.hudLayout().viewport(client.getWindow().getGuiScale());
             dev.sqwat.vela.friend.FriendPresence.tick(client,services);
             dev.sqwat.vela.marker.MarkerRuntime.tick(client,services.markers());
             services.hudLayout().tickTarget(client);
-            if(client.level==null){dev.sqwat.vela.render.AutomaticVisibility.clear();dev.sqwat.vela.ui.HudTelemetry.clear();dev.sqwat.vela.ui.CooldownTracker.clear();}
-            dev.sqwat.vela.ui.ModuleBindings.tick(client, services);
+            if(client.level==null){dev.sqwat.vela.render.entity.AutomaticVisibility.clear();dev.sqwat.vela.ui.hud.HudTelemetry.clear();dev.sqwat.vela.ui.hud.CooldownTracker.clear();}
+            dev.sqwat.vela.ui.input.ModuleBindings.tick(client, services);
             services.modules().tickEnabled();
             while (openKey.consumeClick()) {
                 if (client.gui.screen() instanceof VelaDashboardScreen dashboard) {if(!dashboard.hasModal())dashboard.onClose();}
@@ -91,7 +91,7 @@ public final class VelaClient implements ClientModInitializer {
             }
         });
         ClientLifecycleEvents.CLIENT_STARTED.register(this::captureLauncherAccount);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {dev.sqwat.vela.render.TextureDecodeCache.close();dev.sqwat.vela.render.TemporalBlur.close();dev.sqwat.vela.ui.render.GlassSurface.close();services.close();});
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {dev.sqwat.vela.render.resource.TextureDecodeCache.close();dev.sqwat.vela.render.shader.TemporalBlur.close();dev.sqwat.vela.ui.render.GlassSurface.close();services.close();});
     }
 
     private void captureLauncherAccount(Minecraft client) {

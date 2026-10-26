@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.GuiSortOrder;
+import dev.sqwat.vela.render.perf.GuiSortOrder;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import java.util.*;
 import org.junit.jupiter.api.Test;

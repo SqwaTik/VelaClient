@@ -36,7 +36,7 @@ public class GameRendererHudMixin {
 		}
 		if (!minecraft.gui.hud.isHidden()) {
 			GuiGraphicsExtractor graphics = new GuiGraphicsExtractor(minecraft, ((GameRenderer) (Object) this).gameRenderState().guiRenderState, 0, 0);
-			dev.sqwat.vela.render.TemporalBlur.draw(graphics);
+			dev.sqwat.vela.render.shader.TemporalBlur.draw(graphics);
 			HudInvoker hud = (HudInvoker) minecraft.gui.hud;
 			hud.zakoopt$extractCameraOverlays(graphics, deltaTracker);
 			hud.zakoopt$extractCrosshair(graphics, deltaTracker);

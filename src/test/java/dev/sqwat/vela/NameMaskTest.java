@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.NameMask;
+import dev.sqwat.vela.render.entity.NameMask;
 import dev.sqwat.vela.module.setting.TextSetting;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.FormattedCharSequence;

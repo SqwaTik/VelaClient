@@ -28,8 +28,8 @@ class ShaderFogCompilationTest {
             try(var input=getClass().getClassLoader().getResourceAsStream("assets/velaclient/shaders/examples/aurora.glsl")) {
                 assertNotNull(input);example=new String(input.readAllBytes(),StandardCharsets.UTF_8);
             }
-            for(String body:new String[]{dev.sqwat.vela.render.CustomSkySource.DEFAULT,example}) {
-            long custom=shaderc_compile_into_spv(compiler,dev.sqwat.vela.render.CustomSkySource.fragment(body),shaderc_fragment_shader,"user-sky.fsh","main",options);
+            for(String body:new String[]{dev.sqwat.vela.render.shader.CustomSkySource.DEFAULT,example}) {
+            long custom=shaderc_compile_into_spv(compiler,dev.sqwat.vela.render.shader.CustomSkySource.fragment(body),shaderc_fragment_shader,"user-sky.fsh","main",options);
             assertNotEquals(0,custom);
             try{assertEquals(shaderc_compilation_status_success,shaderc_result_get_compilation_status(custom),shaderc_result_get_error_message(custom));}
             finally{shaderc_result_release(custom);}

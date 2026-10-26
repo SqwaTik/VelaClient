@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.CrystalOptimizer;
+import dev.sqwat.vela.module.utility.CrystalOptimizer;
 import dev.sqwat.vela.module.setting.KeySetting;
-import dev.sqwat.vela.render.FriendNameTags;
+import dev.sqwat.vela.render.entity.FriendNameTags;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,8 +1,8 @@
 package dev.sqwat.vela;
 
 import dev.sqwat.vela.marker.*;
-import dev.sqwat.vela.ui.NearPlayers;
-import dev.sqwat.vela.render.SectionVisibilityCache;
+import dev.sqwat.vela.ui.hud.NearPlayers;
+import dev.sqwat.vela.render.entity.SectionVisibilityCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;

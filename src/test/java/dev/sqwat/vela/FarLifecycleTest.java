@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FarLifecycleTest {
     @Test void terrainCleanupUsesTheSameCompleteInvalidationAsVanillaReload() throws Exception {
-        var far=read("dev/sqwat/vela/module/Far");
+        var far=read("dev/sqwat/vela/module/utility/Far");
         var cleanup=far.methods.stream().filter(m->m.name.equals("clearDisabledTerrain")).findFirst().orElseThrow();
         assertTrue(calls(cleanup,"net/minecraft/client/renderer/extract/LevelExtractor","allChanged"));
         assertFalse(calls(cleanup,"net/minecraft/client/renderer/LevelRenderer","invalidateCompiledGeometry"));

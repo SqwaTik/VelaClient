@@ -98,7 +98,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             Rect preview=new Rect(content.x(),cy,content.width(),27);button(g,preview,"Прослушать",false);controls.add(new Control("preview",preview));cy+=37;
         } else {
             cy=toggle(g,"show-binds","Всегда показывать бинды",c.alwaysShowBinds,cy);
-            String[] names={"Открыть GUI","Поиск","Бинд"};String[] keys={capturingKey!=null&&capturingKey.equals("open")?"Нажмите…":dev.sqwat.vela.VelaClient.openKeyLabel(),capturingKey!=null&&capturingKey.equals("search")?"Нажмите…":"Ctrl+"+dev.sqwat.vela.ui.KeyLabels.of(c.searchKey,""),"СКМ"};
+            String[] names={"Открыть GUI","Поиск","Бинд"};String[] keys={capturingKey!=null&&capturingKey.equals("open")?"Нажмите…":dev.sqwat.vela.VelaClient.openKeyLabel(),capturingKey!=null&&capturingKey.equals("search")?"Нажмите…":"Ctrl+"+dev.sqwat.vela.ui.input.KeyLabels.of(c.searchKey,""),"СКМ"};
             for(int i=0;i<names.length;i++){VelaDraw.text(g,names[i],content.x(),cy+7,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);Rect key=new Rect(content.x()+content.width()-82,cy,82,25);button(g,key,keys[i],false);if(i<2)controls.add(new Control(i==0?"bind-open":"bind-search",key));cy+=35;}
             Rect reset=new Rect(content.x(),cy+9,content.width(),27);button(g,reset,"Сбросить бинды модулей",false);controls.add(new Control("resetbinds",reset));cy+=45;
         }

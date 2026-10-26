@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.HudTelemetry;
+import dev.sqwat.vela.ui.hud.HudTelemetry;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class HudTelemetryTest {

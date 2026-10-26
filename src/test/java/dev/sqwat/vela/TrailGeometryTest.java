@@ -1,7 +1,7 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.TrailGeometry;
-import dev.sqwat.vela.render.TrailHistory;
+import dev.sqwat.vela.render.effect.TrailGeometry;
+import dev.sqwat.vela.render.effect.TrailHistory;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

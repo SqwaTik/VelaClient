@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.ui.HudVisibility;
+import dev.sqwat.vela.ui.hud.HudVisibility;
 import dev.sqwat.vela.ui.render.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,6 @@
 package dev.sqwat.vela.render;
 
+import dev.sqwat.vela.render.entity.PreparedLabelCache;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

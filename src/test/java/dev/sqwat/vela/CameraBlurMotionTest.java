@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.CameraBlurMotion;
+import dev.sqwat.vela.render.camera.CameraBlurMotion;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class CameraBlurMotionTest {

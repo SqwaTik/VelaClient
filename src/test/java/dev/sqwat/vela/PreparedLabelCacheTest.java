@@ -1,22 +1,22 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.PreparedLabelCache;
+import dev.sqwat.vela.render.entity.PreparedLabelCache;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PreparedLabelCacheTest {
     @Test void underlineRunBoundariesArePartOfLayoutKey(){
         var style=net.minecraft.network.chat.Style.EMPTY.withUnderlined(true);
-        var a=new dev.sqwat.vela.render.LabelTextKey();var b=new dev.sqwat.vela.render.LabelTextKey();
+        var a=new dev.sqwat.vela.render.entity.LabelTextKey();var b=new dev.sqwat.vela.render.entity.LabelTextKey();
         a.read(net.minecraft.util.FormattedCharSequence.forward("AB",style));
         b.read(net.minecraft.util.FormattedCharSequence.composite(net.minecraft.util.FormattedCharSequence.forward("A",style),net.minecraft.util.FormattedCharSequence.forward("B",style)));
         assertNotEquals(a,b);
     }
     @Test void animatedAndOversizedTextBypassesCache() {
         var normal = net.minecraft.network.chat.Style.EMPTY;
-        assertTrue(dev.sqwat.vela.render.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("Player", normal)));
-        assertFalse(dev.sqwat.vela.render.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("Player", normal.withObfuscated(true))));
-        assertFalse(dev.sqwat.vela.render.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("x".repeat(257), normal)));
+        assertTrue(dev.sqwat.vela.render.entity.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("Player", normal)));
+        assertFalse(dev.sqwat.vela.render.entity.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("Player", normal.withObfuscated(true))));
+        assertFalse(dev.sqwat.vela.render.entity.NameTagTextCache.cacheable(net.minecraft.util.FormattedCharSequence.forward("x".repeat(257), normal)));
     }
     @Test void reusesOnlyIdenticalInputs() {
         var cache = new PreparedLabelCache<String>(4);
@@ -47,7 +47,7 @@ class PreparedLabelCacheTest {
     }
 
     @Test void rebuiltTextHitsButChangedStyleMissesAndProbeCannotMutateStoredKey() {
-        var probe = new dev.sqwat.vela.render.LabelTextKey();
+        var probe = new dev.sqwat.vela.render.entity.LabelTextKey();
         var cache = new PreparedLabelCache<String>(4);
         var style = net.minecraft.network.chat.Style.EMPTY;
         probe.read(net.minecraft.util.FormattedCharSequence.forward("Player", style));

@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.TextureDecodeCache;
+import dev.sqwat.vela.render.resource.TextureDecodeCache;
 import com.mojang.blaze3d.platform.NativeImage;
 import org.junit.jupiter.api.Test;
 import java.awt.image.BufferedImage;

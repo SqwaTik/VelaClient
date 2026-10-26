@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.ItemHighlight;
+import dev.sqwat.vela.module.visual.ItemHighlight;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class ItemHighlightTest {

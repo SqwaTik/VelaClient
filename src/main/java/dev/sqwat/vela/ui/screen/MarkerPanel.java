@@ -2,7 +2,7 @@ package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.core.VelaServices;
 import dev.sqwat.vela.marker.MarkerRuntime;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.UiSounds;
 import dev.sqwat.vela.ui.render.*;
 import net.minecraft.client.Minecraft;
@@ -29,8 +29,8 @@ final class MarkerPanel {
     private String lastEditingId;
     private int pickerY,pickerX;
     private void edit(dev.sqwat.vela.marker.MarkerService.Point p){if(p.id().equals(editingId)){editingId=null;open=false;picker=false;return;}lastEditingId=p.id();editingId=p.id();open=true;picker=false;edits[0].set(p.name());edits[1].set(Long.toString((long)p.x()));edits[2].set(Long.toString((long)p.y()));edits[3].set(Long.toString((long)p.z()));float[] hsv=java.awt.Color.RGBtoHSB((p.color()>>16)&255,(p.color()>>8)&255,p.color()&255,null);hue=hsv[0];sat=hsv[1];value=hsv[2];alpha=(p.color()>>>24)/255f;icon=Math.max(0,List.of(ICONS).indexOf(p.icon()));syncHex();}
-    boolean captureMouse(int button){if(!binding)return false;services.markers().state().key=dev.sqwat.vela.ui.BindInput.mouse(button);binding=false;save();return true;}
-    boolean clearBinding(KeyEvent event){if(!binding||!dev.sqwat.vela.ui.BindInput.clears(event.key()))return false;services.markers().state().key=-1;binding=false;save();return true;}
+    boolean captureMouse(int button){if(!binding)return false;services.markers().state().key=dev.sqwat.vela.ui.input.BindInput.mouse(button);binding=false;save();return true;}
+    boolean clearBinding(KeyEvent event){if(!binding||!dev.sqwat.vela.ui.input.BindInput.clears(event.key()))return false;services.markers().state().key=-1;binding=false;save();return true;}
     MarkerPanel(VelaServices services){this.services=services;edits[0].set(nextName());edits[4].set("FFA24C");coordinates();}
     private String nextName(){var c=Minecraft.getInstance();return c.level==null?"Метка 1":services.markers().nextName(MarkerRuntime.world(c),MarkerRuntime.dimension(c));}
     private void coordinates(){var c=Minecraft.getInstance();double[] xyz=c.player==null?new double[]{0,64,0}:new double[]{c.player.getX(),c.player.getY(),c.player.getZ()};for(int i=0;i<3;i++)edits[i+1].set(Long.toString((long)Math.floor(xyz[i])));}
@@ -91,7 +91,7 @@ final class MarkerPanel {
         limitBar=new Rect(0,0,0,0);
         if(limit>.005f){Rect r=groups.limit();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,Integer.toString(state.limit),r.x()+r.width()-26,r.y()+33);Rect track=new Rect(r.x()+8,r.y()+52,r.width()-16,5);bar(g,track,(state.limit-10)/240f,"limit");if(limit>.95f)limitBar=track;g.disableScissor();}
         settingGroup(g,groups.quick(),"Быстрая метка","Установить точку по взгляду",state.quick,()->state.quick=!state.quick);
-        if(quick>.005f){Rect r=groups.quick();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,"Клавиша",r.x()+8,r.y()+42);Rect key=new Rect(r.x()+r.width()-64,r.y()+34,56,23);controls.button(g,"quick-bind",key,binding?"…":state.key<0?"Нет":dev.sqwat.vela.ui.KeyLabels.of(state.key,"Клавиша"),key.contains(mx,my));if(quick>.95f)actions.add(new Action(key,()->binding=true));g.disableScissor();}
+        if(quick>.005f){Rect r=groups.quick();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,"Клавиша",r.x()+8,r.y()+42);Rect key=new Rect(r.x()+r.width()-64,r.y()+34,56,23);controls.button(g,"quick-bind",key,binding?"…":state.key<0?"Нет":dev.sqwat.vela.ui.input.KeyLabels.of(state.key,"Клавиша"),key.contains(mx,my));if(quick>.95f)actions.add(new Action(key,()->binding=true));g.disableScissor();}
     }
     private void settingGroup(GuiGraphicsExtractor g,Rect r,String title,String description,boolean checked,Runnable toggle){
         MarkerChrome.group(new GameUiCanvas(g),r,title,description);
@@ -132,10 +132,10 @@ final class MarkerPanel {
     void release(){boolean changed=drag==3;drag=-1;if(changed)save();}
     boolean key(KeyEvent e){
         if(binding&&e.key()==GLFW.GLFW_KEY_ESCAPE){binding=false;return true;}
-        if(binding){services.markers().state().key=dev.sqwat.vela.ui.BindInput.clears(e.key())?-1:e.key();save();binding=false;return true;}
+        if(binding){services.markers().state().key=dev.sqwat.vela.ui.input.BindInput.clears(e.key())?-1:e.key();save();binding=false;return true;}
         if(focus<0)return false;
         if(e.key()==GLFW.GLFW_KEY_ESCAPE||e.key()==GLFW.GLFW_KEY_ENTER){focus=-1;return true;}
-        dev.sqwat.vela.ui.GameTextInput.key(edits[focus],e,focus==0?40:16);parseHex();return true;
+        dev.sqwat.vela.ui.input.GameTextInput.key(edits[focus],e,focus==0?40:16);parseHex();return true;
     }
     boolean character(String text){if(focus<0)return false;edits[focus].insert(text,focus==0?40:16);parseHex();return true;}
     private void parseHex(){if(focus!=4)return;try{String text=edits[4].text().replace("#","");if(text.length()!=6)return;int rgb=Integer.parseInt(text,16);float[] hsv=java.awt.Color.RGBtoHSB((rgb>>16)&255,(rgb>>8)&255,rgb&255,null);hue=hsv[0];sat=hsv[1];value=hsv[2];}catch(NumberFormatException ignored){}}

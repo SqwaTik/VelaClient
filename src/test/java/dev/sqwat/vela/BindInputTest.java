@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.ui.BindInput;
-import dev.sqwat.vela.ui.KeyLabels;
+import dev.sqwat.vela.ui.input.BindInput;
+import dev.sqwat.vela.ui.input.KeyLabels;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class BindInputTest {

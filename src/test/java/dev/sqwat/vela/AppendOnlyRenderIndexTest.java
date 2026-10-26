@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.AppendOnlyRenderIndex;
+import dev.sqwat.vela.render.perf.AppendOnlyRenderIndex;
 import org.junit.jupiter.api.Test;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;

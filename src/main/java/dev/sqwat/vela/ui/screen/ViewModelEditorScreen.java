@@ -1,9 +1,9 @@
 package dev.sqwat.vela.ui.screen;
 
 import dev.sqwat.vela.core.VelaServices;
-import dev.sqwat.vela.module.ViewModel;
+import dev.sqwat.vela.module.visual.ViewModel;
 import dev.sqwat.vela.module.setting.NumberSetting;
-import dev.sqwat.vela.ui.TextEdit;
+import dev.sqwat.vela.ui.input.TextEdit;
 import dev.sqwat.vela.ui.render.*;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.*;
@@ -97,7 +97,7 @@ public final class ViewModelEditorScreen extends VelaScreen {
     }
     private void keepVisible(){
         if(minecraft.player==null)return;
-        var projection=((dev.sqwat.vela.mixin.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
+        var projection=((dev.sqwat.vela.mixin.entity.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
         for(var hand:net.minecraft.world.InteractionHand.values()){
             boolean main=hand==net.minecraft.world.InteractionHand.MAIN_HAND;
             boolean right=(main?minecraft.player.getMainArm():minecraft.player.getMainArm().getOpposite())==net.minecraft.world.entity.HumanoidArm.RIGHT;
@@ -125,7 +125,7 @@ public final class ViewModelEditorScreen extends VelaScreen {
         if(dragging){
             captureHand(e.x(),e.y());
             dragX=dragY=0;startX=values.get(0).value();startY=values.get(1).value();
-            var projection=((dev.sqwat.vela.mixin.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
+            var projection=((dev.sqwat.vela.mixin.entity.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
             double depth=Math.max(.05,.72-values.get(2).value());
             dragUnitX=2*depth/(Math.max(.01,Math.abs(projection.m00()))*Math.max(1,width));
             dragUnitY=2*depth/(Math.max(.01,Math.abs(projection.m11()))*Math.max(1,height));
@@ -157,7 +157,7 @@ public final class ViewModelEditorScreen extends VelaScreen {
     }
     private void captureHand(double x,double y){
         if(!model.hand().value().equals("Обе")||minecraft.player==null)return;
-        var projection=((dev.sqwat.vela.mixin.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
+        var projection=((dev.sqwat.vela.mixin.entity.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f());
         net.minecraft.world.InteractionHand closest=net.minecraft.world.InteractionHand.MAIN_HAND;
         double best=Double.POSITIVE_INFINITY;
         for(var hand:net.minecraft.world.InteractionHand.values()){
@@ -179,7 +179,7 @@ public final class ViewModelEditorScreen extends VelaScreen {
             if(commit()){focus=next;input.set(String.format(Locale.ROOT,"%.2f",values.get(focus).value()));input.selectAll();}
             return true;
         }
-        if(focus>=0)dev.sqwat.vela.ui.GameTextInput.key(input,e,12);
+        if(focus>=0)dev.sqwat.vela.ui.input.GameTextInput.key(input,e,12);
         return true;
     }
     @Override public boolean charTyped(CharacterEvent e){if(focus>=0&&e.isAllowedChatCharacter())input.insert(e.codepointAsString(),12);return true;}

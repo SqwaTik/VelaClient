@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.ReloadWorldBinding;
+import dev.sqwat.vela.render.resource.ReloadWorldBinding;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class ReloadWorldBindingTest {

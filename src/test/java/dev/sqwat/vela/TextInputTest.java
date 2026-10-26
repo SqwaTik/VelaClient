@@ -1,4 +1,6 @@
 package dev.sqwat.vela;
+import dev.sqwat.vela.ui.input.TextEdit;
+import dev.sqwat.vela.ui.input.TextInput;
 import dev.sqwat.vela.ui.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

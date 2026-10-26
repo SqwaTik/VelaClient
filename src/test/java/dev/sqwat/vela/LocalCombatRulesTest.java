@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.LocalCombatRules;
+import dev.sqwat.vela.module.utility.LocalCombatRules;
 import net.minecraft.world.damagesource.CombatRules;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
@@ -18,7 +18,7 @@ class LocalCombatRulesTest {
         assertTrue(player.methods.stream().anyMatch(m->m.name.equals("getEnchantedDamage")&&m.desc.equals("(Lnet/minecraft/world/entity/Entity;FLnet/minecraft/world/damagesource/DamageSource;)F")));
         var living=read("net/minecraft/world/entity/LivingEntity");
         assertTrue(living.methods.stream().anyMatch(m->m.name.equals("getKnockback")&&m.desc.equals("(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)F")));
-        var dummy=read("dev/sqwat/vela/module/FakePlayer$LocalDummy");
+        var dummy=read("dev/sqwat/vela/module/utility/FakePlayer$LocalDummy");
         var kb=dummy.methods.stream().filter(m->m.name.equals("knockback")).findFirst().orElseThrow();
         assertTrue(calls(kb,"knockback"));assertFalse(calls(kb,"setDeltaMovement"));
         var receive=dummy.methods.stream().filter(m->m.name.equals("receive")).findFirst().orElseThrow();

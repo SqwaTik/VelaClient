@@ -1,5 +1,5 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.render.LocalHitWindow;
+import dev.sqwat.vela.render.effect.LocalHitWindow;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class LocalHitWindowTest {

@@ -139,7 +139,7 @@ public final class VelaSessionLoginScreen extends VelaScreen implements LoginHan
             return true;
         }
         if (password && focusIndex == 0) {
-            if(event.key()==GLFW.GLFW_KEY_BACKSPACE&&(event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){var edit=new dev.sqwat.vela.ui.TextEdit();edit.set(passwordValue);edit.eraseWord();passwordValue=edit.text();return true;}
+            if(event.key()==GLFW.GLFW_KEY_BACKSPACE&&(event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){var edit=new dev.sqwat.vela.ui.input.TextEdit();edit.set(passwordValue);edit.eraseWord();passwordValue=edit.text();return true;}
             if (event.key() == GLFW.GLFW_KEY_BACKSPACE && !passwordValue.isEmpty())
                 passwordValue = passwordValue.substring(0, passwordValue.offsetByCodePoints(passwordValue.length(), -1));
             else if (event.key() == GLFW.GLFW_KEY_ENTER) submitPassword();

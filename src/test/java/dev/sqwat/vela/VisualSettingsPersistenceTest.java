@@ -12,16 +12,16 @@ class VisualSettingsPersistenceTest {
     @TempDir Path root;
     @Test void combinedShaderSettingsPersist(){
         try(var services=new VelaServices(root)){
-            var shader=(dev.sqwat.vela.module.Shaders)services.modules().byId("shaders");
+            var shader=(dev.sqwat.vela.module.visual.Shaders)services.modules().byId("shaders");
             for(String id:java.util.List.of("sky","hands","wet"))
                 ((BooleanSetting)shader.settings().stream().filter(s->s.id().equals(id)).findFirst().orElseThrow()).set(true);
             ((ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("hand_mode")).findFirst().orElseThrow()).set("Пламя");
             ((ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("sky_mode")).findFirst().orElseThrow()).set("Чёрная дыра");
             ((ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("wet_quality")).findFirst().orElseThrow()).set("Низкое");
-            shader.skyCode(dev.sqwat.vela.render.CustomSkySource.DEFAULT+"\n// saved draft");
+            shader.skyCode(dev.sqwat.vela.render.shader.CustomSkySource.DEFAULT+"\n// saved draft");
         }
         try(var services=new VelaServices(root)){
-            var shader=(dev.sqwat.vela.module.Shaders)services.modules().byId("shaders");
+            var shader=(dev.sqwat.vela.module.visual.Shaders)services.modules().byId("shaders");
             assertTrue(shader.skyActive());assertTrue(shader.handsActive());assertTrue(shader.wetActive());
             assertEquals("Пламя",shader.handMode());assertEquals("Чёрная дыра",shader.skyMode());
             assertEquals(14,shader.reflectionSteps());assertTrue(shader.skyCode().endsWith("// saved draft"));
@@ -34,10 +34,10 @@ class VisualSettingsPersistenceTest {
             ((dev.sqwat.vela.module.setting.NumberSetting)shader.settings().stream().filter(s->s.id().equals("fog_height")).findFirst().orElseThrow()).set(72d);
             ((BooleanSetting)shader.settings().stream().filter(s->s.id().equals("wet")).findFirst().orElseThrow()).set(true);
             ((ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("hand_mode")).findFirst().orElseThrow()).set("Стекло");
-            ((dev.sqwat.vela.module.Shaders)shader).skyCode("void mainImage(out vec4 c, in vec2 p){c=vec4(1.0);}");
+            ((dev.sqwat.vela.module.visual.Shaders)shader).skyCode("void mainImage(out vec4 c, in vec2 p){c=vec4(1.0);}");
         }
         try(var services=new VelaServices(root)){
-            var shader=(dev.sqwat.vela.module.Shaders)services.modules().byId("shaders");
+            var shader=(dev.sqwat.vela.module.visual.Shaders)services.modules().byId("shaders");
             assertTrue(shader.enabled());assertEquals(72,shader.fogHeight());
             assertTrue(shader.wetActive());assertEquals("Стекло",shader.handMode());
             assertEquals("void mainImage(out vec4 c, in vec2 p){c=vec4(1.0);}",shader.skyCode());

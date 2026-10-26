@@ -1,6 +1,6 @@
 package dev.sqwat.vela;
 
-import dev.sqwat.vela.render.OcclusionRay;
+import dev.sqwat.vela.render.entity.OcclusionRay;
 import org.junit.jupiter.api.Test;
 import java.util.HashSet;
 import java.util.Random;

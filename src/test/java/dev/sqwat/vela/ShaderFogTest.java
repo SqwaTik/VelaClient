@@ -1,12 +1,12 @@
 package dev.sqwat.vela;
-import dev.sqwat.vela.module.Shaders;
+import dev.sqwat.vela.module.visual.Shaders;
 import dev.sqwat.vela.module.setting.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class ShaderFogTest {
     @Test void skyRasterWorkIsBoundedAcrossWindowSizes(){
         for(int[] size:new int[][]{{1,1},{1280,720},{1920,1080},{2560,1440},{3840,2160},{7680,4320},{1080,1920}}){
-            int divisor=dev.sqwat.vela.render.SkyShaderRenderer.resolutionDivisor(size[0],size[1]);
+            int divisor=dev.sqwat.vela.render.shader.SkyShaderRenderer.resolutionDivisor(size[0],size[1]);
             assertTrue(divisor>=2);
             assertTrue(Math.max(1,size[0]/divisor)<=960);
             assertTrue(Math.max(1,size[1]/divisor)<=540);

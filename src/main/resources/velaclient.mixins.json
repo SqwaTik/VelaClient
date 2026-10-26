@@ -108,7 +108,8 @@
     "world.AttackSoundMuteMixin",
     "screen.WastedDeathScreenStyleMixin",
     "screen.AutoReconnectMixin",
-    "screen.ChatTimestampMixin"
+    "screen.ChatTimestampMixin",
+    "screen.WastedHoldScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

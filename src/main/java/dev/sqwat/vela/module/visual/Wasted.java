@@ -52,6 +52,11 @@ public final class Wasted extends ClientModule {
         if(s==null||!(s.modules().byId("wasted") instanceof Wasted module)||!module.enabled()||mc.player==null)return false;
         module.begin(deathScreen,mc);return true;
     }
+    /** A death screen opened while the effect runs is held (replacing the earlier one) instead of shown. */
+    public static boolean hold(DeathScreen screen){
+        var w=running;if(w==null)return false;
+        w.pending=screen;return true;
+    }
     private void begin(Screen deathScreen,Minecraft mc){
         pending=deathScreen;started=System.nanoTime();level=mc.level;startYaw=mc.player.getYRot();running=this;presenting=null;
         if(orbit.value()){previousCamera=mc.options.getCameraType();mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);}

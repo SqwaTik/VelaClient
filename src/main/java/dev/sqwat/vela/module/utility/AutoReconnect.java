@@ -34,7 +34,7 @@ public final class AutoReconnect extends ClientModule {
         var s=dev.sqwat.vela.VelaClient.services();
         return s!=null&&s.modules().byId("auto_reconnect") instanceof AutoReconnect m&&m.enabled()&&m.last!=null?m:null;
     }
-    public String serverName(){return last.name;}
+    public String serverIp(){return last.ip;}
     /** Seconds until the automatic attempt, or -1 when it will not happen. */
     public long countdownNanos(){return automatic.value()&&allowed()?delay.value().longValue()*1_000_000_000L:-1;}
     private boolean allowed(){

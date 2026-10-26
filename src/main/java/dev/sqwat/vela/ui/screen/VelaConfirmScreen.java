@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 public final class VelaConfirmScreen extends VelaScreen {
     private final VelaScreen parent;private final String name;private final Supplier<String> action;
     private final UiControls controls=new UiControls();private Rect confirm=new Rect(0,0,0,0),cancel=confirm;private String error="";
-    public VelaConfirmScreen(VelaScreen parent,String name,Supplier<String> action){super(Component.literal("Удаление конфигурации"));this.parent=parent;this.name=name;this.action=action;}
+    public VelaConfirmScreen(VelaScreen parent,String name,Supplier<String> action){super(Component.literal(dev.sqwat.vela.ui.Lang.tr("Удаление конфигурации")));this.parent=parent;this.name=name;this.action=action;}
     @Override protected float interfaceScale(){return parent.interfaceScale();}
     @Override protected void renderVela(GuiGraphicsExtractor g,int mx,int my,float delta){
         parent.renderAsBackdrop(g,width,height,delta);g.nextStratum();g.fill(0,0,width,height,0xB805070A);

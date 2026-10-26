@@ -22,7 +22,7 @@ public final class ShaderEditorScreen extends VelaScreen {
     private String status="Локальный GLSL запускается только по кнопке «Применить».";
     private boolean error;
     public ShaderEditorScreen(VelaScreen parent,VelaServices services,Shaders settings){
-        super(Component.literal("Редактор GLSL"));this.parent=parent;this.services=services;this.settings=settings;
+        super(Component.literal(dev.sqwat.vela.ui.Lang.tr("Редактор GLSL")));this.parent=parent;this.services=services;this.settings=settings;
     }
     @Override protected float interfaceScale(){return services.configs().current().uiScale;}
     @Override protected void init(){

@@ -17,12 +17,12 @@ public final class PerformanceCapture {
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client->{if(all!=null)finish("Выход из игры");});
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(literal("vela")
             .then(literal("perf")
-                .then(literal("start").executes(ctx->{start(false);ctx.getSource().sendFeedback(Component.literal("Замер кадров начат. Завершить: /vela perf stop"));return 1;})
+                .then(literal("start").executes(ctx->{start(false);ctx.getSource().sendFeedback(Component.literal(dev.sqwat.vela.ui.Lang.tr("Замер кадров начат. Завершить: /vela perf stop")));return 1;})
                     .then(literal("profile").executes(ctx->{
-                        try{start(true);}catch(RuntimeException error){org.slf4j.LoggerFactory.getLogger("Vela/Performance").warn("Cannot start profile",error);ctx.getSource().sendError(Component.literal("Не удалось запустить профиль нагрузки. См. журнал."));return 0;}
-                        ctx.getSource().sendFeedback(Component.literal("Замер и профиль нагрузки начаты (до 5 минут). Завершить: /vela perf stop"));return 1;})))
+                        try{start(true);}catch(RuntimeException error){org.slf4j.LoggerFactory.getLogger("Vela/Performance").warn("Cannot start profile",error);ctx.getSource().sendError(Component.literal(dev.sqwat.vela.ui.Lang.tr("Не удалось запустить профиль нагрузки. См. журнал.")));return 0;}
+                        ctx.getSource().sendFeedback(Component.literal(dev.sqwat.vela.ui.Lang.tr("Замер и профиль нагрузки начаты (до 5 минут). Завершить: /vela perf stop")));return 1;})))
                 .then(literal("stop").executes(ctx->{
-                    if(all==null){ctx.getSource().sendFeedback(Component.literal(lastReport==null?"Замер не запущен.":"Последний сохранённый замер: "+lastReport));return lastReport==null?0:1;}
+                    if(all==null){ctx.getSource().sendFeedback(Component.literal(lastReport==null?"Замер не запущен.":dev.sqwat.vela.ui.Lang.tr("Последний сохранённый замер: ")+lastReport));return lastReport==null?0:1;}
                     String report=finish("Остановлен командой");
                     ctx.getSource().sendFeedback(Component.literal(report));return 1;
                 })))));
@@ -55,7 +55,7 @@ public final class PerformanceCapture {
             dev.sqwat.vela.zako.ZakoOptConfig.parallelModels(),dev.sqwat.vela.zako.ZakoOptConfig.parallelParticles(),dev.sqwat.vela.zako.hud.HudCache.active(),
             module==null?0:dev.sqwat.vela.zako.entity.ParallelModels.retainedBytes()/(1024*1024));
     }
-    private static String format(String name,FrameSamples.Summary s){return String.format(java.util.Locale.ROOT,"%s: n=%d, среднее %.2f мс, p95 %.2f мс, p99 %.2f мс, max %.2f мс, >16.67 мс: %d",name,s.frames(),s.averageMs(),s.p95Ms(),s.p99Ms(),s.maxMs(),s.over16Ms());}
+    private static String format(String name,FrameSamples.Summary s){return String.format(java.util.Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%s: n=%d, среднее %.2f мс, p95 %.2f мс, p99 %.2f мс, max %.2f мс, >16.67 мс: %d"),name,s.frames(),s.averageMs(),s.p95Ms(),s.p99Ms(),s.maxMs(),s.over16Ms());}
     public static void attacked(){if(all!=null)attackUntil=System.nanoTime()+1_000_000_000L;}
     public static void frame(){
         if(all==null)return;

@@ -81,6 +81,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             VelaDraw.roundedRect(g,hexHit.x(),cy+57,hexHit.width(),25,6,0xFF000000|rgb);
             cy+=118;cy=slider(g,"brightness","Яркость цвета",hsv[2],.15,1,cy);
         } else if(tab==1){
+            cy=language(g,c,cy);
             cy=slider(g,"scale","UI Scale",c.uiScale,.75,1.25,cy);
             cy=toggle(g,"animations","Анимации",c.animations,cy);
             cy=toggle(g,"motion","Уменьшение движения",c.reducedMotion,cy);
@@ -94,7 +95,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             cy=toggle(g,"sounds","Звуки интерфейса",c.uiSounds,cy);
             cy=slider(g,"volume","Громкость",c.uiSoundVolume,0,1,cy);
             Rect sound=new Rect(content.x(),cy,content.width(),27);
-            button(g,sound,"Звуковой профиль: "+c.uiSoundPreset,false);controls.add(new Control("preset",sound));cy+=37;
+            button(g,sound,dev.sqwat.vela.ui.Lang.tr("Звуковой профиль: ")+c.uiSoundPreset,false);controls.add(new Control("preset",sound));cy+=37;
             Rect preview=new Rect(content.x(),cy,content.width(),27);button(g,preview,"Прослушать",false);controls.add(new Control("preview",preview));cy+=37;
         } else {
             cy=toggle(g,"show-binds","Всегда показывать бинды",c.alwaysShowBinds,cy);
@@ -116,6 +117,20 @@ public final class VelaSettingsScreen extends VelaScreen {
         VelaDraw.roundedRect(g,track.x(),track.y()+5,pos,3,2,VelaTheme.PRIMARY);
         VelaDraw.roundedRect(g,track.x()+pos-4,track.y()+2,8,9,4,VelaTheme.TEXT);
         controls.add(new Control(id,track)); return y+42;
+    }
+    /** Language row: two chips; the names are written in their own language so either is findable. */
+    private int language(GuiGraphicsExtractor g,dev.sqwat.vela.core.ClientConfig c,int y){
+        VelaDraw.text(g,font,"Язык",content.x(),y+6,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR);
+        int x=content.x()+content.width();
+        for(String id:new String[]{"ru","en"}){
+            String label=id.equals("en")?"English":"Русский";
+            int w=dev.sqwat.vela.ui.render.UiKit.chipWidth(label);x-=w;
+            var r=new Rect(x,y+4,w,dev.sqwat.vela.ui.render.UiKit.CHIP_H);
+            float hover=chrome.animate("lang-hover:"+id,r.contains(pointerX,pointerY)?1:0),active=chrome.animate("lang:"+id,c.language.equals(id)?1:0);
+            dev.sqwat.vela.ui.render.UiKit.chip(g,x,y+4,label,active,hover,false);
+            controls.add(new Control("lang-"+id,r));x-=4;
+        }
+        return y+29;
     }
     private int toggle(GuiGraphicsExtractor g,String id,String name,boolean value,int y) {
         float rowHover=chrome.animate("row-hover:"+id,content.contains(pointerX,pointerY)&&new Rect(content.x(),y,content.width(),23).contains(pointerX,pointerY)?1:0);VelaDraw.roundedRect(g,content.x()-3,y,content.width()+6,23,5,VelaTheme.mix(VelaTheme.WINDOW,VelaTheme.SURFACE_HOVER,rowHover));
@@ -149,6 +164,7 @@ public final class VelaSettingsScreen extends VelaScreen {
                 case "motion"->c.reducedMotion=!c.reducedMotion;
                 case "sounds"->c.uiSounds=!c.uiSounds;
                 case "mainmenu"->c.replaceMainMenu=!c.replaceMainMenu;
+                case "lang-en","lang-ru"->{c.language=hit.id.substring(5);dev.sqwat.vela.ui.Lang.set(c.language.equals("ru")?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);}
                 case "resetbinds"->{for(var module:services.modules().all())module.bind(-1,"None",dev.sqwat.vela.module.ClientModule.BindMode.TOGGLE);}
                 case "preview"->UiSounds.play(services,true);
                 case "preset"->c.uiSoundPreset=c.uiSoundPreset.equals("Soft")?"Classic":"Soft";

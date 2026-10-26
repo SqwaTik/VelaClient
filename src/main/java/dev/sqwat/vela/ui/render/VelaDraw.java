@@ -56,7 +56,7 @@ public final class VelaDraw {
         return ellipsize(value,width,weight,BODY);
     }
     public static String ellipsize(String value,float width,Weight weight,float size){
-        value=dev.sqwat.vela.module.utility.StreamerMode.display(value);
+        value=dev.sqwat.vela.module.utility.StreamerMode.display(dev.sqwat.vela.ui.Lang.tr(value)); // cut the shown language
         if(PngTextRenderer.width(value,weight,size)<=width)return value;
         if(PngTextRenderer.width("…",weight,size)>width)return "";
         int end=value.length();while(end>0&&PngTextRenderer.width(value.substring(0,end)+"…",weight,size)>width)end=value.offsetByCodePoints(end,-1);

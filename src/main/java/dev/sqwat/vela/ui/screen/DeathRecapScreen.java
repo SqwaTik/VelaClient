@@ -41,7 +41,7 @@ public final class DeathRecapScreen extends VelaScreen {
     @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float delta){}
 
     private int tickAt(float time){return recording.firstTick()+Math.round(time);}
-    private String clock(int tick){float s=(tick-recording.deathTick())/20f;return (s>0?"+":s<0?"−":"")+String.format(Locale.ROOT,"%.1f с",Math.abs(s));}
+    private String clock(int tick){float s=(tick-recording.deathTick())/20f;return (s>0?"+":s<0?"−":"")+String.format(Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%.1f с"),Math.abs(s));}
 
     @Override protected void renderVela(GuiGraphicsExtractor g,int mx,int my,float delta){
         DeathReplay.frame();actions.clear();
@@ -54,14 +54,14 @@ public final class DeathRecapScreen extends VelaScreen {
     }
     private void header(GuiGraphicsExtractor g){
         VelaDraw.text(g,"Death Recap",16,14,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,15f);
-        String cause=recording.message()!=null?recording.message().getString():recording.killerName()!=null?"Убил: "+recording.killerName():"Смерть";
+        String cause=recording.message()!=null?recording.message().getString():recording.killerName()!=null?dev.sqwat.vela.ui.Lang.tr("Убил: ")+recording.killerName():"Смерть";
         VelaDraw.text(g,VelaDraw.ellipsize(cause,width-32,VelaDraw.Weight.REGULAR,8.5f),16,33,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8.5f);
         float damage=0;int hits=0;
         for(var e:recording.events())if(e.kind()==DeathRecap.Kind.HIT){damage+=e.amount();hits++;}
         var death=frameAt(recording.deathTick());
         int x=16,y=47;
-        for(String stat:List.of(hits+" "+plural(hits,"удар","удара","ударов"),String.format(Locale.ROOT,"%.1f урона",damage),
-                death.armor()<0?"без брони":"броня "+death.armor()+"%","пинг "+death.ping()+" мс")){
+        for(String stat:List.of(hits+" "+plural(hits,"удар","удара","ударов"),String.format(Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%.1f урона"),damage),
+                death.armor()<0?"без брони":dev.sqwat.vela.ui.Lang.tr("броня ")+death.armor()+"%",dev.sqwat.vela.ui.Lang.tr("пинг ")+death.ping()+dev.sqwat.vela.ui.Lang.tr(" мс"))){
             x+=UiKit.chip(g,x,y,stat,0,0,false).width()+4;
         }
     }
@@ -192,6 +192,7 @@ public final class DeathRecapScreen extends VelaScreen {
         return true;
     }
     private static String plural(int n,String one,String few,String many){
+        if(dev.sqwat.vela.ui.Lang.english())return dev.sqwat.vela.ui.Lang.tr(n==1?one:many);
         int m10=n%10,m100=n%100;
         return m10==1&&m100!=11?one:m10>=2&&m10<=4&&(m100<12||m100>14)?few:many;
     }

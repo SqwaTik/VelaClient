@@ -66,7 +66,7 @@ public final class CommandEditorScreen extends VelaScreen {
             Rect row=new Rect(list.x(),rowY,lw-9,30);float active=controls.animate("entry-"+e.id(),e.id().equals(draft.selected())?1:0);
             VelaDraw.roundedRect(g,row.x(),row.y(),row.width(),30,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY_SOFT,active));
             VelaDraw.text(g,VelaDraw.ellipsize(e.name(),row.width()-12,VelaDraw.Weight.MEDIUM,8),row.x()+6,row.y()+5,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
-            String label=!e.enabled()?"Выключено":interval?e.seconds()+" сек":dev.sqwat.vela.ui.input.KeyLabels.of(e.key(),"Не назначено");
+            String label=!e.enabled()?"Выключено":interval?e.seconds()+dev.sqwat.vela.ui.Lang.tr(" сек"):dev.sqwat.vela.ui.input.KeyLabels.of(e.key(),"Не назначено");
             VelaDraw.text(g,label,row.x()+6,row.y()+18,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
             int visualY=row.y()-Math.round(scroll);
             int top=Math.max(visualY,list.y()),bottom=Math.min(visualY+30,list.y()+list.height());

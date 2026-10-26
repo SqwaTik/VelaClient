@@ -12,7 +12,7 @@ public final class RenderTweaks extends ClientModule {
         option("pictures","Картины","Скрывать рисунки карт и картин, сохраняя рамки и основу");
         option("holograms","Голограммы","Скрывать текстовые дисплеи и надписи невидимых стоек");
     }
-    private void add(String id,String name){option(id,name,"Скрывать: "+name);}
+    private void add(String id,String name){option(id,name,dev.sqwat.vela.ui.Lang.tr("Скрывать: ")+name);}
     private void option(String id,String name,String description){var value=new BooleanSetting(id,name,description,false);options.put(id,value);setting(value);}
     public boolean hides(String id){var option=options.get(id);return enabled()&&option!=null&&Boolean.TRUE.equals(option.value());}
     public static boolean hide(String id){var s=dev.sqwat.vela.VelaClient.services();return s!=null&&s.renderTweaks().hides(id);}

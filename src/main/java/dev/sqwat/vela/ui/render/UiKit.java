@@ -69,8 +69,8 @@ public final class UiKit {
     public static String ago(long millis){
         long s=Math.max(0,millis/1000);
         if(s<60)return "только что";
-        if(s<3600)return (s/60)+" мин назад";
-        if(s<86400)return (s/3600)+" ч назад";
-        return (s/86400)+" дн назад";
+        if(s<3600)return (s/60)+dev.sqwat.vela.ui.Lang.tr(" мин назад");
+        if(s<86400)return (s/3600)+dev.sqwat.vela.ui.Lang.tr(" ч назад");
+        return (s/86400)+dev.sqwat.vela.ui.Lang.tr(" дн назад");
     }
 }

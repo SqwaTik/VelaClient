@@ -1,0 +1,88 @@
+{
+  "versions": [
+    {
+      "version": "0.2.0",
+      "date": "2026-10-27",
+      "title": { "en": "Death Recap, Storage Index and smart chat", "ru": "Повтор смерти, хранилища и умный чат" },
+      "sections": [
+        { "kind": "new", "items": [
+          { "en": "Death Recap: replay the last seconds before death from a free camera, your own eyes or the killer's, at 0.25×–1× speed, with a timeline of hits, totems, potions, armour and ping.", "ru": "Death Recap: повтор последних секунд перед смертью — свободная камера, от первого лица или глазами убийцы, скорость 0.25×–1×, таймлайн ударов, тотемов, зелий, брони и пинга." },
+          { "en": "Storage Index: search every chest, barrel and shulker you have opened, including shulkers inside chests; place a marker on any of them.", "ru": "Storage Index: поиск по всем открытым сундукам, бочкам и шалкерам, включая шалкеры в сундуках; метка на любой из них." },
+          { "en": "Smart chat: coordinates become clickable markers, your name is highlighted with a soft chime, private messages fold into tabs.", "ru": "Умный чат: координаты превращаются в кликабельные метки, ваш ник подсвечивается с тихим сигналом, личные сообщения собираются во вкладки." },
+          { "en": "What's new: this changelog on the main menu.", "ru": "«Что нового»: этот список изменений в главном меню." },
+          { "en": "English interface, switchable to Russian in the settings.", "ru": "Английский интерфейс; русский включается в настройках." }
+        ]},
+        { "kind": "improved", "items": [
+          { "en": "Zipped resource packs load faster: entries are indexed once instead of scanned on every lookup.", "ru": "Ресурспаки в ZIP грузятся быстрее: записи индексируются один раз вместо полного обхода при каждом запросе." },
+          { "en": "Loading screen: animation keeps going through reload stalls, fades out slower and reveals the already drawn menu.", "ru": "Экран загрузки: анимация не дёргается на подвисаниях перезагрузки, затухает плавнее и открывает уже отрисованное меню." },
+          { "en": "Shared interface components keep chips, cards and fields identical everywhere.", "ru": "Общие компоненты интерфейса: чипы, карточки и поля одинаковые везде." }
+        ]}
+      ]
+    },
+    {
+      "version": "0.1.12",
+      "date": "2026-10-26",
+      "title": { "en": "Wasted, Brew Viewer and a lot more", "ru": "Wasted, Brew Viewer и многое другое" },
+      "sections": [
+        { "kind": "new", "items": [
+          { "en": "Wasted: cinematic GTA-style death with its own sound.", "ru": "Wasted: кинематографичная смерть в стиле GTA со своим звуком." },
+          { "en": "Brew Viewer, Item Pickups, Tab Ping, Food Info, Key Strokes, Array List, Custom Hotbar, Freelook.", "ru": "Brew Viewer, Item Pickups, Tab Ping, Food Info, Key Strokes, Array List, Custom Hotbar, Freelook." },
+          { "en": "Hit Sound with built-in and custom sounds; vanilla hit sounds muted.", "ru": "Hit Sound со встроенными и своими звуками; ванильные звуки удара заглушаются." },
+          { "en": "Chat, Container Tools and Death modules; Auto Reconnect; Coordinates with portal maths and dimension icons.", "ru": "Модули Chat, Container Tools и Death; Auto Reconnect; Coordinates с пересчётом для портала и иконками измерений." }
+        ]},
+        { "kind": "improved", "items": [
+          { "en": "Steady 800 FPS: cached HUD panels, batched GUI drawing, entity occlusion.", "ru": "Стабильные 800 FPS: кэш HUD-панелей, пакетная отрисовка GUI, отсечение скрытых сущностей." },
+          { "en": "Pinger animates, updates live and fades on its own.", "ru": "Pinger анимирован, обновляется вживую и исчезает сам." }
+        ]},
+        { "kind": "fixed", "items": [
+          { "en": "Mobs no longer twitch when hit.", "ru": "Мобы больше не дёргаются при ударе." },
+          { "en": "\"?\" instead of the minus sign in damage numbers.", "ru": "«?» вместо минуса в числах урона." }
+        ]}
+      ]
+    },
+    {
+      "version": "0.1.11",
+      "date": "2026-09-25",
+      "title": { "en": "Editors and Click Pearl", "ru": "Редакторы и Click Pearl" },
+      "sections": [
+        { "kind": "improved", "items": [
+          { "en": "Macros and Interval Commands editors: shared controls, smooth scrolling, no switch delay.", "ru": "Редакторы Macros и Interval Commands: общие контролы, плавная прокрутка, без задержки переключения." },
+          { "en": "Friend name tags use the tab list colour.", "ru": "Подложка ника друга использует цвет из таба." }
+        ]},
+        { "kind": "new", "items": [
+          { "en": "Click Pearl: throw a pearl from the hotbar with its own key and return to the slot.", "ru": "Click Pearl: бросок жемчуга с хотбара своей клавишей и возврат слота." }
+        ]}
+      ]
+    },
+    {
+      "version": "0.1.10",
+      "date": "2026-09-24",
+      "title": { "en": "Command editor", "ru": "Редактор команд" },
+      "sections": [
+        { "kind": "improved", "items": [
+          { "en": "Explicit create and edit modes; the form clears after adding.", "ru": "Явные режимы создания и редактирования; форма очищается после добавления." }
+        ]}
+      ]
+    },
+    {
+      "version": "0.1.9",
+      "date": "2026-09-24",
+      "title": { "en": "Gamma and command automation", "ru": "Gamma и автоматизация команд" },
+      "sections": [
+        { "kind": "new", "items": [
+          { "en": "Gamma adapting to local light; Macros and Interval Commands.", "ru": "Gamma с адаптацией к освещению; Macros и Interval Commands." }
+        ]}
+      ]
+    },
+    {
+      "version": "0.1.8",
+      "date": "2026-09-21",
+      "title": { "en": "HUD fixes", "ru": "Исправления HUD" },
+      "sections": [
+        { "kind": "fixed", "items": [
+          { "en": "HUD panel fixes; unused map model preparation skipped for item frames.", "ru": "Исправления HUD-панелей; неиспользуемая модель карты в рамке не готовится." }
+        ]}
+      ]
+    }
+  ]
+}

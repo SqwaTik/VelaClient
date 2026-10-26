@@ -42,9 +42,9 @@ public final class TalTracker extends ClientModule {
         boolean enchanted=held.is(Items.TOTEM_OF_UNDYING)&&held.isEnchanted();
         boolean friend=dev.sqwat.vela.VelaClient.services().friends().contains(name);
         var line=Component.literal(name).withStyle(st->st.withColor(friend?0x5BE38A:0xFFFFFF))
-            .append(Component.literal(" потерял тотем ").withStyle(st->st.withColor(0xB9C2D6)))
+            .append(Component.literal(dev.sqwat.vela.ui.Lang.tr(" потерял тотем ")).withStyle(st->st.withColor(0xB9C2D6)))
             .append(Component.literal("#"+count).withStyle(st->st.withColor(0xFF5A6E)));
-        if(enchanted)line.append(Component.literal(" (зачарованный)").withStyle(st->st.withColor(0xC08CFF)));
+        if(enchanted)line.append(Component.literal(dev.sqwat.vela.ui.Lang.tr(" (зачарованный)")).withStyle(st->st.withColor(0xC08CFF)));
         mc.gui.hud.getChat().addClientSystemMessage(line);
     }
     @Override public void onClientTick(){
@@ -60,7 +60,7 @@ public final class TalTracker extends ClientModule {
             if(player!=null&&deaths.value()){
                 String name=names.getOrDefault(entry.getKey(),player.getGameProfile().name());
                 mc.gui.hud.getChat().addClientSystemMessage(Component.literal(name).withStyle(st->st.withColor(0xFFFFFF))
-                    .append(Component.literal(" погиб, потеряв тотемов: ").withStyle(st->st.withColor(0xB9C2D6)))
+                    .append(Component.literal(dev.sqwat.vela.ui.Lang.tr(" погиб, потеряв тотемов: ")).withStyle(st->st.withColor(0xB9C2D6)))
                     .append(Component.literal(Integer.toString(entry.getValue())).withStyle(st->st.withColor(0xFF5A6E))));
             }
             names.remove(entry.getKey());iterator.remove();

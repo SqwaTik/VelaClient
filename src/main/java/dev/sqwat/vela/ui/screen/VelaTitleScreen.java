@@ -27,6 +27,7 @@ public final class VelaTitleScreen extends VelaScreen {
     private long clockSecond=-1;
     private String timeLabel="",dateLabel="";
     private static final java.time.format.DateTimeFormatter TIME=java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+    private static final java.time.format.DateTimeFormatter DATE_EN=java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM",java.util.Locale.ENGLISH);
     private static final java.time.format.DateTimeFormatter DATE=java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM",java.util.Locale.forLanguageTag("ru"));
 
     public VelaTitleScreen(VelaServices services) {
@@ -45,7 +46,7 @@ public final class VelaTitleScreen extends VelaScreen {
         int y=height/2-75+Math.round((1-Motion.easeOutCubic(entrance))*5);
         VelaDraw.logo(g,center-14,y-43,28);
         long second=System.currentTimeMillis()/1000;
-        if(second!=clockSecond){clockSecond=second;var now=java.time.LocalDateTime.now();timeLabel=now.format(TIME);dateLabel=now.format(DATE);}
+        if(second!=clockSecond){clockSecond=second;var now=java.time.LocalDateTime.now();timeLabel=now.format(TIME);dateLabel=now.format(dev.sqwat.vela.ui.Lang.english()?DATE_EN:DATE);}
         VelaDraw.centeredText(g,timeLabel,center,y,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,36);
         VelaDraw.centeredText(g,dateLabel,center,y+45,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,9);
         hits.clear();

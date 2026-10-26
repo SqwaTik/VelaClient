@@ -86,7 +86,7 @@ public final class Trajectories extends ClientModule {
         }
         boolean airborne=source instanceof ThrowableItemProjectile;
         return new Path(List.copyOf(points),initialVelocity,source.getId(),
-            hit&&known?String.format(Locale.ROOT,"%.1f с",ticks/20):"В полёте",hit,airborne);
+            hit&&known?String.format(Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%.1f с"),ticks/20):"В полёте",hit,airborne);
     }
     private List<AABB> collisionBoxes(Minecraft mc,Entity source,Vec3 start){
         long tick=mc.level.getGameTime();

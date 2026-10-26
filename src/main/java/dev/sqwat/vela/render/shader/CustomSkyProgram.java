@@ -42,6 +42,6 @@ public final class CustomSkyProgram {
                 return errors.isBlank()?"Ошибка GLSL. Подробности в latest.log":errors.substring(Math.max(0,errors.length()-3000));
             }
             accepted=source;fragment=next;return null;
-        }catch(RuntimeException error){device.clearPipelineCache();return "Ошибка GLSL: "+error.getMessage();}
+        }catch(RuntimeException error){device.clearPipelineCache();return dev.sqwat.vela.ui.Lang.tr("Ошибка GLSL: ")+error.getMessage();}
     }
 }

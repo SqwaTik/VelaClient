@@ -40,10 +40,10 @@ public final class Death extends ClientModule {
     private static void announce(Minecraft mc){
         String coords=mc.player.getBlockX()+" "+mc.player.getBlockY()+" "+mc.player.getBlockZ();
         String dimension=mc.level.dimension().identifier().getPath();
-        var line=Component.literal("Место смерти: ").withStyle(s->s.withColor(0xB9C2D6))
+        var line=Component.literal(dev.sqwat.vela.ui.Lang.tr("Место смерти: ")).withStyle(s->s.withColor(0xB9C2D6))
             .append(Component.literal(coords).withStyle(s->s.withColor(0xFFFFFF).withUnderlined(true)
                 .withClickEvent(new ClickEvent.CopyToClipboard(coords))
-                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Скопировать координаты")))))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal(dev.sqwat.vela.ui.Lang.tr("Скопировать координаты"))))))
             .append(Component.literal(" ("+dimension+")").withStyle(s->s.withColor(0x8996B0)));
         mc.gui.hud.getChat().addClientSystemMessage(line);
     }

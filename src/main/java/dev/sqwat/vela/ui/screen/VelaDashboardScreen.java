@@ -290,7 +290,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         String key=(services.configs().current().alwaysShowBinds||hovered&&!expanded)&&module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):"";
         float keyWidth=key.isEmpty()?0:VelaDraw.textWidth(key,VelaDraw.Weight.REGULAR,7)+6;
         // Search results carry their tab as a chip: same padding on every side, centred on the title line.
-        String location=search.isBlank()?"":"в "+sectionOf(module).title();
+        String location=search.isBlank()?"":dev.sqwat.vela.ui.Lang.tr("в ")+sectionOf(module).title();
         int chipText=location.isEmpty()?0:(int)Math.ceil(VelaDraw.textWidth(location,VelaDraw.Weight.MEDIUM,8)),chipWidth=chipText+LOCATION_PAD*2;
         float locationWidth=location.isEmpty()?0:chipWidth+LOCATION_GAP;
         String title=VelaDraw.ellipsize(module.name(),labelWidth-keyWidth-locationWidth,VelaDraw.Weight.MEDIUM);
@@ -571,7 +571,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         long now=System.currentTimeMillis();
         if(now>savedTimesRefresh){savedTimes.clear();for(String profile:services.configs().profiles())try{savedTimes.put(profile,java.nio.file.Files.getLastModifiedTime(services.configs().profilePath(profile)).toMillis());}catch(java.io.IOException ignored){}savedTimesRefresh=now+1000;}
         Long time=savedTimes.get(name);if(time==null)return "Время сохранения неизвестно";
-        long minutes=Math.max(0,(now-time)/60000);return minutes==0?"Сохранено только что":minutes<60?"Сохранено "+minutes+" мин. назад":minutes<1440?"Сохранено "+minutes/60+" ч. назад":"Сохранено "+minutes/1440+" д. назад";
+        long minutes=Math.max(0,(now-time)/60000);return minutes==0?"Сохранено только что":minutes<60?dev.sqwat.vela.ui.Lang.tr("Сохранено ")+minutes+dev.sqwat.vela.ui.Lang.tr(" мин. назад"):minutes<1440?dev.sqwat.vela.ui.Lang.tr("Сохранено ")+minutes/60+dev.sqwat.vela.ui.Lang.tr(" ч. назад"):dev.sqwat.vela.ui.Lang.tr("Сохранено ")+minutes/1440+dev.sqwat.vela.ui.Lang.tr(" д. назад");
     }
     private void drawerButton(GuiGraphicsExtractor g,Rect rect,String icon,boolean open){controls.iconButton(g,"drawer:"+section+":"+icon,rect,icon,open,rect.contains(pointerX,pointerY));}
     private boolean sideOpen(){return section==VelaSection.MARKERS?markerPanel.settingsOpen():section==VelaSection.FRIENDS?friendSettings:section==VelaSection.CONFIGS&&configPanelOpen;}
@@ -687,7 +687,7 @@ public final class VelaDashboardScreen extends VelaScreen {
                 if(doubled)edit.selectWord();return true;
             }
             if(actionHit.contains(mx,my)){createConfig();return true;}
-            if(importHit.contains(mx,my)){try{String imported=services.configs().importProfile(configKey);configKey="";showToast("Активирован "+imported);}catch(Exception error){showToast(error.getMessage());}return true;}
+            if(importHit.contains(mx,my)){try{String imported=services.configs().importProfile(configKey);configKey="";showToast(dev.sqwat.vela.ui.Lang.tr("Активирован ")+imported);}catch(Exception error){showToast(error.getMessage());}return true;}
             return true;
         }
         if(section==VelaSection.CONFIGS&&configFolderHit.contains(mx,my)){net.minecraft.util.Util.getPlatform().openUri(services.configs().profilesDirectory().toUri());return true;}
@@ -771,7 +771,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             if(configNameFocused){configKeyFocused=false;searchFocused=false;nameEdit.set(configName);dev.sqwat.vela.ui.render.TextFieldDraw.click(nameEdit,new Rect(configNameHit.x()+8,configNameHit.y()+5,configNameHit.width()-16,14),mx,false);return true;}
             configKeyFocused=configKeyHit.contains(mx,my);
             if(configKeyFocused){searchFocused=false;keyEdit.set(configKey);dev.sqwat.vela.ui.render.TextFieldDraw.click(keyEdit,new Rect(configKeyHit.x()+8,configKeyHit.y()+6,configKeyHit.width()-16,14),mx,false);if(doubled)keyEdit.selectAll();return true;}
-            if(importHit.contains(mx,my)){try{String imported=services.configs().importProfile(configKey);configKey="";showToast("Активирован "+imported);}catch(Exception error){showToast(error.getMessage());}return true;}
+            if(importHit.contains(mx,my)){try{String imported=services.configs().importProfile(configKey);configKey="";showToast(dev.sqwat.vela.ui.Lang.tr("Активирован ")+imported);}catch(Exception error){showToast(error.getMessage());}return true;}
             for (ProfileHit hit : profileHits) {
                 if (hit.rect().contains(mx, my)) {
                     try {
@@ -899,9 +899,9 @@ public final class VelaDashboardScreen extends VelaScreen {
     private void createConfig(){
         String name=configName.strip();
         if(!name.matches("[A-Za-z0-9_-]{1,32}")){showToast("Имя: латиница, цифры, _ и -");return;}
-        if(renameSource!=null){try{services.configs().renameProfile(renameSource,name);renameSource=null;configName="";nameEdit.set("");savedTimesRefresh=0;showToast("Конфиг переименован · "+name);}catch(java.io.IOException error){showToast(error.getMessage());}return;}
+        if(renameSource!=null){try{services.configs().renameProfile(renameSource,name);renameSource=null;configName="";nameEdit.set("");savedTimesRefresh=0;showToast(dev.sqwat.vela.ui.Lang.tr("Конфиг переименован · ")+name);}catch(java.io.IOException error){showToast(error.getMessage());}return;}
         if(services.configs().profiles().contains(name.toLowerCase(java.util.Locale.ROOT))){showToast("Такой конфиг уже есть");return;}
-        services.configs().createProfile(name);configName="";nameEdit.set("");showToast("Конфиг создан · "+name);
+        services.configs().createProfile(name);configName="";nameEdit.set("");showToast(dev.sqwat.vela.ui.Lang.tr("Конфиг создан · ")+name);
     }
     private void showToast(String message) {String[] lines=message.split(" · ",2);dev.sqwat.vela.ui.Notifications.show(lines[0],lines.length>1?lines[1]:"",section==VelaSection.CONFIGS?"configs":section==VelaSection.FRIENDS?"friends":"settings");}
     private Rect primaryButton(GuiGraphicsExtractor g, Rect rect, String label) {
@@ -1016,7 +1016,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         if(contextModule!=null){
             ClientModule module=contextModule;
             popupRow(g,new Rect(popupRect.x()+4,y,popupRect.width()-8,23),"Назначить клавишу",mx,my,()->{binding=module;hover.put("bind-entrance",0f);draftKey=module.boundKey();draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,module.keybind());draftMode=module.bindMode();capturing=false;contextModule=null;});
-            popupRow(g,new Rect(popupRect.x()+4,y+23,popupRect.width()-8,23),"Режим: "+(module.bindMode()==ClientModule.BindMode.HOLD?"Hold":"Toggle"),mx,my,()->{module.bind(module.boundKey(),module.keybind(),module.bindMode()==ClientModule.BindMode.HOLD?ClientModule.BindMode.TOGGLE:ClientModule.BindMode.HOLD);services.configs().requestSave();contextModule=null;});
+            popupRow(g,new Rect(popupRect.x()+4,y+23,popupRect.width()-8,23),dev.sqwat.vela.ui.Lang.tr("Режим: ")+(module.bindMode()==ClientModule.BindMode.HOLD?"Hold":"Toggle"),mx,my,()->{module.bind(module.boundKey(),module.keybind(),module.bindMode()==ClientModule.BindMode.HOLD?ClientModule.BindMode.TOGGLE:ClientModule.BindMode.HOLD);services.configs().requestSave();contextModule=null;});
         }else {
             ChoiceSetting select=choice;
             for(String option:select.options()){Rect row=new Rect(popupRect.x()+4,y,popupRect.width()-8,23);popupRow(g,row,option,mx,my,()->{select.set(option);choice=null;services.configs().requestSave();});y+=24;}

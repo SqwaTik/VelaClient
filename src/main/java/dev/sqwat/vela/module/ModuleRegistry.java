@@ -29,11 +29,10 @@ public final class ModuleRegistry {
 
     public synchronized List<ClientModule> find(ModuleCategory category, String query) {
         String needle = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
-        String key=category.name()+":"+needle;if(searches.containsKey(key))return searches.get(key);
+        String key=dev.sqwat.vela.ui.Lang.current()+":"+category.name()+":"+needle;if(searches.containsKey(key))return searches.get(key);
         var result=snapshot.stream()
             .filter(module -> module.category() == category)
-            .filter(module -> needle.isEmpty() || module.name().toLowerCase(Locale.ROOT).contains(needle)
-                || module.description().toLowerCase(Locale.ROOT).contains(needle))
+            .filter(module -> needle.isEmpty() || matches(module,needle))
             .toList();
         cache(key,result);return result;
     }
@@ -41,13 +40,16 @@ public final class ModuleRegistry {
     public synchronized List<ClientModule> findAll(String query) {
         String needle = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
         if (needle.isEmpty()) return snapshot;
-        String key="all:"+needle;if(searches.containsKey(key))return searches.get(key);
+        String key=dev.sqwat.vela.ui.Lang.current()+":all:"+needle;if(searches.containsKey(key))return searches.get(key);
         var result=snapshot.stream()
-            .filter(module -> module.name().toLowerCase(Locale.ROOT).contains(needle)
-                || module.description().toLowerCase(Locale.ROOT).contains(needle)
-                || module.category().title().toLowerCase(Locale.ROOT).contains(needle))
+            .filter(module -> matches(module,needle)||module.category().title().toLowerCase(Locale.ROOT).contains(needle))
             .toList();
         cache(key,result);return result;
+    }
+    /** Name, or description in either language, so search works whichever language the player types in. */
+    private static boolean matches(ClientModule module,String needle){
+        return module.name().toLowerCase(Locale.ROOT).contains(needle)||module.description().toLowerCase(Locale.ROOT).contains(needle)
+            ||dev.sqwat.vela.ui.Lang.tr(module.description()).toLowerCase(Locale.ROOT).contains(needle);
     }
     private void cache(String key,List<ClientModule> result){if(searches.size()>=64)searches.remove(searches.keySet().iterator().next());searches.put(key,result);}
 

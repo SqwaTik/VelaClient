@@ -31,12 +31,12 @@ public final class LocalCommands {
                     java.nio.file.Files.createDirectories(services.configs().profilesDirectory());
                     Util.getPlatform().openUri(services.configs().profilesDirectory().toUri());result="Папка конфигураций открыта";
                 }else{
-                    if(args.length!=3||!args[2].matches("[A-Za-z0-9_-]{1,32}"))throw new IllegalArgumentException(usage+". Имя: латиница, цифры, _ и -");
+                    if(args.length!=3||!args[2].matches("[A-Za-z0-9_-]{1,32}"))throw new IllegalArgumentException(usage+dev.sqwat.vela.ui.Lang.tr(". Имя: латиница, цифры, _ и -"));
                     String name=args[2].toLowerCase(java.util.Locale.ROOT);
                     switch(args[1].toLowerCase(java.util.Locale.ROOT)){
-                        case "load" -> {requireProfile(services,name);services.configs().selectProfile(name);result="Загружен: "+name;}
-                        case "save" -> {services.configs().saveToProfile(name);result="Сохранён: "+name;}
-                        case "remove" -> {requireProfile(services,name);services.configs().archiveProfile(name);result="Перемещён в архив: "+name;}
+                        case "load" -> {requireProfile(services,name);services.configs().selectProfile(name);result=dev.sqwat.vela.ui.Lang.tr("Загружен: ")+name;}
+                        case "save" -> {services.configs().saveToProfile(name);result=dev.sqwat.vela.ui.Lang.tr("Сохранён: ")+name;}
+                        case "remove" -> {requireProfile(services,name);services.configs().archiveProfile(name);result=dev.sqwat.vela.ui.Lang.tr("Перемещён в архив: ")+name;}
                         default -> throw new IllegalArgumentException(usage);
                     }
                 }
@@ -47,7 +47,7 @@ public final class LocalCommands {
             .append(Component.literal(result).withStyle(s->s.withColor(0xDCE2EE))));
         return false;
     }
-    private static void requireProfile(VelaServices services,String name){if(!services.configs().profiles().contains(name))throw new IllegalArgumentException("Конфигурация не найдена: "+name);}
+    private static void requireProfile(VelaServices services,String name){if(!services.configs().profiles().contains(name))throw new IllegalArgumentException(dev.sqwat.vela.ui.Lang.tr("Конфигурация не найдена: ")+name);}
     private static double coordinate(String value){
         try{double number=Double.parseDouble(value);if(!Double.isFinite(number)||Math.abs(number)>30_000_000)throw new NumberFormatException();return number;}
         catch(NumberFormatException error){throw new IllegalArgumentException("Координаты должны быть числами в пределах мира: .gps <x> [y] <z>");}

@@ -14,6 +14,7 @@ final class PngTextRenderer {
     };
     /** World labels keep immutable local glyph geometry; only their pose changes per frame. */
     static void floating(GuiGraphicsExtractor g,String text,float center,float y,int color,float em){
+        text=dev.sqwat.vela.ui.Lang.tr(text);
         var mask=dev.sqwat.vela.module.utility.StreamerMode.mask();
         if(mask==null){floatingRaw(g,text,center,y,color,em);return;}
         boolean italic=mask.next(text,0)>=0||mask.containsAlias(text);
@@ -58,16 +59,19 @@ final class PngTextRenderer {
             catch(Exception e){throw new IllegalStateException("Cannot load packaged PNG font "+key,e);}
     }
     static float width(String text,VelaDraw.Weight weight,float em){
+        text=dev.sqwat.vela.ui.Lang.tr(text);
         text=dev.sqwat.vela.module.utility.StreamerMode.display(text);
         var metrics=atlas(weight,18).metrics;float maximum=0;
         if(text.indexOf('\n')<0)return metrics.line(text).width()*em/18;
         for(String line:text.split("\n",-1))maximum=Math.max(maximum,metrics.line(line).width()*em/18);return maximum;
     }
     static float centeredY(String text,VelaDraw.Weight weight,float em,float top,float height){
+        text=dev.sqwat.vela.ui.Lang.tr(text);
         text=dev.sqwat.vela.module.utility.StreamerMode.display(text);
         return atlas(weight,18).metrics.centeredTop(text,em,top,height);
     }
     static void draw(GuiGraphicsExtractor g,String text,float x,float y,int color,VelaDraw.Weight weight,float em){
+        text=dev.sqwat.vela.ui.Lang.tr(text); // interface language: every Vela label passes through here
         var mask=dev.sqwat.vela.module.utility.StreamerMode.mask();
         if(mask==null){drawRaw(g,text,x,y,color,weight,em);return;}
         boolean italic=mask.next(text,0)>=0||mask.containsAlias(text);

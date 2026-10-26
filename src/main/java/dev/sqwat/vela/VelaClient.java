@@ -41,6 +41,7 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.module.utility.FoodInfo.initialize();
         dev.sqwat.vela.module.visual.DeathRecap.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+        dev.sqwat.vela.ui.Lang.set("ru".equals(services.configs().current().language)?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.core.LocalCommands.send(message,services));
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(dev.sqwat.vela.module.utility.ChatTweaks::allowChat);
         dev.sqwat.vela.module.utility.ChatThreads.initialize();
@@ -79,6 +80,8 @@ public final class VelaClient implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            // Follows the active config profile, which can be switched at any time.
+            dev.sqwat.vela.ui.Lang.set("ru".equals(services.configs().current().language)?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);
             var watermark=services.modules().byId("watermark");
             dev.sqwat.vela.ui.hud.HudTelemetry.tickPing(client,watermark!=null&&watermark.enabled()&&watermark.settings().stream().anyMatch(s->s.id().equals("ping")&&Boolean.TRUE.equals(s.value())));
             dev.sqwat.vela.module.utility.CommandAutomation.tick(client,services);

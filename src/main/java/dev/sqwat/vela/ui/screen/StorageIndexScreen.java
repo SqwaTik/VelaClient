@@ -101,11 +101,11 @@ public final class StorageIndexScreen extends VelaScreen {
                 var key=c.key();boolean ender=c.kind()==StorageStore.Kind.ENDER;
                 String title=ender?"Эндер-сундук":key.x()+" "+key.y()+" "+key.z();
                 VelaDraw.text(g,title,r.x()+28,r.y()+6,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8.5f);
-                var details=new StringBuilder(ender?"общий для всех":dimensionName(key.dimension()));
+                var details=new StringBuilder(ender?dev.sqwat.vela.ui.Lang.tr("общий для всех"):dimensionName(key.dimension()));
                 if(!ender&&key.dimension().equals(dimension)&&mc.player!=null)
-                    details.append(" · ").append(Math.round(Math.sqrt(mc.player.distanceToSqr(key.x()+.5,key.y()+.5,key.z()+.5)))).append(" м");
+                    details.append(" · ").append(Math.round(Math.sqrt(mc.player.distanceToSqr(key.x()+.5,key.y()+.5,key.z()+.5)))).append(dev.sqwat.vela.ui.Lang.tr(" м"));
                 details.append(" · ").append(UiKit.ago(System.currentTimeMillis()-c.seenAt()));
-                if(c.items().stream().anyMatch(s->s.item().equals(hit.item())&&s.nested()))details.append(" · в шалкере");
+                if(c.items().stream().anyMatch(s->s.item().equals(hit.item())&&s.nested()))details.append(dev.sqwat.vela.ui.Lang.tr(" · в шалкере"));
                 VelaDraw.text(g,VelaDraw.ellipsize(details.toString(),r.width()-90,VelaDraw.Weight.REGULAR,7.5f),r.x()+28,r.y()+18,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7.5f);
                 String count="×"+c.total(hit.item());float cw=VelaDraw.textWidth(count,VelaDraw.Weight.SEMIBOLD,9f);
                 VelaDraw.text(g,count,r.x()+r.width()-8-cw,r.y()+6,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,9f);
@@ -134,9 +134,10 @@ public final class StorageIndexScreen extends VelaScreen {
         return new ItemStack(switch(kind){case BARREL->Items.BARREL;case SHULKER->Items.SHULKER_BOX;case ENDER->Items.ENDER_CHEST;case OTHER->Items.HOPPER;default->Items.CHEST;});
     }
     private static String dimensionName(String dimension){
-        return switch(dimension){case "minecraft:overworld"->"Мир";case "minecraft:the_nether"->"Незер";case "minecraft:the_end"->"Край";default->dimension;};
+        return switch(dimension){case "minecraft:overworld"->dev.sqwat.vela.ui.Lang.pick("Overworld","Мир");case "minecraft:the_nether"->dev.sqwat.vela.ui.Lang.pick("Nether","Незер");case "minecraft:the_end"->dev.sqwat.vela.ui.Lang.pick("End","Край");default->dimension;};
     }
     private static String plural(int n,String one,String few,String many){
+        if(dev.sqwat.vela.ui.Lang.english())return dev.sqwat.vela.ui.Lang.tr(n==1?one:many);
         int m10=n%10,m100=n%100;
         return m10==1&&m100!=11?one:m10>=2&&m10<=4&&(m100<12||m100>14)?few:many;
     }

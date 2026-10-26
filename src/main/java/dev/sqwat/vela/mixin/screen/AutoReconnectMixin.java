@@ -32,9 +32,9 @@ abstract class AutoReconnectMixin extends Screen {
     private void vela$reposition(CallbackInfo ci){vela$place();}
     @Unique private void vela$place(){if(vela$reconnect!=null)vela$reconnect.setPosition(width/2-100,layout.getY()+layout.getHeight()+6);}
     @Unique private Component vela$label(AutoReconnect module){
-        if(vela$deadline<0)return Component.literal("Подключиться к "+module.serverIp());
+        if(vela$deadline<0)return Component.literal(dev.sqwat.vela.ui.Lang.tr("Подключиться к ")+module.serverIp());
         long left=Math.max(0,(vela$deadline-System.nanoTime()+999_999_999L)/1_000_000_000L);
-        return Component.literal("Подключение к "+module.serverIp()+" через "+left+" с");
+        return Component.literal(dev.sqwat.vela.ui.Lang.tr("Подключение к ")+module.serverIp()+dev.sqwat.vela.ui.Lang.tr(" через ")+left+dev.sqwat.vela.ui.Lang.tr(" с"));
     }
     @Override public void tick(){
         super.tick();

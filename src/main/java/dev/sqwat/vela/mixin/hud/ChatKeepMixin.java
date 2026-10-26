@@ -13,6 +13,6 @@ abstract class ChatKeepMixin {
     @WrapOperation(method="onDisconnected",at=@At(value="INVOKE",target="Lnet/minecraft/client/gui/components/ChatComponent;clearMessages(Z)V"))
     private void vela$keep(ChatComponent chat,boolean history,Operation<Void> original){
         if(!ChatTweaks.keepOnDisconnect()){original.call(chat,history);return;}
-        chat.addClientSystemMessage(Component.literal("──── Отключено от сервера ────").withColor(0x5C6680));
+        chat.addClientSystemMessage(Component.literal(dev.sqwat.vela.ui.Lang.tr("──── Отключено от сервера ────")).withColor(0x5C6680));
     }
 }

@@ -152,7 +152,7 @@ public final class AccountChrome {
         String total = Integer.toString(count); float badgeWidth = c.textWidth(total, 8, MEDIUM) + 14;
         c.round(left + titleWidth + 10, l.y() + 14, badgeWidth, 17, 5, VelaTheme.SURFACE_HOVER);
         c.centered(total, left + titleWidth + 10 + badgeWidth / 2, l.y() + 18, 8, VelaTheme.TEXT_SECONDARY, MEDIUM);
-        c.text(fit(c, "Сейчас в игре: " + name, l.listWidth() - l.padding() * 2 - 30, 8, REGULAR), left, l.y() + (l.compact() ? 33 : 40), 8, VelaTheme.TEXT_SECONDARY, REGULAR);
+        c.text(fit(c, dev.sqwat.vela.ui.Lang.tr("Сейчас в игре: ") + name, l.listWidth() - l.padding() * 2 - 30, 8, REGULAR), left, l.y() + (l.compact() ? 33 : 40), 8, VelaTheme.TEXT_SECONDARY, REGULAR);
         if(l.side()>0)c.fill(l.split(),l.y()+16,1/c.density(),l.height()-32,VelaTheme.BORDER);
         Rect search = l.search();
         c.round(search.x(), search.y(), search.width(), search.height(), 7, VelaTheme.SURFACE_DEEP);

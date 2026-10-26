@@ -124,7 +124,7 @@ public final class BrewViewer extends ClientModule {
         if(finished){time="готово";progress=1;}
         else if(shot.brewTicks<=0){time="—";progress=0;}
         else if(remaining<=0){time="готово";progress=1;}
-        else{time=(remaining+19)/20+"с";progress=1-remaining/(float)BREW_TICKS;}
+        else{time=(remaining+19)/20+dev.sqwat.vela.ui.Lang.tr("с");progress=1-remaining/(float)BREW_TICKS;}
         VelaDraw.roundedOutline(g,0,0,W,H,7,(0x55<<24)|(VelaTheme.BORDER&0xFFFFFF),(0xE0<<24)|(VelaTheme.SURFACE&0xFFFFFF));
         ItemStack hovered=ItemStack.EMPTY;
         int cx=6;

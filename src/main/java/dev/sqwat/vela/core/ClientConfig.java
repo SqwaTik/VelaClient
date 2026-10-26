@@ -17,6 +17,10 @@ public final class ClientConfig {
     public float uiSoundVolume = 0.55f;
     public String uiSoundPreset = "Soft";
     public String accentColor = "#756CFF";
+    /** Interface language: "en" (default) or "ru". */
+    public String language = "en";
+    /** Newest changelog version the player has opened; older means the menu shows a dot. */
+    public String lastSeenChangelog = "";
     public String selectedTheme = "aurora";
     public String activeProfile = "default";
     public boolean friendVisuals=true;

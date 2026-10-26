@@ -698,7 +698,7 @@ public final class HudLayoutService {
         for(var player:nearbyCache){
             String name=player.getGameProfile().name();
             nearbyLabels.put(player.getUUID(),name);
-            nearbyDistances.put(player.getUUID(),Math.round(client.player.distanceTo(player))+" м");
+            nearbyDistances.put(player.getUUID(),Math.round(client.player.distanceTo(player))+dev.sqwat.vela.ui.Lang.tr(" м"));
             nearWidthGoal=Math.max(nearWidthGoal,HudGeometry.nearWidth(VelaDraw.textWidth(name,VelaDraw.Weight.REGULAR,8)));
         }
         return nearbyCache;

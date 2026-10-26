@@ -65,7 +65,7 @@ public final class DeathRecap extends ClientModule {
             var recap=current();
             if(!(screen instanceof net.minecraft.client.gui.screens.DeathScreen)||recap==null||!recap.hasRecording())return;
             int y=Wasted.presenting()?Wasted.buttonTop(height)+52:height/4+124;
-            var button=net.minecraft.client.gui.components.Button.builder(Component.literal("Повтор смерти"),b->{
+            var button=net.minecraft.client.gui.components.Button.builder(Component.literal(dev.sqwat.vela.ui.Lang.tr("Повтор смерти")),b->{
                 var r=recap.recording();if(r!=null)DeathReplay.open(r);
             }).bounds(width/2-100,y,200,20).build();
             net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(button);

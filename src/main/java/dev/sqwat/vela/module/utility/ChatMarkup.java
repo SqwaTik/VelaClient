@@ -108,7 +108,7 @@ public final class ChatMarkup {
                 else stop=Math.min(end,active.end);
                 Style style=run.style;
                 if(link!=null)style=style.withUnderlined(true).withClickEvent(new ClickEvent.RunCommand(link.command))
-                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Создать метку")));
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal(dev.sqwat.vela.ui.Lang.tr("Создать метку"))));
                 if(mention!=null)style=style.withColor(mentionColor).withBold(true);
                 out.append(Component.literal(run.text.substring(cursor-start,stop-start)).withStyle(style));
                 cursor=stop;

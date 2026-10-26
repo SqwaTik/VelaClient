@@ -1,33 +1,46 @@
 package dev.sqwat.vela.module.utility;
 
+import dev.sqwat.vela.audio.SoundClips;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
-import dev.sqwat.vela.module.setting.ChoiceSetting;
+import dev.sqwat.vela.module.setting.ActionSetting;
+import dev.sqwat.vela.module.setting.DynamicChoiceSetting;
 import dev.sqwat.vela.module.setting.NumberSetting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
-/** Plays a local UI sound when the player attacks a living entity. Vanilla sounds only. */
+/**
+ * Plays a user sound file when the player attacks a living entity. Sounds are .wav/.ogg files in
+ * config/velaclient/hitsounds; the list follows the folder without a restart.
+ */
 public final class HitSound extends ClientModule {
-    private final ChoiceSetting sound=setting(new ChoiceSetting("sound","Звук","Звук попадания","Колокольчик",java.util.List.of("Колокольчик","Пианино","Опыт","Аметист","Стрела","Щелчок")));
+    private static final String NO_FILES="Нет файлов в папке";
+    private final SoundClips clips=new SoundClips(folder());
+    /** Outside the game (unit tests) Fabric has no config directory; fall back to a relative path that is never created. */
+    private static java.nio.file.Path folder(){
+        java.nio.file.Path config=null;
+        try{config=net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir();}catch(RuntimeException ignored){}
+        return (config==null?java.nio.file.Path.of("config"):config).resolve("velaclient").resolve("hitsounds");
+    }
+    private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("file","Звук","Файл .wav или .ogg из папки hitsounds",NO_FILES,clips::names));
     private final NumberSetting volume=setting(new NumberSetting("volume","Громкость","Громкость звука",70,5,100,5));
-    private final NumberSetting pitch=setting(new NumberSetting("pitch","Тон","Высота звука",100,50,200,5));
-    public HitSound(){super("hit_sound","Hit Sound","Звук при ударе по цели",ModuleCategory.UTILITIES);}
+    public HitSound(){
+        super("hit_sound","Hit Sound","Свой звук при ударе по цели",ModuleCategory.UTILITIES);
+        setting(new ActionSetting("open_folder","Открыть папку звуков",()->{
+            try{java.nio.file.Files.createDirectories(clips.folder());}catch(java.io.IOException ignored){}
+            net.minecraft.util.Util.getPlatform().openPath(clips.folder());
+        }));
+    }
+    @Override protected void onEnable(){clips.request(sound.selected());}
+    @Override public void onClientTick(){clips.request(sound.selected());}
     public static void attacked(Entity target){
         var s=dev.sqwat.vela.VelaClient.services();
         if(s==null||!(s.modules().byId("hit_sound") instanceof HitSound module)||!module.enabled()||!(target instanceof LivingEntity living)||!living.isAlive())return;
-        SoundEvent event=switch(module.sound.value()){
-            case "Пианино"->SoundEvents.NOTE_BLOCK_PLING.value();
-            case "Опыт"->SoundEvents.EXPERIENCE_ORB_PICKUP;
-            case "Аметист"->SoundEvents.AMETHYST_BLOCK_CHIME;
-            case "Стрела"->SoundEvents.ARROW_HIT_PLAYER;
-            case "Щелчок"->SoundEvents.UI_BUTTON_CLICK.value();
-            default->SoundEvents.NOTE_BLOCK_BELL.value();
-        };
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event,module.pitch.value().floatValue()/100,module.volume.value().floatValue()/100));
+        String name=module.sound.selected();if(name==null)return;
+        float master=Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER);
+        module.clips.play(name,module.volume.value().floatValue()/100*master);
     }
+    public void close(){clips.close();}
 }

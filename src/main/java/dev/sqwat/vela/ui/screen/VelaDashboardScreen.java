@@ -683,7 +683,8 @@ public final class VelaDashboardScreen extends VelaScreen {
             for (SettingHit hit : settingHits) {
                 if (!hit.visible().contains(mx, my)) continue;
                 dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TOGGLE);
-                if(hit.setting() instanceof dev.sqwat.vela.module.setting.ActionSetting){
+                if(hit.setting() instanceof dev.sqwat.vela.module.setting.ActionSetting action){
+                    if(action.run())return true;
                     if(services.modules().byId("shaders") instanceof dev.sqwat.vela.module.visual.Shaders shaders&&shaders.settings().contains(hit.setting())){
                         minecraft.gui.setScreen(new ShaderEditorScreen(this,services,shaders));return true;
                     }

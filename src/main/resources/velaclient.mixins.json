@@ -110,6 +110,7 @@
     "screen.WastedDeathScreenStyleMixin",
     "screen.AutoReconnectMixin",
     "screen.ChatTimestampMixin",
+    "screen.ContainerSearchMixin",
     "screen.WastedHoldScreenMixin"
   ],
   "injectors": {

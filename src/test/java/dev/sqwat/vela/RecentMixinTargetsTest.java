@@ -38,4 +38,16 @@ class RecentMixinTargetsTest {
         assertNotNull(method(brewing,"mix","(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;"));
         assertNotNull(method(brewing,"hasMix","(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z"));
     }
+    private static boolean field(ClassNode node,String name){return node.fields.stream().anyMatch(f->f.name.equals(name));}
+    @Test void chatStackAndContainerSearchTargets()throws Exception{
+        var chat=load("net.minecraft.client.gui.components.ChatComponent");
+        assertTrue(field(chat,"allMessages"));
+        assertNotNull(method(chat,"refreshTrimmedMessages","()V"));
+        assertNotNull(method(chat,"addMessage",null));
+        var screen=load("net.minecraft.client.gui.screens.inventory.AbstractContainerScreen");
+        for(String f:new String[]{"menu","leftPos","topPos","imageWidth"})assertTrue(field(screen,f),f);
+        assertNotNull(method(screen,"keyPressed","(Lnet/minecraft/client/input/KeyEvent;)Z"));
+        assertNotNull(method(screen,"init","()V"));
+        assertNotNull(method(screen,"extractRenderState",null));
+    }
 }

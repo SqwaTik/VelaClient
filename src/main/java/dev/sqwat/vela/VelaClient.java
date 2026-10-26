@@ -41,6 +41,9 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.module.utility.FoodInfo.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.core.LocalCommands.send(message,services));
+        net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(dev.sqwat.vela.module.utility.ChatTweaks::allowChat);
+        dev.sqwat.vela.module.utility.ChatThreads.initialize();
+        dev.sqwat.vela.marker.MarkerRuntime.registerCommand(services.markers());
         services.zakoOptimization().require(()->!FabricLoader.getInstance().isModLoaded("zakoopt"));
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> dev.sqwat.vela.zako.IntegrationRuntime.clear());
         dev.sqwat.vela.marker.MarkerNotices.initialize(services.markers());

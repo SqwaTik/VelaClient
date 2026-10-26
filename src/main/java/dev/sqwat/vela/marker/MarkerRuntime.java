@@ -9,6 +9,21 @@ public final class MarkerRuntime {
     private static Object player;
     private static boolean dead,held;
     private MarkerRuntime(){}
+    /** "/vela mark x y z": run locally by clicked chat coordinates (Chat module); never sent to the server. */
+    public static void registerCommand(MarkerService service){
+        net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(
+            net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("vela").then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("mark")
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("x",com.mojang.brigadier.arguments.IntegerArgumentType.integer(-30_000_000,30_000_000))
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("y",com.mojang.brigadier.arguments.IntegerArgumentType.integer(-64,320))
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument("z",com.mojang.brigadier.arguments.IntegerArgumentType.integer(-30_000_000,30_000_000))
+                .executes(ctx->{
+                    var c=Minecraft.getInstance();
+                    int x=ctx.getArgument("x",Integer.class),y=ctx.getArgument("y",Integer.class),z=ctx.getArgument("z",Integer.class);
+                    try{service.add(service.nextName(world(c),dimension(c)),world(c),dimension(c),x,y,z,VelaTheme.PRIMARY,"markers",false);}
+                    catch(IllegalArgumentException full){ctx.getSource().sendError(net.minecraft.network.chat.Component.literal(full.getMessage()));return 0;}
+                    return 1;
+                })))))));
+    }
     public static String world(Minecraft c){return c.getCurrentServer()!=null?c.getCurrentServer().ip:c.getSingleplayerServer()!=null?c.getSingleplayerServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toString():"";}
     public static String dimension(Minecraft c){return c.level.dimension().identifier().toString();}
     public static void tick(Minecraft c,MarkerService service){

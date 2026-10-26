@@ -21,7 +21,7 @@ public abstract class EntityRenderStatePoolMixin {
 	@WrapOperation(method = "createRenderState(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/client/renderer/entity/state/EntityRenderState;",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;createRenderState()Lnet/minecraft/client/renderer/entity/state/EntityRenderState;"))
 	private EntityRenderState zakoopt$pooled(EntityRenderer<?, ?> self, Operation<EntityRenderState> original, @Local(argsOnly = true) Entity entity) {
-		if (!Features.STATE_POOL.on) {
+		if (!Features.STATE_POOL.on || !dev.sqwat.vela.zako.entity.PoolScope.level()) {
 			return original.call(self);
 		}
 		PooledState pooled = (PooledState) entity;

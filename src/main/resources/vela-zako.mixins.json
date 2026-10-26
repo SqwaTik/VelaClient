@@ -76,7 +76,8 @@
     "gl.MinecraftTimerMixin",
     "gl.RenderTargetAccessor",
     "hud.DeltaTrackerHudMixin",
-    "particle.ParticleRotationMixin"
+    "particle.ParticleRotationMixin",
+    "entity.StatePoolScopeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

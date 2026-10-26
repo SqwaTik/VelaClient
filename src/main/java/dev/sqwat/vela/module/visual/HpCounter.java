@@ -66,7 +66,7 @@ public final class HpCounter extends ClientModule {
         float amount=Math.abs(change);
         String value=Math.abs(amount-Math.round(amount))<.05f?Integer.toString(Math.round(amount)):String.format(Locale.ROOT,"%.1f",amount);
         double side=((offset++%3)-1)*.18;
-        numbers.addLast(new Number(position.add(side,0,0),(change>0?"+":"−")+value,change>0,now));
+        numbers.addLast(new Number(position.add(side,0,0),(change>0?"+":"–")+value,change>0,now));
     }
     public int count(){return numbers.size();}
     public void expire(long now){while(!numbers.isEmpty()&&now-numbers.getFirst().born>=LIFETIME)numbers.removeFirst();}

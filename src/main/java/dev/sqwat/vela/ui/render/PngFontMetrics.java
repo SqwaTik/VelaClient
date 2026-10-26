@@ -43,12 +43,18 @@ public final class PngFontMetrics {
         kerning=Map.copyOf(parsedPairs);
         if(!glyphs.containsKey((int)'?'))throw new IOException("PNG font requires a fallback glyph");
     }
+    /** Missing dashes fall back to a dash the atlas has (U+2212 minus is not baked) rather than to '?'. */
+    private Glyph glyph(int cp){
+        Glyph glyph=glyphs.get(cp);
+        if(glyph==null&&(cp==0x2212||cp==0x2012||cp==0x2010||cp==0x2011))glyph=glyphs.getOrDefault(0x2013,glyphs.get((int)'-'));
+        return glyph!=null?glyph:glyphs.get((int)'?');
+    }
     public synchronized Line line(String text){
         return lines.computeIfAbsent(text,value->{
             var result=new ArrayList<PlacedGlyph>(value.length());float x=0;int previous=-1;
             for(int offset=0;offset<value.length();){
                 int cp=value.codePointAt(offset);offset+=Character.charCount(cp);
-                Glyph glyph=glyphs.getOrDefault(cp,glyphs.get((int)'?'));
+                Glyph glyph=glyph(cp);
                 if(previous>=0)x+=kerning.getOrDefault(pair(previous,cp),0f);
                 result.add(new PlacedGlyph(glyph,x));x+=glyph.advance;previous=cp;
             }return new Line(List.copyOf(result),x);

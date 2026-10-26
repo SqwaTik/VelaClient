@@ -559,7 +559,7 @@ public final class HudLayoutService {
             int a=Math.round(alpha*slide*255)<<24;
             g.pose().pushMatrix();g.pose().translate(x,0);
             if(alpha>.35f&&slide>.35f)g.item(row.icon,5,y+2);
-            String amount=(row.amount>0?"+":"−")+Math.abs(row.amount);
+            String amount=(row.amount>0?"+":"–")+Math.abs(row.amount);
             float bump=sample?0:Math.max(0,1-(now-row.bumped)/260f);
             int amountColor=(row.amount>0?VelaTheme.POSITIVE:VelaTheme.DANGER)&0xFFFFFF|a;
             float amountWidth=VelaDraw.textWidth(amount,VelaDraw.Weight.SEMIBOLD,9);

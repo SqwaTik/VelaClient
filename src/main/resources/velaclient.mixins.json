@@ -106,7 +106,9 @@
     "screen.WastedDeathScreenMixin",
     "resource.ProfiledReloadMixin",
     "world.AttackSoundMuteMixin",
-    "screen.WastedDeathScreenStyleMixin"
+    "screen.WastedDeathScreenStyleMixin",
+    "screen.AutoReconnectMixin",
+    "screen.ChatTimestampMixin"
   ],
   "injectors": {
     "defaultRequire": 1

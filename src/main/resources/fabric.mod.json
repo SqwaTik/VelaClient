@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "velaclient",
+  "version": "${version}",
+  "name": "Vela Client",
+  "description": "A polished, extensible client foundation for Minecraft 26.2.",
+  "authors": ["sqwat"],
+  "license": ["MIT", "LGPL-3.0-only"],
+  "icon": "assets/velaclient/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.sqwat.vela.VelaClient"],
+    "voicechat": ["dev.sqwat.vela.integration.VelaVoicePlugin"]
+  },
+  "mixins": ["velaclient.mixins.json", "vela-zako.mixins.json"],
+  "jars": [{"file":"META-INF/jars/bobby-5.2.15+mc26.2.jar"}],
+  "depends": {
+    "fabricloader": ">=0.19.4",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "ias": ">=9.0.7"
+  }
+}

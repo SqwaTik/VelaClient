@@ -1,0 +1,10 @@
+Atmosphere fog GLSL is adapted from KimikoSRC, AmbiencefogShaders.java (CC0 1.0).
+Wet surface GLSL is adapted from KimikoSRC, GroundreflectShaders.java (CC0 1.0).
+Hand hologram GLSL is adapted from HandsHologramShaders.java (CC0 1.0), with native offscreen hand masks.
+Hand glass GLSL is adapted from ShaderhandsShaders.java (CC0 1.0), using Vela's single theme tint and captured-background composition.
+Hand flame GLSL is adapted from HandsFlameShaders.java (CC0 1.0), using native masks and one-third-resolution temporal trails.
+Aurora and starfall GLSL are adapted from CustomskyShaders.java (CC0 1.0), with Vela theme uniforms.
+Black hole, bloom and sky composition GLSL are adapted from CustomskyShaders.java (CC0 1.0).
+The full CC0 text is distributed alongside this notice in Kimiko-particle-assets-CC0.txt.
+Changes: GLSL 330; Minecraft 26.2 reverse-depth and backend clip-depth adaptation.
+Renderer integration and resource ownership use Vela's Minecraft 26.2 APIs.

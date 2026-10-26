@@ -1,0 +1,40 @@
+package dev.sqwat.vela.module;
+
+import dev.sqwat.vela.module.setting.NumberSetting;
+import net.minecraft.client.Minecraft;
+
+/** Controls cached terrain; does not extend server entity tracking or simulation. */
+public final class Far extends ClientModule {
+    private final NumberSetting distance=setting(new NumberSetting("distance","Дальность, чанки","Ранее полученный рельеф; большая дальность увеличивает нагрузку",16,4,64,1));
+    private Integer previous,applied;
+    public Far(){super("far","Far","Показывает сохранённые чанки вдали",ModuleCategory.UTILITIES);}
+    public static boolean active(){
+        var services=dev.sqwat.vela.VelaClient.services();
+        return services!=null&&services.far().enabled();
+    }
+    @Override public void onClientTick(){
+        var client=Minecraft.getInstance();
+        if(client.level==null||client.getSingleplayerServer()!=null){restore();return;}
+        var option=client.options.renderDistance();int now=option.get();
+        if(previous==null||applied!=null&&now!=applied)previous=now;
+        int next=distance.value().intValue();
+        if(now!=next)option.set(next);
+        applied=next;
+    }
+    @Override protected void onDisable(){restore();clearDisabledTerrain();}
+    public static void clearDisabledTerrain(){
+        if(active())return;
+        var client=Minecraft.getInstance();
+        if(client.level==null)return;
+        var cache=((de.johni0702.minecraft.bobby.ext.ClientChunkCacheExt)client.level.getChunkSource()).bobby_getFakeChunkManager();
+        if(cache==null||cache.getFakeChunks().isEmpty())return;
+        for(var chunk:new java.util.ArrayList<>(cache.getFakeChunks())){var p=chunk.getPos();cache.unload(p.x(),p.z(),false);}
+        // Rebuild the extraction dirty tracker together with compiled geometry.
+        // Invalidating only the renderer leaves previously clean sections invisible.
+        client.levelExtractor.allChanged();
+    }
+    private void restore(){
+        if(previous!=null){var option=Minecraft.getInstance().options.renderDistance();if(applied!=null&&option.get().equals(applied))option.set(previous);}
+        previous=applied=null;
+    }
+}

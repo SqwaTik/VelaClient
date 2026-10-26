@@ -1,0 +1,4 @@
+{
+  "zakoopt.guard.chat": "ZakoOptimization: disabled after an error: %s. Details are in latest.log.",
+  "zakoopt.guard.chat.other": "ZakoOptimization: an optimization failed. Details are in latest.log."
+}

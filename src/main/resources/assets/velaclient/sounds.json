@@ -1,0 +1,9 @@
+{
+  "ui.open": {"sounds": ["velaclient:ui/switch_001"]},
+  "ui.close": {"sounds": ["velaclient:ui/switch_001"]},
+  "ui.tab": {"sounds": ["velaclient:ui/switch_001"]},
+  "ui.expand": {"sounds": ["velaclient:ui/open_002"]},
+  "ui.toggle": {"sounds": ["velaclient:ui/click_001"]},
+  "ui.favorite": {"sounds": ["velaclient:ui/confirmation_001"]},
+  "ui.slider": {"sounds": ["velaclient:ui/tick_001"]}
+}

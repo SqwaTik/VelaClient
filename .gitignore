@@ -1,0 +1,8 @@
+# Gradle / build output
+.gradle/
+build/
+# Local game run directory and logs
+run/
+logs/
+# Local tool state
+.impeccable/

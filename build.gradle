@@ -1,0 +1,86 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { url = 'https://api.modrinth.com/maven' }
+    mavenCentral()
+    maven { url = 'https://maven.maxhenkel.de/repository/public' }
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    compileOnly 'maven.modrinth:sodium:mc26.2-0.9.2-fabric'
+    compileOnly 'maven.modrinth:iris:1.11.4+26.2-fabric'
+    implementation files('libs/bobby-5.2.15+mc26.2.jar')
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    compileOnly files('libs/IAS-9.0.7+26.2-fabric.jar')
+    runtimeOnly files('libs/IAS-9.0.7+26.2-fabric.jar')
+    compileOnly 'de.maxhenkel.voicechat:voicechat-api:2.6.0'
+
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'maven.modrinth:sodium:mc26.2-0.9.2-fabric'
+}
+
+processResources {
+    exclude 'recording/**'
+    // Resource identifiers must be lowercase; retain bundled attribution notices.
+    filesMatching(['assets/**/INTER_LICENSE.txt', 'assets/**/Kenney-License.txt']) {
+        name = name.toLowerCase(java.util.Locale.ROOT)
+    }
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand 'version': inputs.properties.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+}
+sourceSets.main.java.srcDir('src/zako/java')
+
+tasks.named('sourcesJar') { exclude 'recording/**' }
+
+tasks.register('sourceBundle', Zip) {
+    archiveFileName = 'vela-client-source.zip'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(projectDir) {
+        include 'src/**', 'gradle/**', 'gradlew', 'gradlew.bat', 'build.gradle', 'settings.gradle', 'gradle.properties', 'LICENSE', 'THIRD_PARTY.md', 'SOURCE_BUILD.md', 'tools/CompactFontPng.java', 'tools/GenerateAccountSurfaces.java', 'tools/GenerateStartupLabels.java'
+        exclude 'src/main/resources/recording/**'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+
+jar {
+    from('src/zako/java') { into 'META-INF/zakoopt-source' }
+    from('src/main/java') {
+        include 'dev/sqwat/vela/module/ZakoOptimization.java'
+        into 'META-INF/zakoopt-source'
+    }
+    from('libs/bobby-5.2.15+mc26.2.jar') { into 'META-INF/jars' }
+    from('LICENSE') {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}

@@ -113,6 +113,11 @@ public final class VelaServices implements AutoCloseable {
         var strokesCps=new BooleanSetting("cps","CPS","Клики в секунду под кнопками мыши",true);
         var strokesMouse=new BooleanSetting("mouse","Кнопки мыши","Левая и правая кнопки",true);
         strokesCps.visibleWhen(strokesMouse::value);
+        modules.register(new FoundationModule("info","Info","Скорость, TPS, пинг и координаты",ModuleCategory.HUD)
+            .add(new BooleanSetting("bps","Скорость","Горизонтальная скорость, блоков в секунду",true))
+            .add(new BooleanSetting("tps","TPS","Оценка частоты тиков сервера",true))
+            .add(new BooleanSetting("ping","Пинг","Задержка соединения",true))
+            .add(new BooleanSetting("coords","Координаты","Положение в блоках",false)));
         modules.register(new FoundationModule("module_list","Array List","Список включённых функций",ModuleCategory.HUD));
         modules.register(new FoundationModule("keystrokes","Key Strokes","Нажатия клавиш движения и кликов",ModuleCategory.HUD)
             .add(strokesMouse).add(strokesCps).add(new BooleanSetting("space","Пробел","Клавиша прыжка",true)));

@@ -105,6 +105,8 @@
     "camera.FreelookCameraMixin",
     "screen.WastedDeathScreenMixin",
     "perf.ProfiledReloadMixin",
+    "perf.ZipPackAccess",
+    "perf.ZipPackIndexMixin",
     "world.AttackSoundMuteMixin",
     "world.EntitySoundMuteMixin",
     "screen.WastedDeathScreenStyleMixin",

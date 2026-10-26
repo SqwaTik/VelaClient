@@ -20,7 +20,13 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
     @Shadow private float currentProgress;
     @Unique private final dev.sqwat.vela.ui.animation.LoadingProgress vela$progress=new dev.sqwat.vela.ui.animation.LoadingProgress();
     @Unique private long vela$lastFrame;
-    @Unique private long vela$fadeFrom=-1;
+    /** Animation time: advances at most 1/30 s per frame, so a frame stalled by the reload never makes motion jump. */
+    @Unique private float vela$clock;
+    /** Clock time when the fade began (-1: not yet) and when the bar first showed 100%. */
+    @Unique private float vela$fadeAt=-1,vela$fullAt=-1;
+    @Unique private int vela$smoothFrames;
+    @Unique private long vela$doneAt=-1;
+    @Unique private static final float HOLD=.35f,FADE=.6f;
     @Unique private boolean vela$departing;
     @Unique private final String vela$farewell=new String[]{"До встречи!","Заходите ещё","Удачной игры!"}[java.util.concurrent.ThreadLocalRandom.current().nextInt(3)];
     @Unique private final dev.sqwat.vela.render.resource.ReloadWorldBinding vela$worldBinding=new dev.sqwat.vela.render.resource.ReloadWorldBinding();
@@ -49,14 +55,23 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
     private void vela$loading(GuiGraphicsExtractor g,int mx,int my,float delta,CallbackInfo ci){
         ci.cancel();long now=Util.getMillis();if(fadeIn&&fadeInStart==-1L)fadeInStart=now;
         long frame=System.nanoTime();float seconds=vela$lastFrame==0?0:(frame-vela$lastFrame)/1_000_000_000f;vela$lastFrame=frame;
-        currentProgress=vela$progress.update(reload.getActualProgress(),fadeOutStart>=0,seconds);
-        // Let the bar visibly reach 100% and rest briefly before fading; capped so a stalled frame never holds the overlay.
-        if(fadeOutStart>=0&&vela$fadeFrom<0&&(vela$progress.finished()||now-fadeOutStart>600))vela$fadeFrom=now+(vela$progress.finished()?120:0);
-        float out=vela$fadeFrom<0||now<vela$fadeFrom?-1:(now-vela$fadeFrom)/90f;
-        if(fadeOutStart>=0&&out<0)out=0; // "ready" state while holding at 100%
+        vela$clock+=Math.min(seconds,1/30f);
+        boolean done=fadeOutStart>=0;
+        currentProgress=vela$progress.update(reload.getActualProgress(),done,Math.min(seconds,1/30f));
+        // The reload ends with texture/sound uploads on this thread, which stall frames. Fade only after the bar has
+        // rested at 100% and frames are smooth again, so the fade itself is never cut by a stall; 3 s caps the wait.
+        if(done&&vela$doneAt<0)vela$doneAt=now;
+        if(vela$progress.finished()&&vela$fullAt<0)vela$fullAt=vela$clock;
+        vela$smoothFrames=done&&seconds<.05f?vela$smoothFrames+1:0;
+        if(vela$fadeAt<0&&done&&(vela$fullAt>=0&&vela$clock-vela$fullAt>=HOLD&&vela$smoothFrames>=6||now-vela$doneAt>3000))vela$fadeAt=vela$clock;
+        float fade=vela$fadeAt<0?0:Motion.clamp01((vela$clock-vela$fadeAt)/FADE);
+        float out=done?Math.max(0,fade):-1; // >=0: "ready" label
+        if(fade>=1){minecraft.gui.setOverlay(null);return;}
+        // The menu is drawn underneath from the moment loading is done: its first frame costs land behind the
+        // opaque overlay instead of stuttering right after it disappears, and the fade reveals it.
+        if(done&&minecraft.gui.screen()!=null&&!vela$compact()){minecraft.gui.screen().extractRenderStateWithTooltipAndSubtitles(g,mx,my,delta);}
         g.nextStratum();
-        float alpha=out>=1?1-Motion.clamp01(out-1):1;
-        if(out>=2){minecraft.gui.setOverlay(null);return;}
+        float alpha=1-fade*fade*(3-2*fade);
         if(vela$compact()){
             if(minecraft.gui.screen()!=null)minecraft.gui.screen().extractRenderStateWithTooltipAndSubtitles(g,mx,my,delta);
             g.nextStratum();
@@ -64,11 +79,14 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
             if(services!=null){var layout=services.hudLayout();layout.viewport(minecraft.getWindow().getGuiScale());var pos=layout.position("notifications",g.guiWidth(),g.guiHeight());ReloadNotice.progress=reload.isDone()?1:Math.min(.99f,reload.getActualProgress());layout.drawChip(g,minecraft,"notifications",pos.x(),pos.y());}
             return;
         }
-        g.fillGradient(0,0,g.guiWidth(),g.guiHeight(),0xFF090B11,0xFF05070A);
+        g.fillGradient(0,0,g.guiWidth(),g.guiHeight(),color(0xFF090B11,alpha),color(0xFF05070A,alpha));
         if(minecraft.getTextureManager().getTexture(id("loading_background")) instanceof StartupLogoTexture)
-            VelaDraw.blit(g,id("loading_background"),0,0,g.guiWidth(),g.guiHeight(),0,0,1024,640,1024,640,0xFFFFFFFF);
+            VelaDraw.blit(g,id("loading_background"),0,0,g.guiWidth(),g.guiHeight(),0,0,1024,640,1024,640,color(0xFFFFFFFF,alpha));
         var view=UiViewport.fit(g.guiWidth(),g.guiHeight(),minecraft.getWindow().getGuiScale(),1);
         g.pose().pushMatrix();g.pose().scale(view.scale());
+        // The content drifts up and grows slightly as it fades.
+        float ease=fade*fade*(3-2*fade);
+        g.pose().translate(view.width()/2f,view.height()/2f-8*ease);g.pose().scale(1+.04f*ease);g.pose().translate(-view.width()/2f,-view.height()/2f);
         try {
             int x=view.width()/2-110,y=view.height()/2-20;
             if(vela$departing){
@@ -79,7 +97,7 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
             }
             float cx=view.width()/2f,cy=y-46;
             for(int i=0;i<64;i++){
-                double angle=i*Math.PI*2/64+(now%2400)/2400.0*Math.PI*2;
+                double angle=i*Math.PI*2/64+(vela$clock%2.4f)/2.4*Math.PI*2;
                 int shade=i<12?color(0xB8918BFF,alpha*(1-i/14f)):color(0x19918BFF,alpha);
                 int px=Math.round(cx+(float)Math.cos(angle)*31),py=Math.round(cy+(float)Math.sin(angle)*31);
                 g.fill(px,py,px+1,py+1,shade);

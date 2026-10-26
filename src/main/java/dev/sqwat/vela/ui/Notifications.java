@@ -57,7 +57,7 @@ public final class Notifications {
         int width=Math.round(g.guiWidth()/scale),y=8;double mx=mc.mouseHandler.getScaledXPos(mc.getWindow())/scale,my=mc.mouseHandler.getScaledYPos(mc.getWindow())/scale;
         g.nextStratum();g.pose().pushMatrix();g.pose().identity();g.pose().scale(scale);
         try{int i=0;for(var n:notices){
-            int detailInset=n.title.equals("Создана метка")?33:16;
+            int detailInset=16;
             int desired=n.width==0?NotificationChrome.compactWidth(VelaDraw.textWidth(n.title,VelaDraw.Weight.MEDIUM,8),VelaDraw.textWidth(n.detail,VelaDraw.Weight.REGULAR,7)+detailInset-16):n.width;
             int w=Math.min(desired,width-16),h=height(!n.detail.isBlank(),n.run!=null),x=width-w-8+Math.round((1-reveal(now-n.started))*(w+10));
             NotificationChrome.draw(new GameUiCanvas(g),x,y,w,VelaDraw.ellipsize(n.title,w-34,VelaDraw.Weight.MEDIUM,8),VelaDraw.ellipsize(n.detail,w-detailInset,VelaDraw.Weight.REGULAR,7),n.icon,n.color,n.run!=null);

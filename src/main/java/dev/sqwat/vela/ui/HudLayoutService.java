@@ -37,6 +37,8 @@ public final class HudLayoutService {
         };
     }
     private java.util.List<ClientModule> shownHotkeys=java.util.List.of();
+    private final KeyStrokesHud keyStrokes=new KeyStrokesHud();
+    private boolean keyFlag(String setting){return flag("keystrokes",setting);}
     private int hotkeyCount(){int count=0;for(var m:modules.all())if(m.enabled()&&m.boundKey()>=0&&m.available())count++;return count;}
     private net.minecraft.world.entity.LivingEntity target;
     private long targetUntil,targetFrame,targetHitUntil;
@@ -127,6 +129,7 @@ public final class HudLayoutService {
         positions.putIfAbsent("potions",new HudPosition(160,75));
         positions.putIfAbsent("speakers",new HudPosition(320,75));
         positions.putIfAbsent("cooldowns",new HudPosition(320,155));
+        positions.putIfAbsent("keystrokes",new HudPosition(10,240));
         var defaults=new JsonFileStore<Map<String,HudPosition>>(root.resolve("hud-default-layout.json"),new TypeToken<Map<String,HudPosition>>(){}.getType(),()->new LinkedHashMap<>(positions));
         var sizeDefaults=new JsonFileStore<Map<String,Float>>(root.resolve("hud-default-scale.json"),new TypeToken<Map<String,Float>>(){}.getType(),()->new LinkedHashMap<>(scales));
         defaultPositions=migrate?new LinkedHashMap<>(defaults.load()):hudConfig.defaultPositions==null?new LinkedHashMap<>(positions):hudConfig.defaultPositions;
@@ -235,6 +238,7 @@ public final class HudLayoutService {
             HudPosition pos=position("notifications",g.guiWidth(),g.guiHeight());
             drawChip(g,client,"notifications",pos.x(),pos.y());
         }
+        if(modules.byId("keystrokes") instanceof ClientModule strokes&&strokes.enabled())keyStrokes.sample(client);
         if(motionLevel!=client.level){hudMotion.clear();for(var state:panels.values())state.height=Float.NaN;motionLevel=client.level;}
         // Rendering runs much more often than ticks: avoid constructing a stream/list every frame.
         for (ClientModule module : modules.all()) {
@@ -383,6 +387,13 @@ public final class HudLayoutService {
                     VelaDraw.text(g,client.font,watermarkLabels[i],tx,7,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM);
                 }return;
             }
+            if(id.equals("keystrokes")){
+                boolean mouse=keyFlag("mouse"),space=keyFlag("space");
+                drawPanel(g,id,KeyStrokesHud.WIDTH,KeyStrokesHud.height(mouse,space),panel);
+                var config=dev.sqwat.vela.VelaClient.services().configs().current();
+                keyStrokes.draw(g,client,mouse,space,keyFlag("cps"),!config.animations||config.reducedMotion);
+                return;
+            }
             if(id.equals("armor")){
                 if(client.player==null)return;
                 ClientModule armor=modules.byId(id);
@@ -442,6 +453,7 @@ public final class HudLayoutService {
             case "cooldowns" -> new RectSize(Math.round(160*scale(id)),Math.round((24+CooldownTracker.snapshot().size()*21)*scale(id)));
             case "hotkeys" -> new RectSize(Math.round(160*scale(id)),Math.round((24+hotkeyCount()*21)*scale(id)));
             case "scoreboard" -> new RectSize(132, 72);
+            case "keystrokes" -> new RectSize(Math.round(KeyStrokesHud.WIDTH*scale(id)),Math.round(KeyStrokesHud.height(keyFlag("mouse"),keyFlag("space"))*scale(id)));
             default -> new RectSize(Math.round((labelWidth(label(client, id)) + 16)*scale(id)), Math.round(22*scale(id)));
         };
     }

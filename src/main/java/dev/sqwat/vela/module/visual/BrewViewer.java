@@ -59,27 +59,41 @@ public final class BrewViewer extends ClientModule {
         float x=(v.x/v.w+1)*g.guiWidth()/2f,y=(1-v.y/v.w)*g.guiHeight()/2f;
         long elapsed=Math.max(0,mc.level.getGameTime()-shot.capturedAt);
         int remaining=shot.brewTicks>0?(int)Math.max(0,shot.brewTicks-elapsed):0;
-        float density=1.5f/Math.max(1,mc.getWindow().getGuiScale())*2;
-        int w=92,h=62;
+        float density=1.5f/Math.max(1,mc.getWindow().getGuiScale())*1.6f;
+        // One compact row: ingredient > three bottles | blaze powder and fuel count; thin progress bar below.
+        String fuel=Integer.toString(shot.fuel);
+        int fuelWidth=(int)Math.ceil(VelaDraw.textWidth(fuel,VelaDraw.Weight.MEDIUM,8));
+        int w=6+18+10+3*18+2*2+9+16+2+fuelWidth+7,h=34;
+        String time;float progress;
+        if(shot.brewTicks<=0){time="—";progress=0;}
+        else if(remaining<=0){time="готово";progress=1;}
+        else{time=(remaining+19)/20+"с";progress=1-remaining/(float)BREW_TICKS;}
         g.pose().pushMatrix();
         try{
             g.pose().translate(x,y);g.pose().scale(density);g.pose().translate(-w/2f,-h);
-            VelaDraw.roundedOutline(g,0,0,w,h,6,(0x60<<24)|(VelaTheme.BORDER&0xFFFFFF),(0xD8<<24)|(VelaTheme.SURFACE&0xFFFFFF));
-            slot(g,shot.ingredient,w/2-9,4);
-            for(int i=0;i<3;i++)slot(g,shot.bottles[i],w/2-9+(i-1)*24,24);
-            String status;float progress;
-            if(shot.brewTicks<=0){status="Не варится";progress=0;}
-            else if(remaining<=0){status="Готово";progress=1;}
-            else{status="Варка "+(remaining+19)/20+" с";progress=1-remaining/(float)BREW_TICKS;}
-            VelaDraw.roundedRect(g,6,h-9,w-12,3,1,VelaTheme.BORDER);
-            if(progress>0)VelaDraw.roundedRect(g,6,h-9,Math.max(2,Math.round((w-12)*progress)),3,1,VelaTheme.PRIMARY);
-            VelaDraw.text(g,status,6,h-19,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,7);
-            String fuel="Топл. "+shot.fuel;
-            VelaDraw.text(g,fuel,w-6-VelaDraw.textWidth(fuel,VelaDraw.Weight.REGULAR,7),h-19,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,7);
+            VelaDraw.roundedOutline(g,0,0,w,h,7,(0x55<<24)|(VelaTheme.BORDER&0xFFFFFF),(0xE0<<24)|(VelaTheme.SURFACE&0xFFFFFF));
+            int cx=6;
+            slot(g,shot.ingredient,cx,5);cx+=18;
+            // The chevron icon points down; turn it to point from the ingredient to the bottles.
+            g.pose().pushMatrix();g.pose().translate(cx+5,14);g.pose().rotate(-(float)Math.PI/2);
+            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"chevron",-4,-4,8,VelaTheme.TEXT_MUTED);
+            g.pose().popMatrix();cx+=10;
+            for(int i=0;i<3;i++){slot(g,shot.bottles[i],cx,5);cx+=20;}
+            cx+=-2+4;
+            VelaDraw.roundedRect(g,cx,8,1,12,1,(0x50<<24)|(VelaTheme.BORDER&0xFFFFFF));cx+=5;
+            g.item(blaze(),cx,6);cx+=18;
+            VelaDraw.text(g,fuel,cx,10,shot.fuel>0?VelaTheme.TEXT:0xFFFF596D,VelaDraw.Weight.MEDIUM,8);
+            int timeWidth=(int)Math.ceil(VelaDraw.textWidth(time,VelaDraw.Weight.REGULAR,6));
+            int barRight=w-8-timeWidth-4;
+            VelaDraw.roundedRect(g,6,h-7,barRight-6,2,1,(0x90<<24)|(VelaTheme.BORDER&0xFFFFFF));
+            if(progress>0)VelaDraw.roundedRect(g,6,h-7,Math.max(2,Math.round((barRight-6)*progress)),2,1,VelaTheme.PRIMARY);
+            VelaDraw.text(g,time,w-8-timeWidth,h-9.5f,progress>=1?VelaTheme.POSITIVE:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,6);
         }finally{g.pose().popMatrix();}
     }
+    private static ItemStack blazeIcon;
+    private static ItemStack blaze(){if(blazeIcon==null)blazeIcon=new ItemStack(net.minecraft.world.item.Items.BLAZE_POWDER);return blazeIcon;}
     private static void slot(GuiGraphicsExtractor g,ItemStack stack,int x,int y){
-        VelaDraw.roundedRect(g,x,y,18,18,4,VelaTheme.SURFACE_DEEP);
+        VelaDraw.roundedRect(g,x,y,18,18,4,(0xB0<<24)|(VelaTheme.SURFACE_DEEP&0xFFFFFF));
         if(!stack.isEmpty())g.item(stack,x+1,y+1);
     }
 }

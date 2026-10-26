@@ -81,6 +81,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.utility.Death());
         modules.register(new dev.sqwat.vela.module.utility.FoodInfo());
         modules.register(new dev.sqwat.vela.module.visual.TabPing());
+        modules.register(new dev.sqwat.vela.module.visual.ItemPickups());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());
         modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
@@ -127,8 +128,8 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new FoundationModule("module_list","Array List","Список включённых функций",ModuleCategory.HUD));
         modules.register(new FoundationModule("keystrokes","Key Strokes","Нажатия клавиш движения и кликов",ModuleCategory.HUD)
             .add(strokesMouse).add(strokesCps).add(new BooleanSetting("space","Пробел","Клавиша прыжка",true)));
-        for(ClientModule module:modules.all())if(module.category()==ModuleCategory.HUD)
-            ((FoundationModule)module).add(new BooleanSetting("transparent","Прозрачный","Заменяет обычный фон прозрачным стеклом",false));
+        for(ClientModule module:modules.all())if(module.category()==ModuleCategory.HUD&&module instanceof FoundationModule foundation)
+            foundation.add(new BooleanSetting("transparent","Прозрачный","Заменяет обычный фон прозрачным стеклом",false));
     }
 
     public ModuleRegistry modules() { return modules; }

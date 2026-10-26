@@ -34,6 +34,7 @@ public final class HudLayoutService {
             case "speakers"->!HudTelemetry.speakers().isEmpty();case "cooldowns"->!CooldownTracker.snapshot().isEmpty();
             case "armor"->java.util.Arrays.stream(ARMOR_SLOTS).anyMatch(slot->!c.player.getItemBySlot(slot).isEmpty());
             case "hotkeys"->hotkeyCount()>0;
+            case "pickups"->modules.byId("pickups") instanceof dev.sqwat.vela.module.visual.ItemPickups feed&&!feed.empty();
             case "module_list"->!moduleList.empty();
             case "target"->target!=null&&target.level()==c.level&&target.isAlive()&&System.nanoTime()<=targetUntil;
             default->true;
@@ -137,6 +138,7 @@ public final class HudLayoutService {
         positions.putIfAbsent("cooldowns",new HudPosition(320,155));
         positions.putIfAbsent("keystrokes",new HudPosition(10,240));
         positions.putIfAbsent("module_list",new HudPosition(420,10));
+        positions.putIfAbsent("pickups",new HudPosition(10,120));
         var defaults=new JsonFileStore<Map<String,HudPosition>>(root.resolve("hud-default-layout.json"),new TypeToken<Map<String,HudPosition>>(){}.getType(),()->new LinkedHashMap<>(positions));
         var sizeDefaults=new JsonFileStore<Map<String,Float>>(root.resolve("hud-default-scale.json"),new TypeToken<Map<String,Float>>(){}.getType(),()->new LinkedHashMap<>(scales));
         defaultPositions=migrate?new LinkedHashMap<>(defaults.load()):hudConfig.defaultPositions==null?new LinkedHashMap<>(positions):hudConfig.defaultPositions;
@@ -437,6 +439,8 @@ public final class HudLayoutService {
                 return;
             }
 
+            if(id.equals("coordinates")){drawCoordinates(g,client,panel);return;}
+            if(id.equals("pickups")){drawPickups(g,client,panel);return;}
             String text = label(client, id);
             int width = labelWidth(text) + 16;
             drawPanel(g,id,width,22,panel);
@@ -485,6 +489,8 @@ public final class HudLayoutService {
             case "scoreboard" -> new RectSize(132, 72);
             case "module_list" -> new RectSize(Math.round(moduleList.width()*scale(id)),Math.round(moduleList.height()*scale(id)));
             case "keystrokes" -> new RectSize(Math.round(KeyStrokesHud.WIDTH*scale(id)),Math.round(KeyStrokesHud.height(keyFlag("mouse"),keyFlag("space"))*scale(id)));
+            case "coordinates" -> new RectSize(Math.round(coordinateWidth(client)*scale(id)),Math.round(22*scale(id)));
+            case "pickups" -> new RectSize(Math.round(PICKUP_WIDTH*scale(id)),Math.round(pickupHeight(pickupRows(client).size())*scale(id)));
             default -> new RectSize(Math.round((labelWidth(label(client, id)) + 16)*scale(id)), Math.round(22*scale(id)));
         };
     }
@@ -519,10 +525,80 @@ public final class HudLayoutService {
             coordinateX=x;coordinateY=y;coordinateZ=z;coordinateCompact=compact;coordinateOther=other;coordinateDimension=dimension;
             coordinateText=(compact ? "" : "XYZ ") + x + " " + y + " " + z;
             // Portal maths: one Nether block is eight Overworld blocks. The End has no counterpart.
-            if(other&&dimension==net.minecraft.world.level.Level.OVERWORLD)coordinateText+="  ·  Незер "+Math.floorDiv(x,8)+" "+Math.floorDiv(z,8);
-            else if(other&&dimension==net.minecraft.world.level.Level.NETHER)coordinateText+="  ·  Мир "+x*8+" "+z*8;
+            coordinateOtherText=!other?"":dimension==net.minecraft.world.level.Level.OVERWORLD?Math.floorDiv(x,8)+" "+Math.floorDiv(z,8)
+                :dimension==net.minecraft.world.level.Level.NETHER?x*8+" "+z*8:"";
         }
         return coordinateText;
+    }
+    private String coordinateOtherText="";
+    private static final int PICKUP_WIDTH=156,PICKUP_ROW=20;
+    private static int pickupHeight(int rows){return 6+Math.max(1,rows)*PICKUP_ROW;}
+    private List<dev.sqwat.vela.module.visual.ItemPickups.Entry> pickupSamples;
+    /** Live rows, or a fixed sample while the HUD editor or chat is open and nothing was picked up. */
+    private List<dev.sqwat.vela.module.visual.ItemPickups.Entry> pickupRows(Minecraft client){
+        var rows=modules.byId("pickups") instanceof dev.sqwat.vela.module.visual.ItemPickups feed?feed.entries():List.<dev.sqwat.vela.module.visual.ItemPickups.Entry>of();
+        if(!rows.isEmpty()||!(editing||client.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen))return rows;
+        if(pickupSamples==null)pickupSamples=dev.sqwat.vela.module.visual.ItemPickups.samples();
+        return pickupSamples;
+    }
+    /** Rows slide in from the left, the counter pops when a repeat merges in, and each row fades out on its own. */
+    private void drawPickups(GuiGraphicsExtractor g,Minecraft client,int panel){
+        var rows=pickupRows(client);
+        var feed=modules.byId("pickups") instanceof dev.sqwat.vela.module.visual.ItemPickups f?f:null;
+        boolean sample=feed==null||rows!=feed.entries();
+        drawPanel(g,"pickups",PICKUP_WIDTH,pickupHeight(rows.size()),panel);
+        long now=System.currentTimeMillis(),life=feed==null?4000:feed.lifetime();
+        boolean showTotal=feed==null||feed.totals();
+        for(int i=0;i<rows.size();i++){
+            var row=rows.get(i);
+            long age=sample?10_000:now-row.born;
+            float slide=sample?1:Math.clamp(age/(float)dev.sqwat.vela.module.visual.ItemPickups.SLIDE_MS,0,1);slide=1-(1-slide)*(1-slide)*(1-slide);
+            float alpha=sample?1:1-Math.clamp((age-life)/(float)dev.sqwat.vela.module.visual.ItemPickups.FADE_MS,0,1);
+            if(alpha<=0)continue;
+            int y=3+i*PICKUP_ROW;float x=(1-slide)*-14;
+            int a=Math.round(alpha*slide*255)<<24;
+            g.pose().pushMatrix();g.pose().translate(x,0);
+            if(alpha>.35f&&slide>.35f)g.item(row.icon,5,y+2);
+            String amount=(row.amount>0?"+":"−")+Math.abs(row.amount);
+            float bump=sample?0:Math.max(0,1-(now-row.bumped)/260f);
+            int amountColor=(row.amount>0?VelaTheme.POSITIVE:VelaTheme.DANGER)&0xFFFFFF|a;
+            float amountWidth=VelaDraw.textWidth(amount,VelaDraw.Weight.SEMIBOLD,9);
+            g.pose().pushMatrix();g.pose().translate(26+amountWidth/2,y+10);g.pose().scale(1+.28f*bump*bump);g.pose().translate(-(26+amountWidth/2),-(y+10));
+            VelaDraw.text(g,amount,26,y+6,amountColor,VelaDraw.Weight.SEMIBOLD,9);
+            g.pose().popMatrix();
+            String total=showTotal?"×"+row.total:"";
+            float totalWidth=total.isEmpty()?0:VelaDraw.textWidth(total,VelaDraw.Weight.REGULAR,7.5f);
+            float nameX=26+amountWidth+5;
+            String name=VelaDraw.ellipsize(row.icon.getHoverName().getString(),PICKUP_WIDTH-nameX-totalWidth-12,VelaDraw.Weight.REGULAR,8);
+            VelaDraw.text(g,name,nameX,y+6.5f,VelaTheme.TEXT&0xFFFFFF|a,VelaDraw.Weight.REGULAR,8);
+            if(!total.isEmpty())VelaDraw.text(g,total,PICKUP_WIDTH-7-totalWidth,y+7,VelaTheme.TEXT_MUTED&0xFFFFFF|a,VelaDraw.Weight.REGULAR,7.5f);
+            g.pose().popMatrix();
+        }
+    }
+    private static final net.minecraft.resources.Identifier DIM_OVERWORLD=net.minecraft.resources.Identifier.fromNamespaceAndPath("velaclient","textures/gui/dim_overworld.png"),
+        DIM_NETHER=net.minecraft.resources.Identifier.fromNamespaceAndPath("velaclient","textures/gui/dim_nether.png");
+    private static final int DIM_ICON=10,DIM_GAP=4,DIM_SPLIT=13;
+    /** Icon of the dimension the player is in: Earth for the Overworld, a portal for the Nether, none for the End. */
+    private static net.minecraft.resources.Identifier dimensionIcon(Object dimension){
+        return dimension==net.minecraft.world.level.Level.OVERWORLD?DIM_OVERWORLD:dimension==net.minecraft.world.level.Level.NETHER?DIM_NETHER:null;
+    }
+    private int coordinateWidth(Minecraft client){
+        String main=client.player==null?"XYZ — — —":coordinateLabel(client);
+        int width=16+labelWidth(main);
+        if(client.player!=null&&dimensionIcon(coordinateDimension)!=null)width+=DIM_ICON+DIM_GAP;
+        if(client.player!=null&&!coordinateOtherText.isEmpty())width+=DIM_SPLIT+DIM_ICON+DIM_GAP+labelWidth(coordinateOtherText);
+        return width;
+    }
+    private void drawCoordinates(GuiGraphicsExtractor g,Minecraft client,int panel){
+        drawPanel(g,"coordinates",coordinateWidth(client),22,panel);
+        String main=client.player==null?"XYZ — — —":coordinateLabel(client);
+        int x=8;var icon=client.player==null?null:dimensionIcon(coordinateDimension);
+        if(icon!=null){VelaDraw.blit(g,icon,x,6,DIM_ICON,DIM_ICON,0,0,64,64,64,64,0xFFFFFFFF);x+=DIM_ICON+DIM_GAP;}
+        VelaDraw.text(g,client.font,main,x,7,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM);x+=labelWidth(main);
+        if(client.player==null||coordinateOtherText.isEmpty())return;
+        g.fill(x+6,6,x+7,16,VelaTheme.BORDER_HOVER);x+=DIM_SPLIT;
+        VelaDraw.blit(g,coordinateDimension==net.minecraft.world.level.Level.OVERWORLD?DIM_NETHER:DIM_OVERWORLD,x,6,DIM_ICON,DIM_ICON,0,0,64,64,64,64,0xFFFFFFFF);
+        VelaDraw.text(g,client.font,coordinateOtherText,x+DIM_ICON+DIM_GAP,7,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM);
     }
     // Measured twice per frame (bounds + draw) for text chips; the label rarely changes between frames.
     private final Map<String,Integer> labelWidths=new java.util.HashMap<>();

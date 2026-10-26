@@ -74,7 +74,7 @@ public final class HudLayoutService {
             &&!target.isInvisible()&&System.nanoTime()<=targetUntil?target:null;
     }
     public void tickTarget(Minecraft client){
-        if(client.player==null||client.level==null){target=null;targetUntil=targetHitUntil=0;arrowMotion.clear();arrowWorld=null;arrowTime=0;return;}
+        if(client.player==null||client.level==null){target=null;targetUntil=targetHitUntil=0;nearArrows.clear();return;}
         long now=System.nanoTime();
         if(target!=null&&(target.level()!=client.level||!target.isAlive())){target=null;targetHitUntil=0;}
         if(now<targetHitUntil)return;
@@ -380,14 +380,10 @@ public final class HudLayoutService {
                 }return;
             }
             if(id.equals("watermark")){
-                watermark(client);String[] parts=watermarkParts;int w=watermarkWidth;
-                drawPanel(g,id,w,22,panel);VelaDraw.logo(g,5,4,14);
-                dev.sqwat.vela.ui.render.GameUiCanvas canvas=parts.length>1?new dev.sqwat.vela.ui.render.GameUiCanvas(g):null;
-                for(int i=0;i<parts.length;i++){
-                    int tx=watermarkTextX[i];
-                    if(i>0)dev.sqwat.vela.ui.render.MetricIcon.draw(canvas,parts[i],tx-13,6,VelaTheme.TEXT_SECONDARY);
-                    VelaDraw.text(g,client.font,watermarkLabels[i],tx,7,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM);
-                }return;
+                watermark(client);
+                drawPanel(g,id,watermark.width(),WatermarkHud.HEIGHT,panel);
+                watermark.drawContent(g,client);
+                return;
             }
             if(id.equals("keystrokes")){
                 boolean mouse=keyFlag("mouse"),space=keyFlag("space");
@@ -444,7 +440,7 @@ public final class HudLayoutService {
         if(actual!=null)return new RectSize(Math.round(actual.width()*scale(id)),Math.round(actual.height()*scale(id)));
         return switch (id) {
             case "notifications" -> new RectSize(Math.round(notificationWidth()*scale(id)),Math.round(notificationHeight()*scale(id)));
-            case "watermark" -> {watermark(client);yield new RectSize(Math.round(watermarkWidth*scale(id)),Math.round(22*scale(id)));}
+            case "watermark" -> {watermark(client);yield new RectSize(Math.round(watermark.width()*scale(id)),Math.round(WatermarkHud.HEIGHT*scale(id)));}
             case "bossbar" -> new RectSize(190, 26);
             case "armor" -> new RectSize(Math.round(80*scale(id)),Math.round(24*scale(id)));
             case "inventory" -> new RectSize(Math.round(184*scale(id)),Math.round(84*scale(id)));
@@ -510,80 +506,16 @@ public final class HudLayoutService {
     private boolean flag(String id,String setting){var module=modules.byId(id);if(module==null)return false;for(var option:module.settings())if(option.id().equals(setting))return Boolean.TRUE.equals(option.value());return false;}
     private boolean nearArrows(){
         var module=modules.byId("near");
-        return module!=null&&module.settings().stream().anyMatch(s->s.id().equals("mode")&&s.value().equals("Стрелки"));
+        if(module!=null)for(var s:module.settings())if(s.id().equals("mode"))return "Стрелки".equals(s.value());
+        return false;
     }
-    private final Map<java.util.UUID,float[]> arrowMotion=new java.util.HashMap<>();
-    private final float[] arrowAngles=new float[24];
-    private final ArrowLayout arrowLayout=new ArrowLayout(24);
-    private float arrowRadius=64;
-    private long arrowTime;
-    private Object arrowWorld;
-    private int arrowCacheTick=Integer.MIN_VALUE;
-    private final Map<java.util.UUID,String> arrowLabels=new java.util.HashMap<>();
-    private final Map<java.util.UUID,String> arrowCaptions=new java.util.HashMap<>();
-    private int arrowCaptionFlags=-1;
-    private static final net.minecraft.resources.Identifier NEAR_ARROW=net.minecraft.resources.Identifier.fromNamespaceAndPath("velaclient","textures/effects/near_arrow.png");
+    private final NearArrowsHud nearArrows=new NearArrowsHud();
     private void drawNearArrows(GuiGraphicsExtractor g,Minecraft client,float partial){
-        if(client.player==null)return;
         int rgb=VelaTheme.PRIMARY&0xFFFFFF;
-        if(!flag("near","client_color"))for(var option:modules.byId("near").settings())
+        var near=modules.byId("near");
+        if(near!=null&&!flag("near","client_color"))for(var option:near.settings())
             if(option.id().equals("color"))rgb=(Integer)option.value()&0xFFFFFF;
-        float density=renderScale("near");
-        boolean names=flag("near","names"),distance=flag("near","distance");
-        var camera=client.gameRenderer.mainCamera();var origin=camera.position();
-        var players=nearby(client);
-        if(arrowWorld!=client.level){arrowMotion.clear();arrowLabels.clear();arrowCaptions.clear();arrowCacheTick=Integer.MIN_VALUE;arrowWorld=client.level;arrowTime=0;}
-        long now=System.nanoTime();float dt=arrowTime==0?1/60f:Math.min(.1f,(now-arrowTime)/1e9f);arrowTime=now;
-        boolean reduced=dev.sqwat.vela.VelaClient.services().configs().current().reducedMotion||!dev.sqwat.vela.VelaClient.services().configs().current().animations;
-        int captionFlags=(names?1:0)|(distance?2:0);
-        if(arrowCacheTick!=nearbyTick||arrowCaptionFlags!=captionFlags){
-            arrowCaptionFlags=captionFlags;
-            arrowCacheTick=nearbyTick;var ids=new java.util.HashSet<java.util.UUID>();
-            for(var p:players){ids.add(p.getUUID());String name=nearbyLabels.getOrDefault(p.getUUID(),p.getGameProfile().name());arrowLabels.put(p.getUUID(),VelaDraw.ellipsize(name,64,VelaDraw.Weight.MEDIUM,8));}
-            arrowMotion.keySet().retainAll(ids);arrowLabels.keySet().retainAll(ids);
-            arrowCaptions.clear();
-            for(var p:players)arrowCaptions.put(p.getUUID(),(names?arrowLabels.get(p.getUUID()):"")+(names&&distance?"\n":"")+(distance?nearbyDistances.getOrDefault(p.getUUID(),""):""));
-        }
-        float maxRadius=Math.max(40,Math.min(g.guiWidth(),g.guiHeight())*.5f-48*density);
-        float spacing=(names?64:distance?40:32)*density;
-        float goal=Math.min(maxRadius,Math.max(96*density,players.size()*spacing/(2*(float)Math.PI)));
-        arrowRadius=reduced?goal:dev.sqwat.vela.ui.animation.Motion.approach(arrowRadius,goal,9,dt);
-        for(int i=0;i<players.size();i++){
-            var point=players.get(i).getPosition(partial);
-            arrowAngles[i]=NearDirection.radians(point.x-origin.x,point.z-origin.z,camera.yRot());
-        }
-        float iconSize=Math.min(28*density,players.size()<2?28*density:2*arrowRadius*(float)Math.sin(Math.PI/players.size())-3*density);
-        iconSize=Math.max(4,iconSize);
-        float[] placed=arrowLayout.place(arrowAngles,players.size(),arrowRadius,iconSize+2*density);
-        for(int i=0;i<players.size();i++){
-            var player=players.get(i);
-            int playerRgb=dev.sqwat.vela.VelaClient.services().friends().contains(player.getGameProfile().name())?VelaTheme.POSITIVE&0xFFFFFF:rgb;
-            float angle=placed[i];
-            final float destination=angle;
-            float[] state=arrowMotion.computeIfAbsent(player.getUUID(),id->new float[]{0,destination});
-            state[0]=reduced?1:dev.sqwat.vela.ui.animation.Motion.approach(state[0],1,10,dt);
-            float r=arrowRadius;
-            float x=g.guiWidth()/2f+(float)Math.cos(angle)*r,y=g.guiHeight()/2f+(float)Math.sin(angle)*r;
-            int alpha=Math.round(255*state[0]);
-            g.pose().pushMatrix();
-            try{
-                g.pose().translate(x,y);g.pose().scale(density);g.pose().rotate(angle+(float)Math.PI/2);
-                float size=iconSize/density;
-                VelaDraw.blit(g,NEAR_ARROW,-size/2,-size/2,size,size,0,0,48,48,48,48,(alpha<<24)|playerRgb);
-            }finally{g.pose().popMatrix();}
-            if(!names&&!distance)continue;
-            g.pose().pushMatrix();
-            try{
-                g.pose().translate(x,y+14*density);g.pose().scale(density);
-                String caption=arrowCaptions.getOrDefault(player.getUUID(),"");
-                VelaDraw.floatingText(g,caption,1,3,alpha<<24,8);
-                VelaDraw.floatingText(g,caption,0,2,(alpha<<24)|0xF4F6FF,8);
-            }finally{g.pose().popMatrix();}
-        }
-    }
-    private static void nearArrowText(GuiGraphicsExtractor g,String text,int y,int alpha,int rgb){
-        VelaDraw.centeredText(g,text,1,y+1,(alpha<<24),VelaDraw.Weight.MEDIUM,8);
-        VelaDraw.centeredText(g,text,0,y,(alpha<<24)|rgb,VelaDraw.Weight.MEDIUM,8);
+        nearArrows.draw(g,client,partial,nearby(client),nearbyLabels,nearbyDistances,nearbyTick,rgb,renderScale("near"),flag("near","names"),flag("near","distance"));
     }
     public boolean supportsTransparency(String id){var module=modules.byId(id);return module!=null&&module.settings().stream().anyMatch(s->s.id().equals("transparent"));}
     public boolean transparent(String id){return flag(id,"transparent");}
@@ -627,37 +559,8 @@ public final class HudLayoutService {
         float alpha=dev.sqwat.vela.ui.animation.Motion.approach(first?target:state.alpha,target,12,first?0:Math.min(.1f,(now-state.time)/1e9f));
         state.time=now;state.alpha=alpha;return (Math.round(184.5f*alpha)<<24)|0x10141C;
     }
-    private static int watermarkWidth(String[] parts){int width=30+Math.max(0,parts.length-1)*21;for(int i=0;i<parts.length;i++)width+=VelaDraw.textWidth(i==0?parts[i]:dev.sqwat.vela.ui.render.MetricIcon.value(parts[i]),VelaDraw.Weight.MEDIUM);return width;}
-    private String watermarkText="Vela";
-    private String[] watermarkParts={"Vela"},watermarkLabels={"Vela"};
-    private int[] watermarkTextX={23};
-    private int watermarkWidth=-1,watermarkFps,watermarkPing;
-    private long watermarkTps;
-    private Object watermarkMask;
-    private String watermark(Minecraft client){
-        // Inputs are compared every frame; the string, split and text measurement only rebuild when one changes.
-        int fps=flag("watermark","fps")?client.getFps():-1;
-        long tps=Double.doubleToRawLongBits(Double.NaN);
-        if(flag("watermark","tps"))tps=Double.doubleToRawLongBits(HudTelemetry.tps());
-        int ping=-1;
-        if(flag("watermark","ping")&&client.player!=null&&client.getConnection()!=null){var info=client.getConnection().getPlayerInfo(client.player.getUUID());if(info!=null)ping=Math.max(-1,HudTelemetry.ping(info.getLatency()));}
-        Object mask=dev.sqwat.vela.module.utility.StreamerMode.mask();
-        if(watermarkWidth>=0&&fps==watermarkFps&&tps==watermarkTps&&ping==watermarkPing&&mask==watermarkMask)return watermarkText;
-        watermarkFps=fps;watermarkTps=tps;watermarkPing=ping;watermarkMask=mask;
-        String text="Vela";
-        if(fps>=0)text+=" · "+fps+" FPS";
-        double ticks=Double.longBitsToDouble(tps);if(!Double.isNaN(ticks))text+=" · "+String.format(java.util.Locale.ROOT,"%.1f",ticks)+" TPS";
-        if(ping>=0)text+=" · "+ping+" ms";
-        watermarkText=text;watermarkParts=text.split(" · ");watermarkWidth=watermarkWidth(watermarkParts);
-        watermarkLabels=new String[watermarkParts.length];watermarkTextX=new int[watermarkParts.length];
-        int tx=23;
-        for(int i=0;i<watermarkParts.length;i++){
-            if(i>0)tx+=21;
-            watermarkLabels[i]=i==0?watermarkParts[i]:dev.sqwat.vela.ui.render.MetricIcon.value(watermarkParts[i]);
-            watermarkTextX[i]=tx;tx+=VelaDraw.textWidth(watermarkLabels[i],VelaDraw.Weight.MEDIUM);
-        }
-        return text;
-    }
+    private final WatermarkHud watermark=new WatermarkHud();
+    private String watermark(Minecraft client){return watermark.text(client,flag("watermark","fps"),flag("watermark","tps"),flag("watermark","ping"));}
     private java.util.List<net.minecraft.world.entity.player.Player> nearby(Minecraft client){
         if(client.player==null||client.level==null){nearPresence.clear();nearbyLabels.clear();nearbyDistances.clear();nearbyLevel=null;nearbyTick=Integer.MIN_VALUE;return nearbyCache=java.util.List.of();}
         if(nearbyLevel==client.level&&nearbyTick==client.player.tickCount)return nearbyCache;

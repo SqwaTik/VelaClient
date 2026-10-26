@@ -39,6 +39,7 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.friend.LocalAppearanceService.initialize();
         dev.sqwat.vela.ui.screen.ContainerSearchBox.initialize();
         dev.sqwat.vela.module.utility.FoodInfo.initialize();
+        dev.sqwat.vela.module.visual.DeathRecap.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(message->dev.sqwat.vela.core.LocalCommands.send(message,services));
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(dev.sqwat.vela.module.utility.ChatTweaks::allowChat);

@@ -114,6 +114,11 @@
     "screen.ChatTweaksMixin",
     "hud.ChatKeepMixin",
     "hud.TabPingMixin",
+    "hud.DeathRecapHudMixin",
+    "camera.DeathRecapCameraMixin",
+    "entity.DeathRecapEventsMixin",
+    "entity.DeathRecapVisibilityMixin",
+    "entity.WalkAnimationAccessor",
     "screen.ContainerSearchMixin",
     "screen.ContainerScreenAccessor",
     "screen.WastedHoldScreenMixin"

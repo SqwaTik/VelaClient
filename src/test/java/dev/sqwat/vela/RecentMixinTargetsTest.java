@@ -59,4 +59,21 @@ class RecentMixinTargetsTest {
         assertNotNull(contents);
         assertTrue(calls(contents,"net/minecraft/client/gui/screens/inventory/AbstractContainerScreen","extractSlotHighlightFront"));
     }
+    @Test void deathRecapAndPackIndexTargets()throws Exception{
+        var listener=load("net.minecraft.client.multiplayer.ClientPacketListener");
+        for(String m:new String[]{"handleDamageEvent","handleEntityEvent","handlePlayerCombatKill"})assertNotNull(method(listener,m,null),m);
+        var camera=load("net.minecraft.client.Camera");
+        assertNotNull(method(camera,"alignWithEntity","(F)V"));
+        assertNotNull(method(camera,"setRotation","(FF)V"));
+        assertNotNull(method(camera,"setPosition","(Lnet/minecraft/world/phys/Vec3;)V"));
+        assertTrue(field(camera,"detached"));
+        assertNotNull(method(load("net.minecraft.client.gui.Hud"),"isHidden","()Z"));
+        var walk=load("net.minecraft.world.entity.WalkAnimationState");
+        for(String f:new String[]{"position","speed","speedOld"})assertTrue(field(walk,f),f);
+        assertNotNull(method(load("net.minecraft.client.renderer.entity.EntityRenderDispatcher"),"shouldRender",null));
+        var pack=load("net.minecraft.server.packs.FilePackResources");
+        for(String f:new String[]{"prefix","zipFileAccess","LOGGER"})assertTrue(field(pack,f),f);
+        assertNotNull(method(pack,"listResources",null));assertNotNull(method(pack,"getNamespaces",null));
+        assertNotNull(method(load("net.minecraft.server.packs.FilePackResources$SharedZipFileAccess"),"getOrCreateZipFile","()Ljava/util/zip/ZipFile;"));
+    }
 }

@@ -71,6 +71,9 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.CrystalOptimizer());
         modules.register(new dev.sqwat.vela.module.AspectRatio());
         modules.register(new dev.sqwat.vela.module.Freelook());
+        modules.register(new dev.sqwat.vela.module.DeathCoords());
+        modules.register(new dev.sqwat.vela.module.HitSound());
+        modules.register(new dev.sqwat.vela.module.AutoRespawn());
         modules.register(new dev.sqwat.vela.module.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.BlockOverlay());
         modules.register(new dev.sqwat.vela.module.Gamma());

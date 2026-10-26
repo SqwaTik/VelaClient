@@ -56,6 +56,7 @@ public final class VelaClient implements ClientModInitializer {
                 &&entity instanceof net.minecraft.world.entity.player.Player friend
                 &&services.friends().contains(friend.getGameProfile().name()))return net.minecraft.world.InteractionResult.FAIL;
             if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.HitBubbles.attacked(entity);
+            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.HitSound.attacked(entity);
             if(player==Minecraft.getInstance().player&&services.modules().byId("fake_player") instanceof dev.sqwat.vela.module.FakePlayer fake&&fake.hit(entity)){
                 if(entity instanceof net.minecraft.world.entity.LivingEntity living)services.hudLayout().attacked(living);
                 player.swing(hand);

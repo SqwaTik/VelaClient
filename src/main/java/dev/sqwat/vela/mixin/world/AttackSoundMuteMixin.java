@@ -13,4 +13,8 @@ abstract class AttackSoundMuteMixin {
     private void vela$muteAttack(ClientboundSoundPacket packet,CallbackInfo ci){
         if(HitSound.mutes(packet.getSound().value(),packet.getX(),packet.getY(),packet.getZ()))ci.cancel();
     }
+    @Inject(method="handleSoundEntityEvent",at=@At("HEAD"),cancellable=true)
+    private void vela$muteEntitySound(net.minecraft.network.protocol.game.ClientboundSoundEntityPacket packet,CallbackInfo ci){
+        if(HitSound.mutesEntity(packet.getSound().value(),packet.getId()))ci.cancel();
+    }
 }

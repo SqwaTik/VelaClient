@@ -49,7 +49,12 @@ public final class HitSound extends ClientModule {
     private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("sound","Звук","Встроенный звук Vela или файл из папки hitsounds","Хитмаркер","Хитмаркер",this::choices));
     private final NumberSetting volume=setting(new NumberSetting("volume","Громкость","Громкость звука",70,5,100,5));
     private final NumberSetting pitch=setting(new NumberSetting("pitch","Тон","Высота встроенного звука, %",100,50,200,5));
-    private final BooleanSetting muteVanilla=setting(new BooleanSetting("mute_vanilla","Заглушить стандартный звук","Не проигрывать обычные звуки удара от ваших атак",true));
+    private final BooleanSetting muteVanilla=setting(new BooleanSetting("mute_vanilla","Заглушить стандартный звук","Не проигрывать обычные звуки удара и ранения цели от ваших атак",true));
+    /** Last attacked entity and when (System.nanoTime); read on the network thread, hence volatile. */
+    private static volatile int lastTarget=Integer.MIN_VALUE;
+    private static volatile double targetX,targetY,targetZ;
+    private static volatile long targetUntil;
+    private static final long HURT_WINDOW=400_000_000L;
     public HitSound(){
         super("hit_sound","Hit Sound","Свой звук при ударе по цели",ModuleCategory.UTILITIES);
         setting(new ActionSetting("open_folder","Открыть папку звуков",()->{
@@ -70,6 +75,7 @@ public final class HitSound extends ClientModule {
     public static void attacked(Entity target){
         var module=current();
         if(module==null||!(target instanceof LivingEntity living)||!living.isAlive())return;
+        lastTarget=target.getId();targetX=target.getX();targetY=target.getY();targetZ=target.getZ();targetUntil=System.nanoTime()+HURT_WINDOW;
         float vol=module.volume.value().floatValue()/100;
         var builtIn=BUILT_IN.get(module.sound.value());
         if(builtIn!=null){
@@ -80,11 +86,26 @@ public final class HitSound extends ClientModule {
         var file=module.file();if(file==null)return;
         module.clips.play(file,vol*Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER));
     }
-    /** True for vanilla attack sounds played at the local player while the module replaces them. */
+    /**
+     * True for sounds the module replaces: vanilla attack sounds at the local player, and the hurt sound of the entity
+     * the player just hit (servers play it at the target; many PvP servers disable attack sounds and only this remains).
+     */
     public static boolean mutes(SoundEvent event,double x,double y,double z){
         var module=current();var player=Minecraft.getInstance().player;
-        return module!=null&&module.muteVanilla.value()&&player!=null&&Vanilla.ATTACK.contains(event)&&player.distanceToSqr(x,y,z)<=2.5*2.5;
+        if(module==null||!module.muteVanilla.value()||player==null)return false;
+        if(Vanilla.ATTACK.contains(event)&&player.distanceToSqr(x,y,z)<=2.5*2.5)return true;
+        if(!hurtSound(event)||System.nanoTime()>targetUntil)return false;
+        double dx=x-targetX,dy=y-targetY,dz=z-targetZ;
+        return dx*dx+dy*dy+dz*dz<=3*3;
     }
+    /** Entity-attached variant of {@link #mutes}. */
+    public static boolean mutesEntity(SoundEvent event,int entityId){
+        var module=current();
+        if(module==null||!module.muteVanilla.value())return false;
+        if(Vanilla.ATTACK.contains(event)){var p=Minecraft.getInstance().player;return p!=null&&p.getId()==entityId;}
+        return entityId==lastTarget&&System.nanoTime()<=targetUntil&&hurtSound(event);
+    }
+    static boolean hurtSound(SoundEvent event){String path=event.location().getPath();return path.endsWith(".hurt")||path.contains(".hurt_")||path.endsWith("_hurt");}
     private static HitSound current(){
         var s=dev.sqwat.vela.VelaClient.services();
         return s!=null&&s.modules().byId("hit_sound") instanceof HitSound module&&module.enabled()?module:null;

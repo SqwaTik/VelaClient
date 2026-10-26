@@ -235,6 +235,7 @@ public final class HudLayoutService {
         if(modules.byId("dash_trail") instanceof dev.sqwat.vela.module.visual.DashTrail trail&&trail.enabled())trail.draw(g);
         if(modules.byId("kill_effect") instanceof dev.sqwat.vela.module.visual.KillEffect kill&&kill.enabled())kill.draw(g);
         dev.sqwat.vela.module.visual.Wasted.draw(g);
+        if(modules.byId("brew_viewer") instanceof dev.sqwat.vela.module.visual.BrewViewer brew&&brew.enabled())brew.draw(g);
         if(modules.byId("particles") instanceof dev.sqwat.vela.module.visual.Particles particles&&particles.enabled())particles.draw(g);
         if(modules.byId("world_particles") instanceof dev.sqwat.vela.module.visual.WorldParticles ambient&&ambient.enabled())ambient.draw(g);
         if(modules.byId("trajectories") instanceof dev.sqwat.vela.module.utility.Trajectories trajectories&&trajectories.enabled())trajectories.draw(g);

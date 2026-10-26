@@ -104,7 +104,9 @@
     "camera.FreelookMouseMixin",
     "camera.FreelookCameraMixin",
     "screen.WastedDeathScreenMixin",
-    "resource.ProfiledReloadMixin"
+    "resource.ProfiledReloadMixin",
+    "world.AttackSoundMuteMixin",
+    "screen.WastedDeathScreenStyleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

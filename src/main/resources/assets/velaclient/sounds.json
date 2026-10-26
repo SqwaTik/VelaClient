@@ -5,5 +5,13 @@
   "ui.expand": {"sounds": ["velaclient:ui/open_002"]},
   "ui.toggle": {"sounds": ["velaclient:ui/click_001"]},
   "ui.favorite": {"sounds": ["velaclient:ui/confirmation_001"]},
-  "ui.slider": {"sounds": ["velaclient:ui/tick_001"]}
+  "ui.slider": {"sounds": ["velaclient:ui/tick_001"]},
+  "hit.click": {"sounds": ["velaclient:hit/click"]},
+  "hit.pulse": {"sounds": ["velaclient:hit/pulse"]},
+  "hit.crystal": {"sounds": ["velaclient:hit/crystal"]},
+  "hit.bass": {"sounds": ["velaclient:hit/bass"]},
+  "hit.neon": {"sounds": ["velaclient:hit/neon"]},
+  "hit.glass": {"sounds": ["velaclient:hit/glass"]},
+  "hit.marker": {"sounds": ["velaclient:hit/marker"]},
+  "death.wasted": {"sounds": ["velaclient:death/wasted"]}
 }

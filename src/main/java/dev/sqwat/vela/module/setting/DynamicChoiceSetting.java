@@ -12,7 +12,11 @@ public final class DynamicChoiceSetting extends ChoiceSetting {
     private final Supplier<List<String>> source;
     private final String placeholder;
     public DynamicChoiceSetting(String id,String name,String description,String placeholder,Supplier<List<String>> source){
-        super(id,name,description,placeholder,List.of(placeholder));
+        this(id,name,description,placeholder,placeholder,source);
+    }
+    /** {@code value} is the initial selection; it must be one of the options the supplier normally returns. */
+    public DynamicChoiceSetting(String id,String name,String description,String value,String placeholder,Supplier<List<String>> source){
+        super(id,name,description,value,List.of(value));
         this.source=source;this.placeholder=placeholder;
     }
     @Override public List<String> options(){

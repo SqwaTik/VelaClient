@@ -24,14 +24,14 @@ public final class ChatTweaks extends ClientModule {
     private final ColorSetting timeColor=setting(new ColorSetting("time_color","Цвет времени",0x7F8AA3));
     private final BooleanSetting stack=setting(new BooleanSetting("stack","Объединять повторы","Одинаковые сообщения подряд — одна строка со счётчиком",true));
     private final NumberSetting window=setting(new NumberSetting("window","Окно повторов","Объединять повторы не старше, секунд",60,5,600,5));
-    private final NumberSetting history=setting(new NumberSetting("history","История","Сколько сообщений хранит чат (в игре — 100)",500,100,2000,100));
+    private final NumberSetting history=setting(new NumberSetting("history","История чата","Сколько сообщений хранит чат (в игре — 100)",500,100,2000,100));
     private final BooleanSetting keep=setting(new BooleanSetting("keep","Сохранять при выходе","Не очищать чат при отключении от сервера",true));
     private final BooleanSetting links=setting(new BooleanSetting("coordinate_links","Координаты-ссылки","Клик по координатам в сообщении создаёт метку",true));
     private final BooleanSetting mentions=setting(new BooleanSetting("mentions","Упоминания","Подсвечивать ваш ник в чужих сообщениях",true));
     private final BooleanSetting mentionSound=setting(new BooleanSetting("mention_sound","Звук упоминания","Тихий сигнал при упоминании и личном сообщении",true));
     private final ColorSetting mentionColor=setting(new ColorSetting("mention_color","Цвет упоминания",0xFFD166));
     private final BooleanSetting threads=setting(new BooleanSetting("threads","Личные сообщения","Вкладки переписок над строкой чата",true));
-    private final TextSetting replyCommand=setting(new TextSetting("reply_command","Команда ЛС","Чем отправлять сообщение во вкладке переписки","msg"));
+    private final TextSetting replyCommand=setting(new TextSetting("reply_command","Команда личных сообщений","Команда сервера, которой отправляется текст во вкладке переписки: msg — это /msg ник текст","msg"));
     private long lastPing;
     private String lastText;
     private GuiMessage lastLine;

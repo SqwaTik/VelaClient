@@ -67,6 +67,7 @@ public final class VelaClient implements ClientModInitializer {
                 &&entity instanceof net.minecraft.world.entity.player.Player friend
                 &&services.friends().contains(friend.getGameProfile().name()))return net.minecraft.world.InteractionResult.FAIL;
             if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.visual.HitBubbles.attacked(entity);
+            if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.visual.MaceSmash.attacked(player,entity);
             if(player==Minecraft.getInstance().player)dev.sqwat.vela.module.utility.HitSound.attacked(entity);
             if(player==Minecraft.getInstance().player&&services.modules().byId("fake_player") instanceof dev.sqwat.vela.module.utility.FakePlayer fake&&fake.hit(entity)){
                 if(entity instanceof net.minecraft.world.entity.LivingEntity living)services.hudLayout().attacked(living);
@@ -89,6 +90,7 @@ public final class VelaClient implements ClientModInitializer {
             if(client.level!=null)dev.sqwat.vela.ui.SessionPresentation.visit();
             services.hudLayout().viewport(client.getWindow().getGuiScale());
             dev.sqwat.vela.friend.FriendPresence.tick(client,services);
+            dev.sqwat.vela.friend.VelaUsers.tick(client);
             dev.sqwat.vela.marker.MarkerRuntime.tick(client,services.markers());
             services.hudLayout().tickTarget(client);
             if(client.level==null){dev.sqwat.vela.render.entity.AutomaticVisibility.clear();dev.sqwat.vela.ui.hud.HudTelemetry.clear();dev.sqwat.vela.ui.hud.CooldownTracker.clear();}

@@ -30,7 +30,6 @@ public final class DeathReplay {
     private static float time;           // ticks since the first frame
     private static boolean playing=true;
     private static float speed=1f;
-    private static boolean exporting;
     /** Per actor: for every frame, the newest frame at or before it that contains the actor (-1 before it appears). */
     private static final Map<UUID,int[]> lastSeen=new HashMap<>();
     private static int endIndex;
@@ -58,13 +57,10 @@ public final class DeathReplay {
     public static boolean showsHud(){return hud;}
     public static void showHud(boolean value){hud=value;}
     public static void start(Recording r){start(r,View.ORBIT,false,1f);}
-    /** While a video is written the replay is stepped by ReplayVideo, one video frame at a time, not by real time. */
-    public static void pauseForExport(boolean value){exporting=value;lastFrame=0;}
-    public static boolean exporting(){return exporting;}
     public static void start(Recording r,View initial,boolean showHud,float playbackSpeed){
         stop();
         var mc=Minecraft.getInstance();if(mc.level==null||r.frames().isEmpty())return;
-        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;hud=showHud;speed=playbackSpeed;exporting=false;
+        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;hud=showHud;speed=playbackSpeed;
         // The replay ends one second after the death; nothing after that is interesting.
         endIndex=r.frames().size()-1;
         for(int i=0;i<r.frames().size();i++)if(r.frames().get(i).tick()>r.deathTick()+20){endIndex=Math.max(1,i-1);break;}
@@ -101,7 +97,7 @@ public final class DeathReplay {
     }
     public static void stop(){
         if(level!=null)for(var ghost:ghosts.values())level.removeEntity(ghost.getId(),Entity.RemovalReason.DISCARDED);
-        ghosts.clear();ghostSet.clear();ghostWalks.clear();lastSeen.clear();recording=null;hud=false;exporting=false;level=null;cameraPos=null;
+        ghosts.clear();ghostSet.clear();ghostWalks.clear();lastSeen.clear();recording=null;hud=false;level=null;cameraPos=null;
     }
 
     public static float length(){return recording==null?0:recording.frames().get(endIndex).tick()-recording.firstTick();}
@@ -122,8 +118,7 @@ public final class DeathReplay {
         if(recording==null)return;
         if(Minecraft.getInstance().level!=level){stop();return;}
         long now=System.nanoTime();float dt=lastFrame==0?0:Math.min(.1f,(now-lastFrame)/1e9f);lastFrame=now;
-        if(exporting)dt=1f/ReplayVideo.FPS*speed; // camera motion follows video time
-        else if(playing){time+=dt*20*speed;if(time>=length()){time=length();playing=false;}}
+        if(playing){time+=dt*20*speed;if(time>=length()){time=length();playing=false;}}
         if(autoOrbit)orbitYaw+=dt*9;
         for(var e:ghosts.entrySet())apply(e.getValue(),recording.actors().get(e.getKey()),time);
         place();

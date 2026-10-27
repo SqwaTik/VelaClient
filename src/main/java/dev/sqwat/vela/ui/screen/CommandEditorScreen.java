@@ -38,6 +38,23 @@ public final class CommandEditorScreen extends VelaScreen {
     @Override protected float interfaceScale(){return services.configs().current().uiScale;}
     private void fresh(){draft.fresh();fields[0].set("");fields[1].set("");fields[2].set("60");key=-1;enabled=true;focus=0;capturing=false;status="";}
     private void transition(Runnable action){capturing=false;focus=-1;action.run();formReveal=0;}
+    /**
+     * What is typed is never lost: "+", choosing another entry and closing save the form first. A form without a
+     * command is just dropped; without a name, the command names it. False (with the reason in the status line) when
+     * the input cannot be saved, so the form stays open.
+     */
+    private boolean commitPending(){
+        String name=fields[0].text().strip(),text=fields[1].text().strip();
+        CommandEntries.Entry current=draft.selected()==null?null:services.commands().all().stream().filter(e->e.id().equals(draft.selected())).findFirst().orElse(null);
+        if(draft.selected()==null&&text.isEmpty())return true;
+        if(draft.selected()!=null&&current==null)return true;
+        int seconds;
+        try{seconds=interval?Integer.parseInt(fields[2].text().strip()):60;}catch(NumberFormatException ex){status="Интервал должен быть целым числом";return false;}
+        if(current!=null&&current.name().equals(name)&&current.text().equals(text)&&current.key()==key&&current.seconds()==seconds&&current.enabled()==enabled)return true;
+        if(name.isEmpty()){name=text.length()>40?text.substring(0,40).strip():text;fields[0].set(name);}
+        try{draft.save(services.commands(),interval,name,text,key,seconds,enabled);return true;}
+        catch(RuntimeException ex){status=ex.getMessage();return false;}
+    }
     private void select(CommandEntries.Entry e){draft.select(e.id());fields[0].set(e.name());fields[1].set(e.text());fields[2].set(Integer.toString(e.seconds()));key=e.key();enabled=e.enabled();focus=-1;capturing=false;status="";}
     @Override protected void renderVela(GuiGraphicsExtractor g,int mx,int my,float delta){
         parent.renderAsBackdrop(g,width,height,delta);
@@ -66,7 +83,7 @@ public final class CommandEditorScreen extends VelaScreen {
         VelaDraw.roundedRect(g,add.x(),add.y(),16,16,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.25f+.5f*addHover));
         if(addHover>.02f)new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(add.x(),add.y(),16,16,5,(VelaTheme.PRIMARY&0xFFFFFF)|(Math.round(255*addHover)<<24));
         VelaIcons.draw(g,"plus",add.x()+4,add.y()+4,8,VelaTheme.TEXT);
-        actions.add(new Action(add,()->transition(this::fresh)));
+        actions.add(new Action(add,()->{if(commitPending())transition(this::fresh);}));
         list=new Rect(x+10,y+70,lw,h-80);
         g.fill(x+lw+16,y+52,x+lw+17,y+h-12,VelaTheme.BORDER);
         scrollLimit=Math.max(0,entries.size()*31-list.height());if(scrollToEnd){targetScroll=scrollLimit;scrollToEnd=false;}targetScroll=Math.clamp(targetScroll,0,scrollLimit);
@@ -86,7 +103,7 @@ public final class CommandEditorScreen extends VelaScreen {
             VelaDraw.text(g,label,row.x()+18,row.y()+15,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
             int visualY=row.y()-Math.round(scroll);
             int top=Math.max(visualY,list.y()),bottom=Math.min(visualY+27,list.y()+list.height());
-            if(bottom>top)actions.add(new Action(new Rect(row.x(),top,row.width(),bottom-top),()->{if(!e.id().equals(draft.selected()))transition(()->select(e));}));
+            if(bottom>top)actions.add(new Action(new Rect(row.x(),top,row.width(),bottom-top),()->{if(!e.id().equals(draft.selected())&&commitPending())transition(()->select(e));}));
             rowY+=31;
         }
         VelaDraw.subpixelText(oldSubpixel);g.pose().popMatrix();
@@ -158,7 +175,9 @@ public final class CommandEditorScreen extends VelaScreen {
     }
     private void button(GuiGraphicsExtractor g,Rect r,String label,int mx,int my,Runnable action){controls.button(g,"button:"+r.x()+":"+r.y(),r,label,r.contains(mx,my));actions.add(new Action(r,action));}
     private void save(){try{
-        boolean created=draft.save(services.commands(),interval,fields[0].text().strip(),fields[1].text().strip(),key,interval?Integer.parseInt(fields[2].text()):60,enabled);
+        String name=fields[0].text().strip(),text=fields[1].text().strip();
+        if(name.isEmpty()&&!text.isEmpty()){name=text.length()>40?text.substring(0,40).strip():text;fields[0].set(name);}
+        boolean created=draft.save(services.commands(),interval,name,text,key,interval?Integer.parseInt(fields[2].text().strip()):60,enabled);
         if(created){transition(()->{fresh();scrollToEnd=true;status="Добавлено — можно создать следующую";});}else status="Изменения сохранены";
     }catch(NumberFormatException ex){status="Интервал должен быть целым числом";}catch(RuntimeException ex){status=ex.getMessage();}}
     @Override protected boolean clickVela(MouseButtonEvent event,boolean doubled){
@@ -190,6 +209,6 @@ public final class CommandEditorScreen extends VelaScreen {
     private void scrollTo(double y){targetScroll=Math.clamp((float)(y-scrollTrack.y()-scrollGrab)/Math.max(1,scrollTrack.height()-scrollThumb.height()),0,1)*scrollLimit;}
     @Override protected boolean dragVela(MouseButtonEvent e,double dx,double dy){if(draggingScroll){scrollTo(e.y());return true;}return false;}
     @Override protected boolean releaseVela(MouseButtonEvent e){draggingScroll=false;return true;}
-    @Override public void onClose(){closing=true;capturing=false;}
+    @Override public void onClose(){if(closing||commitPending()){closing=true;capturing=false;}}
     @Override public boolean isPauseScreen(){return false;}
 }

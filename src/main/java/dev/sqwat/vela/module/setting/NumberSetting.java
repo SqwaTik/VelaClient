@@ -4,6 +4,7 @@ public final class NumberSetting extends Setting<Double> {
     private final double min;
     private final double max;
     private final double step;
+    private NumberUnits.Unit unit;
 
     public NumberSetting(String id, String name, String description, double value, double min, double max, double step) {
         super(id, name, description, value);
@@ -12,8 +13,14 @@ public final class NumberSetting extends Setting<Double> {
         this.min = min;
         this.max = max;
         this.step = step;
+        this.unit = NumberUnits.infer(name, description);
         set(value);
     }
+    /** Overrides the unit read from the name and description. */
+    public NumberSetting unit(NumberUnits.Unit unit) { this.unit = unit; return this; }
+    public NumberUnits.Unit unit() { return unit; }
+    /** Value with its unit, e.g. "1 мин", "250 мс", "40%". */
+    public String display() { return NumberUnits.format(this); }
 
     @Override protected Double validate(Double next) {
         if (!Double.isFinite(next)) throw new IllegalArgumentException("Value must be finite");

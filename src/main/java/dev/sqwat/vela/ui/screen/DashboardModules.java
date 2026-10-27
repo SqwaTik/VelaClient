@@ -225,7 +225,7 @@ abstract class DashboardModules extends DashboardBase {
             }
             clippedText(g,setting.name(),x+15,cursor,width-(setting instanceof BooleanSetting?35:95),VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR);
             String value = setting instanceof BooleanSetting b ? (b.value() ? "Вкл" : "Выкл")
-                : setting instanceof NumberSetting n ? format(n.value().floatValue()) : setting instanceof ChoiceSetting c ? c.value() : String.valueOf(setting.value());
+                : setting instanceof NumberSetting n ? n.display() : setting instanceof ChoiceSetting c ? c.value() : String.valueOf(setting.value());
             value=VelaDraw.ellipsize(value,76,VelaDraw.Weight.MEDIUM);
             if(setting instanceof BooleanSetting b) {
                 controls.checkbox(g,"setting-"+module.id()+"-"+setting.id(),ModuleSettingsGeometry.checkbox(x,cursor,width),b.value());

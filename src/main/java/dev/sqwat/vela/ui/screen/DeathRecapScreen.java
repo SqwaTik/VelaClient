@@ -4,7 +4,6 @@ import dev.sqwat.vela.module.visual.DeathRecap;
 import dev.sqwat.vela.module.visual.DeathRecap.Recording;
 import dev.sqwat.vela.module.visual.DeathReplay;
 import dev.sqwat.vela.module.visual.ReplayFiles;
-import dev.sqwat.vela.module.visual.ReplayVideo;
 import dev.sqwat.vela.ui.Lang;
 import dev.sqwat.vela.ui.input.GameTextInput;
 import dev.sqwat.vela.ui.input.TextEdit;
@@ -47,7 +46,6 @@ public final class DeathRecapScreen extends VelaScreen {
     private DeathReplay.View saveView=DeathReplay.View.ORBIT;
     private boolean saveHud;
     private float saveSpeed=1f;
-    private boolean saveVideo=true;
     /** Events with hits from the same source within two seconds merged into one row. */
     private final List<Row> rows;
     private record Row(DeathRecap.Event first,int lastTick,float amount,int count){}
@@ -84,7 +82,7 @@ public final class DeathRecapScreen extends VelaScreen {
         if(initial==null)DeathReplay.start(recording);
         else DeathReplay.start(recording,initial.view(),initial.hud(),initial.speed());
     }
-    @Override public void removed(){ReplayVideo.cancel();DeathReplay.stop();super.removed();}
+    @Override public void removed(){DeathReplay.stop();super.removed();}
     @Override public void onClose(){
         var player=minecraft.player;
         minecraft.gui.setScreen(parent instanceof ReplayLibraryScreen||player!=null&&player.isDeadOrDying()&&parent!=null?parent:null);
@@ -100,7 +98,6 @@ public final class DeathRecapScreen extends VelaScreen {
         // First-person views get the ordinary crosshair; the free camera has none.
         if(DeathReplay.view()!=DeathReplay.View.ORBIT&&!DeathReplay.showsHud())
             g.blitSprite(net.minecraft.client.renderer.RenderPipelines.CROSSHAIR,CROSSHAIR,(width-15)/2,(height-15)/2,15,15);
-        if(ReplayVideo.running())return; // the video shows the scene only
         boolean blocked=modal!=Modal.NONE;int px=blocked?-10000:mx,py=blocked?-10000:my;
         // Soft vignette top and bottom keeps the text readable over any scene.
         g.fillGradient(0,0,width,70,0xB0050608,0x00050608);
@@ -262,7 +259,7 @@ public final class DeathRecapScreen extends VelaScreen {
         name.selectAll();
     }
     private void saveWindow(GuiGraphicsExtractor g,int mx,int my){
-        int w=320,h=270;var r=new Rect((width-w)/2,(height-h)/2,w,h);modalRect=r;
+        int w=320,h=246;var r=new Rect((width-w)/2,(height-h)/2,w,h);modalRect=r;
         var content=UiKit.window(g,r,"Сохранить повтор","Настройки сохранённой записи");
         int x=content.x(),y=content.y(),cw=content.width();
         UiKit.caption(g,"Название",x,y);y+=10;
@@ -291,11 +288,6 @@ public final class DeathRecapScreen extends VelaScreen {
         VelaDraw.text(g,"Интерфейс игры в повторе",x,y+4,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8f);
         VelaDraw.toggle(g,x+cw-24,y+2,controls.animate("svhud",saveHud?1:0),hudRow.contains(mx,my));
         actions.add(Map.entry(hudRow,()->saveHud=!saveHud));
-        y+=22;
-        var videoRow=new Rect(x,y,cw,18);
-        VelaDraw.text(g,"Также записать видеофайл",x,y+4,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8f);
-        VelaDraw.toggle(g,x+cw-24,y+2,controls.animate("svvid",saveVideo?1:0),videoRow.contains(mx,my));
-        actions.add(Map.entry(videoRow,()->saveVideo=!saveVideo));
         int by=r.y()+r.height()-30;
         String saveLabel="Сохранить",cancelLabel="Отмена";
         int sw=UiKit.chipWidth(saveLabel),cw2=UiKit.chipWidth(cancelLabel);
@@ -307,25 +299,13 @@ public final class DeathRecapScreen extends VelaScreen {
     }
     private void save(){
         try{
-            var file=ReplayFiles.save(recording,new ReplayFiles.Options(name.text().strip(),saveView,saveHud,saveSpeed,saveSeconds));
+            ReplayFiles.save(recording,new ReplayFiles.Options(name.text().strip(),saveView,saveHud,saveSpeed,saveSeconds));
             modal=Modal.NONE;
-            if(saveVideo)recordVideo(file);
-            else dev.sqwat.vela.ui.Notifications.show(Lang.tr("Повтор сохранён"),name.text().strip(),"save");
+            dev.sqwat.vela.ui.Notifications.show(Lang.tr("Повтор сохранён"),name.text().strip(),"save");
         }catch(Exception error){
             org.slf4j.LoggerFactory.getLogger("Vela/Recap").warn("Cannot save replay",error);
             dev.sqwat.vela.ui.Notifications.show(Lang.tr("Не удалось сохранить повтор"),String.valueOf(error.getMessage()),"save");
         }
-    }
-
-    /** Plays the saved part once with the saved camera and writes it next to the replay file. Esc cancels. */
-    private void recordVideo(java.nio.file.Path replay){
-        String base=replay.getFileName().toString().replaceFirst("\\.vrec$","");
-        float from=saveSeconds>0?Math.max(0,recording.deathTick()-saveSeconds*20-recording.firstTick()):0;
-        DeathReplay.view(saveView);DeathReplay.showHud(saveHud);DeathReplay.seek(from);
-        ReplayVideo.start(replay.resolveSibling(base),saveSpeed,video->{
-            DeathReplay.showHud(false);
-            dev.sqwat.vela.ui.Notifications.show(Lang.tr("Повтор и видео сохранены"),video.getFileName().toString(),"save");
-        });
     }
 
     // ---- Library ----
@@ -371,7 +351,6 @@ public final class DeathRecapScreen extends VelaScreen {
     }
 
     @Override protected boolean clickVela(MouseButtonEvent e,boolean doubled){
-        if(ReplayVideo.running())return true;
         for(var a:actions)if(a.getKey().contains(e.x(),e.y())){a.getValue().run();return true;}
         if(modal!=Modal.NONE){if(!modalRect.contains(e.x(),e.y()))modal=Modal.NONE;return true;}
         if(new Rect(track.x()-4,track.y()-30,track.width()+8,track.height()+36).contains(e.x(),e.y())){scrubbing=true;scrub(e.x());return true;}
@@ -391,10 +370,6 @@ public final class DeathRecapScreen extends VelaScreen {
         return true;
     }
     @Override public boolean keyPressed(KeyEvent event){
-        if(ReplayVideo.running()){
-            if(event.key()==GLFW.GLFW_KEY_ESCAPE){ReplayVideo.cancel();DeathReplay.showHud(false);dev.sqwat.vela.ui.Notifications.show(Lang.tr("Видео отменено"),Lang.tr("Повтор сохранён без видео"),"save");}
-            return true;
-        }
         if(modal!=Modal.NONE){
             if(event.key()==GLFW.GLFW_KEY_ESCAPE)modal=Modal.NONE;
             else if(modal==Modal.SAVE&&(event.key()==GLFW.GLFW_KEY_ENTER||event.key()==GLFW.GLFW_KEY_KP_ENTER))save();

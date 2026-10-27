@@ -9,8 +9,6 @@ import java.util.Map;
 /** "Near" in arrow mode: eased pointers around the crosshair. Players and labels come from the HUD service. */
 final class NearArrowsHud {
     private final Map<java.util.UUID,float[]> arrowMotion=new java.util.HashMap<>();
-    private final float[] arrowAngles=new float[24];
-    private final ArrowLayout arrowLayout=new ArrowLayout(24);
     private float arrowRadius=64;
     private long arrowTime;
     private Object arrowWorld;
@@ -37,24 +35,21 @@ final class NearArrowsHud {
             arrowCaptions.clear();
             for(var p:players)arrowCaptions.put(p.getUUID(),(names?arrowLabels.get(p.getUUID()):"")+(names&&distance?"\n":"")+(distance?nearbyDistances.getOrDefault(p.getUUID(),""):""));
         }
-        float maxRadius=Math.max(40,Math.min(g.guiWidth(),g.guiHeight())*.5f-48*density);
-        float spacing=(names?64:distance?40:32)*density;
-        float goal=Math.min(maxRadius,Math.max(96*density,players.size()*spacing/(2*(float)Math.PI)));
+        // Fixed ring; every arrow points at its player's real direction and may overlap others, like classic arrows.
+        float goal=Math.max(40,Math.min(72*density,Math.min(g.guiWidth(),g.guiHeight())*.5f-48*density));
         arrowRadius=reduced?goal:dev.sqwat.vela.ui.animation.Motion.approach(arrowRadius,goal,9,dt);
-        for(int i=0;i<players.size();i++){
-            var point=players.get(i).getPosition(partial);
-            arrowAngles[i]=NearDirection.radians(point.x-origin.x,point.z-origin.z,camera.yRot());
-        }
-        float iconSize=Math.min(28*density,players.size()<2?28*density:2*arrowRadius*(float)Math.sin(Math.PI/players.size())-3*density);
-        iconSize=Math.max(4,iconSize);
-        float[] placed=arrowLayout.place(arrowAngles,players.size(),arrowRadius,iconSize+2*density);
+        float iconSize=22*density;
         for(int i=0;i<players.size();i++){
             var player=players.get(i);
             int playerRgb=dev.sqwat.vela.VelaClient.services().friends().contains(player.getGameProfile().name())?VelaTheme.POSITIVE&0xFFFFFF:rgb;
-            float angle=placed[i];
-            final float destination=angle;
-            float[] state=arrowMotion.computeIfAbsent(player.getUUID(),id->new float[]{0,destination});
+            var point=player.getPosition(partial);
+            float target=NearDirection.radians(point.x-origin.x,point.z-origin.z,camera.yRot());
+            float[] state=arrowMotion.computeIfAbsent(player.getUUID(),id->new float[]{0,target});
             state[0]=reduced?1:dev.sqwat.vela.ui.animation.Motion.approach(state[0],1,10,dt);
+            // Ease along the shortest arc: smooth when the player or the camera turns, never spins the long way round.
+            float delta=(float)Math.IEEEremainder(target-state[1],Math.PI*2);
+            state[1]=reduced?target:state[1]+delta*(1-(float)Math.exp(-dt*22));
+            float angle=state[1];
             float r=arrowRadius;
             float x=g.guiWidth()/2f+(float)Math.cos(angle)*r,y=g.guiHeight()/2f+(float)Math.sin(angle)*r;
             int alpha=Math.round(255*state[0]);

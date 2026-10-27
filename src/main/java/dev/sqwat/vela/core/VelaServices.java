@@ -32,6 +32,7 @@ public final class VelaServices implements AutoCloseable {
         registerFoundationModules();
         commands=new dev.sqwat.vela.module.utility.CommandEntries(configRoot);
         friends = new FriendService(configRoot);
+        dev.sqwat.vela.friend.VelaUsers.initialize(configRoot);
         accounts = new AccountService(configRoot);
         configs = new ConfigService(configRoot, modules,zakoOptimization);
         hudLayout = new HudLayoutService(configRoot, modules);
@@ -43,6 +44,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.Crosshair());
         modules.register(new dev.sqwat.vela.module.visual.HitColor());
         modules.register(new dev.sqwat.vela.module.visual.HitBubbles());
+        modules.register(new dev.sqwat.vela.module.visual.MaceSmash());
         modules.register(new dev.sqwat.vela.module.visual.Animations());
         modules.register(new dev.sqwat.vela.module.visual.SwingAnimations());
         modules.register(new dev.sqwat.vela.module.visual.Ambience());

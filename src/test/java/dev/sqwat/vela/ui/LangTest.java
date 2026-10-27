@@ -38,6 +38,8 @@ class LangTest {
                 for(String line:Files.readAllLines(file)){
                     String t=line.strip();
                     if(t.startsWith("//")||t.startsWith("*")||t.startsWith("/*"))continue;
+                    // Bilingual already (Lang.pick), or Russian words matched in data rather than shown ("// not UI").
+                    if(line.contains("Lang.pick(")||line.contains("// not UI"))continue;
                     var m=literal.matcher(line);
                     while(m.find()){
                         String s=m.group(1).replace("\\\"","\"").replace("\\n","\n");

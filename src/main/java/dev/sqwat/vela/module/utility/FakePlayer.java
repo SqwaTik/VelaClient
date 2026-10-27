@@ -95,11 +95,20 @@ public final class FakePlayer extends ClientModule {
             if(isDeadOrDying())setHealth(getMaxHealth());
             Particles.emit(this,Particles.Event.HIT);
             if(protectedHit)return true;
-            var player=Minecraft.getInstance().player;
-            animateHurt(player==null?0:player.getYRot());hurtTime=10;hurtDuration=10;
+            // Exactly what a client does when the server reports another player was hurt: leg flail, red flash and
+            // the hurt sound (ClientboundDamageEventPacket -> handleDamageEvent), the server's knockback, and the
+            // dark-heart damage indicators the server sends for hits over 2 HP.
             if(!source.is(net.minecraft.tags.DamageTypeTags.NO_KNOCKBACK))dealDefaultKnockback(source,damage,false);
-            owner.playLocalSound(getX(),getY(),getZ(),isDeadOrDying()?getDeathSound():getHurtSound(source),net.minecraft.sounds.SoundSource.PLAYERS,getSoundVolume(),getVoicePitch(),false);
+            handleDamageEvent(source);
+            if(healthDamage>2)damageIndicators((int)(healthDamage*.5f));
             return true;
+        }
+        /** ServerLevel.sendParticles(DAMAGE_INDICATOR, x, y(0.5), z, count, .1, 0, .1, .2) done locally. */
+        private void damageIndicators(int count){
+            for(int i=0;i<count;i++){
+                double dx=random.nextGaussian()*.1,dz=random.nextGaussian()*.1;
+                owner.addParticle(net.minecraft.core.particles.ParticleTypes.DAMAGE_INDICATOR,getX()+dx,getY(.5),getZ()+dz,random.nextGaussian()*.2,random.nextGaussian()*.2,random.nextGaussian()*.2);
+            }
         }
         @Override public void hurtArmor(net.minecraft.world.damagesource.DamageSource source,float damage){
             if(damage<=0)return;

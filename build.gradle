@@ -88,6 +88,7 @@ tasks.matching { it.name == 'runClientGameTest' }.configureEach {
     // The module set of a real profile, so the benchmark measures Vela as it is played, not with everything off.
     jvmArgs "-Dvela.perfModules=${file('perf/user-modules.txt').absolutePath}"
     // ./gradlew verifyClient -Pjfr records a profile of the whole run to build/gametest.jfr.
+    if (project.hasProperty('visualChecks')) jvmArgs '-Dvela.visualChecks=true'
     if (project.hasProperty('perfBreakdown')) jvmArgs '-Dvela.perfBreakdown=true'
     if (project.hasProperty('jfr')) jvmArgs "-XX:StartFlightRecording=filename=${file('build/gametest.jfr').absolutePath},settings=profile"
 }

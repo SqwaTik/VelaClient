@@ -19,8 +19,9 @@ abstract class VisualGizmosMixin {
         var kill=services.modules().byId("kill_effect");
         var hitboxes=services.modules().byId("hitboxes");
         var trajectories=services.modules().byId("trajectories");
+        var mace=dev.sqwat.vela.module.visual.MaceSmash.current();
         boolean storage=dev.sqwat.vela.marker.MarkerRuntime.hasHighlights(services.markers());
-        if(!storage&&(circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled()))return;
+        if(!storage&&(circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled())&&(mace==null||!mace.active()))return;
         try(var collection=((LevelRenderer)(Object)this).collectPerFrameRenderThreadGizmos()){
             if(circle instanceof dev.sqwat.vela.module.visual.JumpCircle effect&&effect.enabled())effect.submit();
             if(hat instanceof dev.sqwat.vela.module.visual.ChinaHat effect&&effect.enabled())effect.submit();
@@ -30,6 +31,7 @@ abstract class VisualGizmosMixin {
             if(hitboxes instanceof dev.sqwat.vela.module.visual.Hitboxes effect&&effect.enabled())effect.submit();
             if(trajectories instanceof dev.sqwat.vela.module.utility.Trajectories effect&&effect.enabled())effect.submit();
             if(storage)dev.sqwat.vela.marker.MarkerRuntime.submitHighlights(services.markers());
+            if(mace!=null&&mace.active())mace.submit();
         }
     }
 }

@@ -1,5 +1,6 @@
 #version 330
 uniform sampler2D SceneSampler;
+// holoColor: rgb, body opacity. params0: time (s), scan strength, flicker, edge glow. screen: size, 1/size.
 layout(std140) uniform HandsHologramData {
     vec4 holoColor;
     vec4 params0;
@@ -8,20 +9,38 @@ layout(std140) uniform HandsHologramData {
 };
 in vec2 texCoord;
 out vec4 fragColor;
+
+float coverageAt(vec2 uv) { return texture(SceneSampler, uv).a; }
+
 void main() {
-    vec4 hand = texture(SceneSampler, texCoord);
-    vec2 px = screen.zw * 2.0;
+    float time = params0.x;
+    // Thin horizontal glitch bands shift the image now and then.
+    float band = step(0.985, fract(sin(floor(gl_FragCoord.y / 6.0) * 12.9898 + floor(time * 9.0) * 78.233) * 43758.5453));
+    vec2 uv = texCoord + vec2(band * screen.z * 6.0, 0.0);
+
+    vec4 hand = texture(SceneSampler, uv);
     float mask = clamp(hand.a, 0.0, 1.0);
-    float nearMask = max(max(texture(SceneSampler, texCoord + vec2(px.x, 0)).a,
-                            texture(SceneSampler, texCoord - vec2(px.x, 0)).a),
-                         max(texture(SceneSampler, texCoord + vec2(0, px.y)).a,
-                             texture(SceneSampler, texCoord - vec2(0, px.y)).a));
-    if (max(mask, nearMask) <= 0.001) discard;
-    float scan = 0.75 + 0.25 * sin(gl_FragCoord.y * 0.8 - params0.x * 4.0);
+    // Glow halo: the silhouette sampled in a ring, wider than the item.
+    float near = 0.0, far = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float angle = float(i) * 0.785398;
+        vec2 dir = vec2(cos(angle), sin(angle));
+        near = max(near, coverageAt(uv + dir * screen.zw * 2.0));
+        far += coverageAt(uv + dir * screen.zw * 5.0);
+    }
+    far /= 8.0;
+    if (max(mask, max(near, far)) <= 0.001) discard;
+
     float shade = dot(hand.rgb, vec3(0.299, 0.587, 0.114));
-    vec3 body = holoColor.rgb * (0.35 + shade) * scan;
-    float edge = max(nearMask - mask, 0.0);
-    float opacity = mask * holoColor.a;
-    vec3 color = body * opacity + mix(holoColor.rgb, vec3(1.0), 0.4) * edge * 0.65;
+    float scan = 1.0 - params0.y * 0.5 * (0.5 + 0.5 * sin(gl_FragCoord.y * 1.4 - time * 6.0));
+    float flicker = 1.0 - params0.z * 0.25 * step(0.92, fract(sin(floor(time * 24.0) * 91.17) * 437.5));
+    // Translucent body: the item's shading in the hologram colour, brighter on the inner edge.
+    float inner = clamp(near - mask * 0.6, 0.0, 1.0);
+    vec3 body = holoColor.rgb * (0.7 + shade * 1.1) * scan * flicker;
+    float opacity = mask * 0.62 * holoColor.a;
+    vec3 rim = mix(holoColor.rgb, vec3(1.0), 0.3) * max(near - mask, 0.0) * 1.1;
+    vec3 halo = holoColor.rgb * far * (1.0 - mask) * params0.w * 1.1;
+    vec3 color = body * opacity + rim + halo + holoColor.rgb * inner * mask * 0.25;
+    // Premultiplied: the rim and halo add light on top of the scene.
     fragColor = vec4(color, opacity);
 }

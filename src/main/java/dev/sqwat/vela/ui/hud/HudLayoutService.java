@@ -378,7 +378,11 @@ public final class HudLayoutService {
                     String level=EffectLevels.suffix(effect.getAmplifier());
                     VelaDraw.text(g,VelaDraw.ellipsize(effect.getEffect().value().getDisplayName().getString(),90-VelaDraw.textWidth(level,VelaDraw.Weight.REGULAR,8),VelaDraw.Weight.REGULAR,8)+level,26,sy+4,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);
                     int seconds=(int)Math.ceil(effect.getDuration()/20.0);
-                    VelaDraw.text(g,effect.isInfiniteDuration()?"∞":String.format(java.util.Locale.ROOT,"%d:%02d",seconds/60,seconds%60),128,sy+4,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,7);
+                    // The PNG font has no ∞ glyph (it would show "?"): two linked rings instead.
+                    if(effect.isInfiniteDuration()){
+                        VelaDraw.roundedOutline(g,128,sy+5,6,6,3,VelaTheme.TEXT_SECONDARY,0);
+                        VelaDraw.roundedOutline(g,133,sy+5,6,6,3,VelaTheme.TEXT_SECONDARY,0);
+                    }else VelaDraw.text(g,String.format(java.util.Locale.ROOT,"%d:%02d",seconds/60,seconds%60),128,sy+4,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,7);
                 }return;
             }
             if(id.equals("inventory")){

@@ -120,6 +120,72 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                 System.out.println("[Vela gametest] Per-module cost:"+System.lineSeparator()+String.join(System.lineSeparator(),costs));
                 context.runOnClient(mc->{for(var m:defaults)m.setEnabled(true);});
             }
+            // 7. Optional (-PvisualChecks): hand shader modes, then the Nether with the profile's modules on and off.
+            if(Boolean.getBoolean("vela.visualChecks")){
+                world.getServer().runCommand("give @a minecraft:diamond_sword");
+                context.runOnClient(mc->{mc.player.setXRot(20);mc.player.getInventory().setSelectedSlot(0);});
+                context.waitTicks(20);context.takeScreenshot("vela-hands-off");
+                for(String mode:List.of("Голограмма","Стекло","Пламя")){
+                    context.runOnClient(mc->{
+                        var shaders=VelaClient.services().modules().byId("shaders");shaders.setEnabled(true);
+                        for(var setting:shaders.settings()){
+                            if(setting.id().equals("hands"))setBoolean(setting,true);
+                            if(setting.id().equals("hand_mode"))setString(setting,mode);
+                        }
+                    });
+                    context.waitTicks(20);context.takeScreenshot("vela-hands-"+(mode.equals("Голограмма")?"hologram":mode.equals("Стекло")?"glass":"flame"));
+                }
+                context.runOnClient(mc->VelaClient.services().modules().byId("shaders").setEnabled(false));
+                // Mace smash: the effect as if the player smashed the nearest villager after a 6-block fall.
+                world.getServer().runCommand("give @a minecraft:mace");
+                context.runOnClient(mc->{
+                    mc.player.getInventory().setSelectedSlot(1);
+                    VelaClient.services().modules().byId("mace_smash").setEnabled(true);
+                });
+                context.waitTicks(5);
+                context.runOnClient(mc->{
+                    mc.player.setXRot(35);mc.player.fallDistance=6;
+                    var target=mc.level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class,mc.player.getBoundingBox().inflate(16)).stream()
+                        .min(java.util.Comparator.comparingDouble(v->v.distanceToSqr(mc.player))).orElseThrow();
+                    dev.sqwat.vela.module.visual.MaceSmash.attacked(mc.player,target);
+                    mc.player.fallDistance=0;
+                });
+                context.waitTicks(4);context.takeScreenshot("vela-mace-smash");
+                context.waitTicks(14);context.takeScreenshot("vela-mace-smash-late");
+                context.runOnClient(mc->mc.options.renderDistance().set(12));
+                world.getServer().runCommand("gamemode creative @a");
+                world.getServer().runCommand("effect give @a minecraft:fire_resistance infinite 0 true");
+                world.getServer().runCommand("execute in minecraft:the_nether run forceload add -16 -16 16 16");
+                world.getServer().runCommand("execute in minecraft:the_nether run fill -2 89 -2 2 89 2 minecraft:netherrack");
+                world.getServer().runCommand("execute in minecraft:the_nether run tp @a 0 90 0 0 10");
+                context.waitTicks(100);
+                try{world.getConnection().waitForChunksRender(true,ClientGameTestContext.DEFAULT_TIMEOUT);}catch(AssertionError slow){context.waitTicks(200);}
+                context.runOnClient(mc->{mc.player.setYRot(0);mc.player.setXRot(10);});
+                context.waitTicks(200);
+                context.takeScreenshot("vela-nether");
+                var withN=new ArrayList<Integer>();var withoutN=new ArrayList<Integer>();
+                for(int round=0;round<4;round++){
+                    context.runOnClient(mc->{for(var m:defaults)m.setEnabled(false);});
+                    context.waitTicks(40);for(int i=0;i<3;i++){context.waitTicks(20);withoutN.add(context.computeOnClient(Minecraft::getFps));}
+                    context.runOnClient(mc->{for(var m:defaults)m.setEnabled(true);});
+                    context.waitTicks(40);for(int i=0;i<3;i++){context.waitTicks(20);withN.add(context.computeOnClient(Minecraft::getFps));}
+                }
+                Collections.sort(withN);Collections.sort(withoutN);
+                var culled=new ArrayList<Integer>();var unculled=new ArrayList<Integer>();
+                for(int round=0;round<3;round++){
+                    dev.sqwat.vela.render.perf.FogCulling.enabled=false;
+                    context.waitTicks(40);for(int i=0;i<3;i++){context.waitTicks(20);unculled.add(context.computeOnClient(Minecraft::getFps));}
+                    dev.sqwat.vela.render.perf.FogCulling.enabled=true;
+                    context.waitTicks(40);for(int i=0;i<3;i++){context.waitTicks(20);culled.add(context.computeOnClient(Minecraft::getFps));}
+                }
+                Collections.sort(culled);Collections.sort(unculled);
+                int sections=context.computeOnClient(mc->mc.levelRenderer.visibleSections().size());
+                System.out.println("[Vela gametest] Nether fog culling: off "+unculled.get(unculled.size()/2)+" FPS, on "+culled.get(culled.size()/2)
+                    +" FPS; sections drawn "+sections+", skipped "+dev.sqwat.vela.render.perf.FogCulling.lastCulled
+                    +"; fog end "+dev.sqwat.vela.render.perf.FogCulling.lastEnvironmentalEnd+", render distance end "+dev.sqwat.vela.render.perf.FogCulling.lastRenderDistanceEnd);
+                context.takeScreenshot("vela-nether-culled");
+                System.out.println("[Vela gametest] Nether: modules off "+withoutN.get(withoutN.size()/2)+" FPS, profile modules "+withN.get(withN.size()/2)+" FPS");
+            }
             check(samples);
         }
     }
@@ -129,6 +195,8 @@ public final class VelaClientGameTest implements FabricClientGameTest {
      * same code measured 894 and 721 on this machine at different times, so a single recording made the gate
      * unreliable. A passing run joins the history; a run below 85% of the baseline fails the build.
      */
+    @SuppressWarnings("unchecked") private static void setBoolean(dev.sqwat.vela.module.setting.Setting<?> s,boolean v){((dev.sqwat.vela.module.setting.Setting<Boolean>)s).set(v);}
+    @SuppressWarnings("unchecked") private static void setString(dev.sqwat.vela.module.setting.Setting<?> s,String v){((dev.sqwat.vela.module.setting.Setting<String>)s).set(v);}
     /** Modules of a real profile (perf/user-modules.txt), comma separated; empty when not configured. */
     private static List<String> readProfile(){
         String file=System.getProperty("vela.perfModules");

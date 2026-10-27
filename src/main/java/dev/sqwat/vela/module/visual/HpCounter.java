@@ -20,6 +20,7 @@ public final class HpCounter extends ClientModule {
     private int offset;
     private final BooleanSetting damage=setting(new BooleanSetting("damage","Урон","Показывать потерянное здоровье",true));
     private final BooleanSetting healing=setting(new BooleanSetting("healing","Лечение","Показывать восстановленное здоровье",true));
+    private final dev.sqwat.vela.module.setting.NumberSetting scale=setting(new dev.sqwat.vela.module.setting.NumberSetting("scale","Размер","Размер чисел, %",160,60,300,10));
     public HpCounter(){super("hp_counter","HP Counter","Всплывающие числа урона и лечения игроков",ModuleCategory.VISUALS);}
     private static HpCounter current(net.minecraft.world.entity.player.Player player){
         var services=dev.sqwat.vela.VelaClient.services();
@@ -98,8 +99,11 @@ public final class HpCounter extends ClientModule {
             if(!Float.isFinite(x)||!Float.isFinite(y)||x<0||y<0||x>g.guiWidth()||y>g.guiHeight())continue;
             float alpha=Math.min(1,progress/.12f)*Math.min(1,(1-progress)/.35f);
             int color=((int)(255*alpha)<<24)|(number.heal?0x64E8A5:0xFF6689);
-            float size=16*density*(float)Math.clamp(7/Math.max(1,origin.distanceTo(at)),.75,1);
-            VelaDraw.floatingText(g,number.text,x+density,y+density,((int)(180*alpha)<<24),size);
+            // Pops in slightly larger, then settles; keeps readable size further away than before.
+            float pop=1+.35f*(float)Math.pow(1-Math.min(1,progress/.15f),2);
+            float size=16*density*scale.value().floatValue()/100f*pop*(float)Math.clamp(8/Math.max(1,origin.distanceTo(at)),.85,1);
+            float shadow=Math.max(1,size/12f);
+            VelaDraw.floatingText(g,number.text,x+shadow,y+shadow,((int)(190*alpha)<<24),size);
             VelaDraw.floatingText(g,number.text,x,y,color,size);
         }}finally{g.pose().popMatrix();}
     }

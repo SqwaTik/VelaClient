@@ -16,5 +16,6 @@ public abstract class DistanceFogMixin {
         if(clear&&camera.entity() instanceof net.minecraft.world.entity.LivingEntity living&&
             (living.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS)||living.hasEffect(net.minecraft.world.effect.MobEffects.DARKNESS)))clear=false;
         if(clear){var fog=cir.getReturnValue();fog.environmentalStart=1_000_000;fog.environmentalEnd=1_000_001;}
+        dev.sqwat.vela.render.perf.FogCulling.fog(cir.getReturnValue());
     }
 }

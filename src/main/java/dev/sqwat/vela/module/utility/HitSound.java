@@ -20,16 +20,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plays a sound when the player attacks a living entity: one of Vela's built-in sounds (synthesized, shipped in the
- * mod, played through Minecraft's sound engine) or a .wav/.ogg file from config/velaclient/hitsounds. Optionally
+ * Plays a sound when the player attacks a living entity: one of Vela's built-in recorded sounds (shipped in the mod,
+ * played through Minecraft's sound engine) or a .wav/.ogg file from config/velaclient/hitsounds. Optionally
  * mutes vanilla's attack sounds for the player's own hits.
  */
 public final class HitSound extends ClientModule {
     /** Display name → sound id under assets/velaclient/sounds.json. */
     private static final Map<String,String> BUILT_IN=new LinkedHashMap<>();
     static{
-        BUILT_IN.put("Хитмаркер","hit.marker");BUILT_IN.put("Клик","hit.click");BUILT_IN.put("Пульс","hit.pulse");
-        BUILT_IN.put("Кристалл","hit.crystal");BUILT_IN.put("Бас","hit.bass");BUILT_IN.put("Неон","hit.neon");BUILT_IN.put("Стекло","hit.glass");
+        // Recorded sounds from Kenney's Impact Sounds (CC0, sounds/Kenney-Impact-License.txt).
+        BUILT_IN.put("Удар","hit.punch");BUILT_IN.put("Шлепок","hit.slap");BUILT_IN.put("Металл","hit.metal");BUILT_IN.put("Колокол","hit.bell");
+        BUILT_IN.put("Стекло","hit.glass");BUILT_IN.put("Тарелка","hit.plate");BUILT_IN.put("Дерево","hit.wood");BUILT_IN.put("Мягкий","hit.soft");
     }
     private static final String FILE_PREFIX="Файл: ";
     private final SoundClips clips=new SoundClips(folder());
@@ -39,7 +40,7 @@ public final class HitSound extends ClientModule {
         try{config=net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir();}catch(RuntimeException ignored){}
         return (config==null?java.nio.file.Path.of("config"):config).resolve("velaclient").resolve("hitsounds");
     }
-    private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("sound","Звук","Встроенный звук Vela или файл из папки hitsounds","Хитмаркер","Хитмаркер",this::choices));
+    private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("sound","Звук","Встроенный звук Vela или файл из папки hitsounds","Удар","Удар",this::choices));
     private final NumberSetting volume=setting(new NumberSetting("volume","Громкость","Громкость звука",70,5,100,5));
     private final NumberSetting pitch=setting(new NumberSetting("pitch","Тон","Высота встроенного звука, %",100,50,200,5));
     private final BooleanSetting muteVanilla=setting(new BooleanSetting("mute_vanilla","Заглушить стандартный звук","Не проигрывать обычные звуки удара и ранения цели от ваших атак",true));

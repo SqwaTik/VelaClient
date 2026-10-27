@@ -1,4 +1,4 @@
-"""Synthesizes Vela's built-in sounds (original audio, no samples) and encodes them to OGG Vorbis.
+"""Synthesizes Vela's Wasted sting (original audio, no samples) and encodes them to OGG Vorbis.
 
 Usage: python tools/GenerateSounds.py <output assets/velaclient/sounds dir>   (needs numpy, scipy, ffmpeg on PATH)
 """
@@ -41,31 +41,6 @@ def finish(sig, peak=.89, fade=.004):
     sig[:n] *= np.linspace(0, 1, n); sig[-n:] *= np.linspace(1, 0, n)
     return sig / (np.max(np.abs(sig)) + 1e-9) * peak
 
-def hit_click():
-    tick = np.sin(2 * np.pi * 3100 * t(.05)) * env(len(t(.05)), .0005, .012)
-    burst = band(noise(.012), 2500, 9000) * env(len(t(.012)), .0002, .003)
-    return finish(mix(tick, burst * .8))
-def hit_pulse():
-    s = .16; x = t(s); f = 900 * np.exp(-x * 2.5)
-    tone = np.sin(2 * np.pi * np.cumsum(f) / RATE) + .35 * np.sin(4 * np.pi * np.cumsum(f) / RATE)
-    return finish(tone * env(len(x), .001, .045))
-def hit_crystal():
-    s = .45; x = t(s)
-    parts = sum(a * np.sin(2 * np.pi * f * x) * np.exp(-x / d) for f, a, d in ((1480, 1, .16), (2390, .6, .11), (3870, .35, .07), (5210, .2, .05)))
-    return finish(reverb(parts * env(len(x), .0008, 10), .5, .2))
-def hit_bass():
-    body = sweep(95, 42, .22, .6) * env(len(t(.22)), .001, .07)
-    knock = lowpass(noise(.02), 1800) * env(len(t(.02)), .0003, .006)
-    return finish(mix(body, knock * .6))
-def hit_neon():
-    s = .11; x = t(s); freq = 520 + 900 * (x / s) ** .5; ph = 2 * np.pi * np.cumsum(freq) / RATE
-    saw = sum(np.sin(k * ph) / k for k in range(1, 6))
-    return finish(lowpass(saw, 6000) * env(len(x), .001, .035))
-def hit_glass():
-    s = .3; x = t(s)
-    ping = sum(a * np.sin(2 * np.pi * f * x) * np.exp(-x / d) for f, a, d in ((4180, 1, .08), (6270, .55, .05), (8390, .25, .03)))
-    shimmer = band(noise(s), 6000, 12000) * np.exp(-x / .02) * .4
-    return finish(reverb(ping + shimmer, .3, .18))
 def hit_marker():
     tick = np.sin(2 * np.pi * 1250 * t(.035)) * env(len(t(.035)), .0004, .01)
     snap = band(noise(.025), 1500, 6000) * env(len(t(.025)), .0002, .005)
@@ -87,10 +62,8 @@ def wasted():
     bell *= np.minimum(1, x / .02)
     return finish(reverb(boom * 1.0 + whoosh + bell * .7, 1.6, .3), peak=.92, fade=.02)
 
-SOUNDS = {
-    "hit/click": hit_click, "hit/pulse": hit_pulse, "hit/crystal": hit_crystal, "hit/bass": hit_bass,
-    "hit/neon": hit_neon, "hit/glass": hit_glass, "hit/marker": hit_marker, "death/wasted": wasted,
-}
+# Hit sounds are recorded (Kenney Impact Sounds, CC0), not generated; only the Wasted sting is synthesized.
+SOUNDS = {"death/wasted": wasted}
 
 def main(out_dir):
     with tempfile.TemporaryDirectory() as tmp:

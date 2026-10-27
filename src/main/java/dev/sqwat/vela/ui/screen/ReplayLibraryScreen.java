@@ -28,8 +28,7 @@ import java.util.Map;
 
 /**
  * Every Death Recap recording in one place: the last death (even unsaved) and all saved replays. Replays of the world
- * and dimension you are in play right away; the others say where they are from. Each row opens its video file when
- * one was recorded, and the folder is one click away. Opens from the module settings, its key and the death screen.
+ * and dimension you are in play right away; the others say where they are from. The folder is one click away. Opens from the module settings, its key and the death screen.
  */
 public final class ReplayLibraryScreen extends VelaScreen {
     private static final int ROW=38;
@@ -54,11 +53,6 @@ public final class ReplayLibraryScreen extends VelaScreen {
     private String world(){return minecraft.level==null?null:MarkerRuntime.world(minecraft);}
     private String dimension(){return minecraft.level==null?null:MarkerRuntime.dimension(minecraft);}
     private boolean here(ReplayFiles.Saved s){return minecraft.level!=null&&s.world().equals(world())&&s.dimension().equals(dimension());}
-    private static Path video(ReplayFiles.Saved s){
-        String base=s.file().getFileName().toString().replaceFirst("\\.vrec$","");
-        for(String ext:new String[]{".mp4",".avi"}){var v=s.file().resolveSibling(base+ext);if(Files.isRegularFile(v))return v;}
-        return null;
-    }
 
     @Override protected void renderVela(GuiGraphicsExtractor g,int mx,int my,float delta){
         float dt=clock.step();actions.clear();
@@ -119,13 +113,7 @@ public final class ReplayLibraryScreen extends VelaScreen {
                 int right=row.x()+row.width()-8;
                 var delete=new Rect(right-18,row.y()+(ROW-18)/2,18,18);right=delete.x()-4;
                 UiKit.iconAction(g,delete,"trash",10,controls.animate("d"+index,delete.contains(mx,my)?1:0),VelaTheme.DANGER);
-                if(over)actions.add(Map.entry(delete,()->{ReplayFiles.delete(s);var v=video(s);if(v!=null)try{Files.deleteIfExists(v);}catch(java.io.IOException ignored){}reload();}));
-                var video=video(s);
-                if(video!=null){
-                    String label="Видео";int vw=UiKit.chipWidth(label);var chip=new Rect(right-vw,row.y()+(ROW-UiKit.CHIP_H)/2,vw,UiKit.CHIP_H);right=chip.x()-6;
-                    UiKit.chip(g,chip.x(),chip.y(),label,0,controls.animate("v"+index,chip.contains(mx,my)?1:0),false);
-                    if(over)actions.add(Map.entry(chip,()->Util.getPlatform().openPath(video)));
-                }
+                if(over)actions.add(Map.entry(delete,()->{ReplayFiles.delete(s);reload();}));
                 VelaDraw.text(g,VelaDraw.ellipsize(s.title(),right-row.x()-14,VelaDraw.Weight.MEDIUM,8.5f),row.x()+10,row.y()+7,playable?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,8.5f);
                 String where=playable?Lang.tr(viewLabel(s.options().view())):Lang.tr("другой мир — смотреть там")+" · "+s.world();
                 String detail=fmt.format(Instant.ofEpochMilli(s.recordedAt()).atZone(ZoneId.systemDefault()))+" · "+where;

@@ -237,7 +237,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         for(var hit:cardHits){
             Rect r=hit.card;
             if(!new Rect(r.x()+8,r.y()+20,r.width()-90,22).contains(mx,my))continue;
-            String text=hit.module.description();int available=r.width()-90;
+            String text=dev.sqwat.vela.ui.Lang.tr(hit.module.description());int available=r.width()-90;
             if(VelaDraw.textWidth(text,VelaDraw.Weight.REGULAR,8)<=available)return;
             java.util.List<String> lines=new java.util.ArrayList<>();String line="";
             for(String word:text.split("\\s+")){String next=line.isEmpty()?word:line+" "+word;if(!line.isEmpty()&&VelaDraw.textWidth(next,VelaDraw.Weight.REGULAR,8)>260){lines.add(line);line=word;}else line=next;}if(!line.isEmpty())lines.add(line);
@@ -281,7 +281,7 @@ public final class VelaDashboardScreen extends VelaScreen {
             if(over>.02f)g.fill(chip.x()+LOCATION_PAD,chip.y()+11,chip.x()+LOCATION_PAD+Math.round(chipText*over),chip.y()+12,color);
             locationHits.put(chip,module);
         }
-        String remaining=module.description().strip();int split=remaining.length();
+        String remaining=dev.sqwat.vela.ui.Lang.tr(module.description()).strip();int split=remaining.length(); // translated before splitting into lines
         while(split>0&&VelaDraw.textWidth(remaining.substring(0,split),VelaDraw.Weight.REGULAR,8)>labelWidth)split=remaining.offsetByCodePoints(split,-1);
         if(split<remaining.length()){
             int space=remaining.lastIndexOf(' ',split);if(space>0)split=space;

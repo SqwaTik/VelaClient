@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "velaclient-gametest",
+  "version": "1.0.0",
+  "name": "Vela client game test",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["dev.sqwat.vela.gametest.VelaClientGameTest"]
+  },
+  "depends": { "velaclient": "*" }
+}

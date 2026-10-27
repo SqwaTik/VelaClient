@@ -52,7 +52,9 @@ public final class StorageIndexScreen extends VelaScreen {
         int w=Math.min(width-40,580),h=Math.min(height-40,350);
         var window=new Rect((width-w)/2,(height-h)/2,w,h);
         var store=index.store();
-        String server=index.world()==null||index.world().isEmpty()?"":" · "+index.world();
+        String world=index.world()==null?"":index.world().replace('\\','/');
+        if(world.endsWith("/"))world=world.substring(0,world.length()-1);
+        String server=world.isEmpty()?"":" · "+world.substring(world.lastIndexOf('/')+1); // singleplayer: folder name, not the full path
         var content=UiKit.window(g,window,"Хранилища",store.size()+" "+plural(store.size(),"контейнер","контейнера","контейнеров")+server);
         UiKit.searchField(g,new Rect(window.x()+window.width()-214,window.y()+12,200,UiKit.FIELD_H),search,true,"Поиск предмета…");
         if(store.size()==0){UiKit.empty(g,content,"search","Пока пусто","Откройте сундук, бочку или шалкер — содержимое запомнится");return;}

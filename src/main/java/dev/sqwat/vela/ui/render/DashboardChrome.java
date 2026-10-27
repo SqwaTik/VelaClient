@@ -36,7 +36,7 @@ public final class DashboardChrome {
             c.text(SECTIONS[i],r.x()+24+shift,r.y()+6,26f/3,active?VelaTheme.TEXT:VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT_SECONDARY,hover),active?MEDIUM:REGULAR);
         }
         c.line(x,y+h-23,side,0xFF1A2030);
-        c.centered("v0.1.8",x+side/2,y+h-15,20f/3,VelaTheme.TEXT_MUTED,REGULAR);
+        c.centered("v"+dev.sqwat.vela.ui.Changelog.current(),x+side/2,y+h-15,20f/3,VelaTheme.TEXT_MUTED,REGULAR);
 
         c.text(SECTIONS[section],x+side+11,y+14,10,VelaTheme.TEXT,MEDIUM);
 

@@ -69,6 +69,30 @@ test {
     useJUnitPlatform()
 }
 
+// Client game test: starts the real client, audits every mixin, opens Vela screens, enters a world with every module
+// on and benchmarks FPS (src/gametest). Run before installing a build: ./gradlew verifyClient
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "velaclient-gametest"
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
+// The FPS baseline lives in the project (it is specific to this machine).
+tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+    jvmArgs "-Dvela.fpsBaseline=${file('perf/fps-baseline.properties').absolutePath}"
+    if (project.hasProperty('rebaseline')) jvmArgs '-Dvela.fpsRebaseline=true'
+}
+
+tasks.register('verifyClient') {
+    group = 'verification'
+    description = 'Unit tests plus the client game test (launch, mixin audit, screens, world, FPS benchmark).'
+    dependsOn 'build', 'runClientGameTest'
+}
+
 
 jar {
     // LGPL: ship the adapted ZakoOpt sources with the binary.

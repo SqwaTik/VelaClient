@@ -107,6 +107,7 @@ public final class Notifications {
             int desired=n.width==0?NotificationChrome.compactWidth(VelaDraw.textWidth(n.title,VelaDraw.Weight.MEDIUM,8),VelaDraw.textWidth(n.detail,VelaDraw.Weight.REGULAR,7)+detailInset-16):n.width;
             int w=Math.min(desired,width-16),h=height(!n.detail.isBlank(),n.run!=null),x=width-w-8+Math.round((1-reveal(now-n.started))*(w+10));
             NotificationChrome.draw(new GameUiCanvas(g),x,y,w,VelaDraw.ellipsize(n.title,w-34,VelaDraw.Weight.MEDIUM,8),VelaDraw.ellipsize(n.detail,w-detailInset,VelaDraw.Weight.REGULAR,7),n.icon,n.color,n.run!=null);
+            if(n.icon.startsWith("item:")){g.pose().pushMatrix();g.pose().translate(x+6,y+6);g.pose().scale(1);g.item(dev.sqwat.vela.marker.MarkerRuntime.icon(n.icon.substring(5)),0,0);g.pose().popMatrix();}
             if(n.run!=null){Rect action=NotificationChrome.action(x,y,w,!n.detail.isBlank());controls.button(g,"notice:"+i,action,n.action,mc.gui.screen()!=null&&action.contains(mx,my));hits.add(new Hit(n,action));}
             y+=h+6;i++;
         }}finally{g.pose().popMatrix();}

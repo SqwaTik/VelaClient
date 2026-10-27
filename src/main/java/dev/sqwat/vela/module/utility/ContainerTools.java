@@ -18,7 +18,7 @@ public final class ContainerTools extends ClientModule {
     private final BooleanSetting remember=setting(new BooleanSetting("remember","Запоминать запрос","Сохранять текст поиска между окнами",false));
     private final BooleanSetting scroller=setting(new BooleanSetting("scroller","Быстрый перенос","Зажмите клавишу и проведите ЛКМ по слотам",true));
     private final NumberSetting delay=setting(new NumberSetting("delay_ms","Задержка, мс","Пауза между переносом соседних слотов",20,0,100,1));
-    private final dev.sqwat.vela.module.setting.KeySetting searchKey=setting(new dev.sqwat.vela.module.setting.KeySetting("search_key","Клавиша поиска (с Ctrl)",org.lwjgl.glfw.GLFW.GLFW_KEY_F));
+    private final dev.sqwat.vela.module.setting.KeySetting searchKey=setting(new dev.sqwat.vela.module.setting.KeySetting("search_combo","Клавиша поиска",dev.sqwat.vela.ui.input.BindInput.combo(org.lwjgl.glfw.GLFW.GLFW_KEY_F,dev.sqwat.vela.ui.input.BindInput.CTRL)));
     private final dev.sqwat.vela.module.setting.KeySetting sweepKey=setting(new dev.sqwat.vela.module.setting.KeySetting("sweep_key","Клавиша переноса",org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT));
     private String query="";
     public ContainerTools(){
@@ -32,7 +32,7 @@ public final class ContainerTools extends ClientModule {
     public static ContainerTools search(){var m=module();return m!=null&&m.search.value()?m:null;}
     /** Sweep delay in ms, or -1 when sweeping is off. */
     public static int sweepDelay(){var m=module();return m!=null&&m.scroller.value()?m.delay.value().intValue():-1;}
-    /** Key that, with Ctrl, focuses the search box. */
+    /** Key or combination that focuses the search box (Ctrl+F by default). */
     public int searchKey(){return searchKey.value();}
     /** Whether the quick-move key is held (Left Shift by default; either Shift then). */
     public static boolean sweepHeld(long window){

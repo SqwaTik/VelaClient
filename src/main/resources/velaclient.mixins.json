@@ -123,6 +123,7 @@
     "entity.DeathRecapVisibilityMixin",
     "entity.WalkAnimationAccessor",
     "screen.ContainerSearchMixin",
+    "screen.ChatPrivacyMixin",
     "screen.ContainerScreenAccessor",
     "screen.WastedHoldScreenMixin"
   ],

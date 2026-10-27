@@ -25,7 +25,8 @@ public final class MarkerRuntime {
                 })))))));
     }
     private static final java.util.Map<String,net.minecraft.world.item.ItemStack> ICONS=new java.util.HashMap<>();
-    private static net.minecraft.world.item.ItemStack icon(String id){
+    /** Item icon of a storage marker (cached per id). */
+    public static net.minecraft.world.item.ItemStack icon(String id){
         return ICONS.computeIfAbsent(id,k->{var item=net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.tryParse(k));return item==null?net.minecraft.world.item.ItemStack.EMPTY:new net.minecraft.world.item.ItemStack(item);});
     }
     /** Whether any storage marker in this world needs its container highlighted (VisualGizmosMixin). */

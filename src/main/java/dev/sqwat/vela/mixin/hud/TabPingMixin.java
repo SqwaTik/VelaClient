@@ -19,9 +19,16 @@ abstract class TabPingMixin {
         String text=ping<=0?"—":String.valueOf(Math.min(ping,9999));
         var font=Minecraft.getInstance().font;
         float scale=.75f;
-        g.pose().pushMatrix();
-        g.pose().translate(x+width-1-font.width(text)*scale,y+1.5f);g.pose().scale(scale);
-        g.text(font,text,0,0,TabPing.color(ping),true);
-        g.pose().popMatrix();
+        float left=x+width-1-font.width(text)*scale;
+        // Report the real screen rectangle to the HUD editor: the scaled text's local (0,0) would stretch the tab
+        // list bounds to the left edge of the screen.
+        dev.sqwat.vela.ui.hud.NativeHudCapture.rectangle(Math.round(left),y,x+width,y+8);
+        dev.sqwat.vela.ui.hud.NativeHudCapture.pause();
+        try{
+            g.pose().pushMatrix();
+            g.pose().translate(left,y+1.5f);g.pose().scale(scale);
+            g.text(font,text,0,0,TabPing.color(ping),true);
+            g.pose().popMatrix();
+        }finally{dev.sqwat.vela.ui.hud.NativeHudCapture.resume();}
     }
 }

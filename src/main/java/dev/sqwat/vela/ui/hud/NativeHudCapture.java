@@ -11,6 +11,10 @@ public final class NativeHudCapture {
     private NativeHudCapture() {}
     public static void begin(String id,int width){active=id;bounds=null;screenWidth=width;}
     public static boolean active(){return active!=null;}
+    private static String paused;
+    /** Stops measuring while text is drawn in a moved/scaled pose (its local coordinates are not screen ones). */
+    public static void pause(){if(active!=null){paused=active;active=null;}}
+    public static void resume(){if(paused!=null){active=paused;paused=null;}}
     public static void rectangle(int x0,int y0,int x1,int y1){
         if(active==null)return;
         int x=Math.min(x0,x1),y=Math.min(y0,y1),right=Math.max(x0,x1),bottom=Math.max(y0,y1);

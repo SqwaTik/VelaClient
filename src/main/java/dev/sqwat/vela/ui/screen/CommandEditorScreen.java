@@ -44,7 +44,7 @@ public final class CommandEditorScreen extends VelaScreen {
         float dt=clock.step();reveal=Motion.approach(reveal,closing?0:1,18,dt);
         formReveal=Motion.approach(formReveal,1,18,dt);
         if(closing&&reveal<.01f){minecraft.gui.setScreen(parent);return;}
-        int w=Math.min(372,width-24),h=Math.min(236,height-12),x=(width-w)/2,y=(height-h)/2;
+        int w=Math.min(372,width-24),h=Math.min(262,height-12),x=(width-w)/2,y=(height-h)/2;
         g.nextStratum();g.fill(0,0,width,height,(Math.round(0xB8*reveal)<<24)|0x05070A);
         g.pose().pushMatrix();g.pose().translate(0,(1-reveal)*8);
         UiClip.enable(g,x-1,y-1,x+w+1,y+h+1);
@@ -104,21 +104,27 @@ public final class CommandEditorScreen extends VelaScreen {
         field(g,0,new Rect(formX,fy,formW,22),"Название");fy+=36;
         field(g,1,new Rect(formX,fy,formW,22),"Команда /… или сообщение");fy+=36;
         if(interval){
-            field(g,2,new Rect(formX,fy,formW/2,22),"Интервал, секунды");
-            VelaDraw.text(g,dev.sqwat.vela.ui.Lang.tr(" сек").strip(),formX+formW/2+8,fy+7,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
+            Rect seconds=new Rect(formX,fy,formW,22);
+            field(g,2,seconds,"Интервал, секунды");
+            // Unit inside the field, right-aligned.
+            String unit=dev.sqwat.vela.ui.Lang.tr(" сек").strip();
+            VelaDraw.text(g,unit,seconds.x()+seconds.width()-9-VelaDraw.textWidth(unit,VelaDraw.Weight.REGULAR,8),fy+7,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
         }else{
             VelaDraw.text(g,"Клавиша",formX,fy-10,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,7.5f);
-            Rect keyRect=new Rect(formX,fy,formW/2,22);
+            Rect keyRect=new Rect(formX,fy,formW,22);
             float kh=controls.animate("key-hover",keyRect.contains(mx,my)?1:0);
             VelaDraw.roundedOutline(g,keyRect.x(),keyRect.y(),keyRect.width(),keyRect.height(),5,capturing?VelaTheme.PRIMARY:VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,kh),VelaTheme.SURFACE_DEEP);
             String keyLabel=capturing?"Нажмите клавишу…":key<0?"Назначить клавишу":dev.sqwat.vela.ui.input.KeyLabels.of(key,"");
             VelaDraw.centeredText(g,keyLabel,keyRect.x()+keyRect.width()/2f,keyRect.y()+7,key<0&&!capturing?VelaTheme.TEXT_MUTED:VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
             actions.add(new Action(keyRect,()->{capturing=true;focus=-1;}));
         }
-        // On/off switch in the same row, right-aligned.
-        Rect toggle=new Rect(formX+formW/2+30,fy,formW-formW/2-30,22);
-        VelaDraw.text(g,interval?"Таймер включён":"Макрос включён",toggle.x(),toggle.y()+7,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
-        VelaDraw.toggle(g,formX+formW-24,toggle.y()+3,controls.animate("entry-enabled",enabled?1:0),toggle.contains(mx,my));
+        // On/off switch on its own row: label left, switch right, the whole row clickable.
+        fy+=30;
+        Rect toggle=new Rect(formX,fy,formW,20);
+        float th=controls.animate("toggle-row-hover",toggle.contains(mx,my)?1:0);
+        if(th>.01f)VelaDraw.roundedRect(g,toggle.x()-4,toggle.y(),toggle.width()+8,toggle.height(),5,VelaTheme.mix(0x00000000,0x10FFFFFF,th));
+        VelaDraw.text(g,interval?"Таймер включён":"Макрос включён",toggle.x(),toggle.y()+6,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
+        VelaDraw.toggle(g,formX+formW-24,toggle.y()+2,controls.animate("entry-enabled",enabled?1:0),toggle.contains(mx,my));
         actions.add(new Action(toggle,()->enabled=!enabled));
         // Footer: status on the left, actions on the right.
         int by=y+h-30;
@@ -162,7 +168,7 @@ public final class CommandEditorScreen extends VelaScreen {
     }
     @Override public boolean keyPressed(KeyEvent event){
         if(closing)return true;
-        if(capturing){if(event.key()!=GLFW.GLFW_KEY_ESCAPE)key=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:event.key();capturing=false;return true;}
+        if(capturing){if(event.key()!=GLFW.GLFW_KEY_ESCAPE)key=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers());capturing=false;return true;}
         if(event.key()==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}
         if(focus>=0){dev.sqwat.vela.ui.input.GameTextInput.key(fields[focus],event,focus==0?40:focus==1?256:5);return true;}return true;
     }

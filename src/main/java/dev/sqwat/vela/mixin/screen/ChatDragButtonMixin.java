@@ -16,7 +16,7 @@ public abstract class ChatDragButtonMixin {
     @org.spongepowered.asm.mixin.Unique private static final int VELA_SIZE=dev.sqwat.vela.ui.render.ChatDragGeometry.SIZE;
     @org.spongepowered.asm.mixin.Shadow protected net.minecraft.client.gui.components.EditBox input;
     @org.spongepowered.asm.mixin.Unique private final dev.sqwat.vela.ui.animation.FrameClock vela$clock=new dev.sqwat.vela.ui.animation.FrameClock();
-    @org.spongepowered.asm.mixin.Unique private float vela$hover;
+    @org.spongepowered.asm.mixin.Unique private float vela$hover,vela$privacyHover;
     @org.spongepowered.asm.mixin.Unique private final dev.sqwat.vela.ui.animation.FiniteMotion vela$motion=new dev.sqwat.vela.ui.animation.FiniteMotion();
     @org.spongepowered.asm.mixin.Unique private static int vela$labelWidth(){return Math.round(VelaDraw.textWidth("Dragmode",VelaDraw.Weight.MEDIUM,8))+4;}
     @Inject(method = "extractRenderState", at = @At("TAIL"))
@@ -34,6 +34,11 @@ public abstract class ChatDragButtonMixin {
         if(vela$hover>.01f){dev.sqwat.vela.ui.render.UiClip.enable(g,x-extension,y,x,y+VELA_SIZE);
             VelaDraw.text(g,"Dragmode",x-vela$labelWidth()+4,y+(VELA_SIZE-8)/2,(VelaTheme.TEXT_SECONDARY&0xFFFFFF)|(Math.round(255*vela$hover)<<24),VelaDraw.Weight.MEDIUM,8);g.disableScissor();}
         dev.sqwat.vela.ui.render.VelaIcons.draw(g,"move",x+(VELA_SIZE-14)/2,y+(VELA_SIZE-14)/2,14,VelaTheme.TEXT_SECONDARY);
+        // Privacy toggle, mirrored at the left above the input.
+        dev.sqwat.vela.ui.ChatPrivacy.track(input);
+        var privacy=dev.sqwat.vela.ui.ChatPrivacy.place(view,input.getX(),input.getY());
+        vela$privacyHover=dev.sqwat.vela.ui.animation.Motion.approach(vela$privacyHover,privacy.contains(localX,localY)?1:0,config.reducedMotion?60:14,1/60f);
+        dev.sqwat.vela.ui.ChatPrivacy.draw(g,privacy,vela$privacyHover);
         g.pose().popMatrix();
     }
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
@@ -41,6 +46,9 @@ public abstract class ChatDragButtonMixin {
         Minecraft client = Minecraft.getInstance();
         var view=dev.sqwat.vela.ui.render.UiViewport.fit(client.getWindow().getGuiScaledWidth(),client.getWindow().getGuiScaledHeight(),client.getWindow().getGuiScale(),VelaClient.services().configs().current().uiScale);
         var anchor=dev.sqwat.vela.ui.render.ChatDragGeometry.place(view,input.getX(),input.getY(),input.getWidth());int x=anchor.x(),y=anchor.y();
+        if(event.button()==0&&dev.sqwat.vela.ui.ChatPrivacy.place(view,input.getX(),input.getY()).contains(view.local(event.x()),view.local(event.y()))){
+            dev.sqwat.vela.ui.ChatPrivacy.toggle();cir.setReturnValue(true);return;
+        }
         if (event.button() == 0 && view.local(event.x()) >= x-vela$labelWidth()*vela$hover && view.local(event.x()) < x + VELA_SIZE && view.local(event.y()) >= y && view.local(event.y()) < y + VELA_SIZE) {
             client.gui.setScreen(new HudPositionScreen((Screen)(Object)this, VelaClient.services().hudLayout()));
             cir.setReturnValue(true);

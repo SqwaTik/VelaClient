@@ -19,6 +19,8 @@ public final class ClientConfig {
     public String accentColor = "#756CFF";
     /** Interface language: "en" (default) or "ru". */
     public String language = "en";
+    /** Chat privacy toggle: hide what is typed after /login and /register in the chat input. */
+    public boolean chatPrivacy = true;
     /** Newest changelog version the player has opened; older means the menu shows a dot. */
     public String lastSeenChangelog = "";
     public String selectedTheme = "aurora";

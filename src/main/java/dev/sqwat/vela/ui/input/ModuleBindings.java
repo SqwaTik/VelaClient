@@ -12,8 +12,14 @@ public final class ModuleBindings {
     private ModuleBindings() {}
     public static void tick(Minecraft client, VelaServices services) {
         boolean allowed = client.level != null && client.gui.screen() == null && client.isWindowActive();
+        long window=client.getWindow().handle();
+        // A held combination (Ctrl+F) wins over a plain bind on the same key (F).
+        java.util.Set<Integer> comboKeys=new java.util.HashSet<>();
+        for (ClientModule module : services.modules().all())
+            if (BindInput.modifiers(module.boundKey())!=0 && BindInput.down(window,module.boundKey())) comboKeys.add(BindInput.base(module.boundKey()));
         for (ClientModule module : services.modules().all()) {
-            boolean pressed = BindInput.down(client.getWindow().handle(),module.boundKey());
+            int code=module.boundKey();
+            boolean pressed = BindInput.down(window,code) && (BindInput.modifiers(code)!=0 || !comboKeys.contains(BindInput.base(code)));
             boolean wasDown = down.contains(module.id());
             if (pressed) down.add(module.id()); else down.remove(module.id());
             if (module.bindMode() == ClientModule.BindMode.HOLD) {

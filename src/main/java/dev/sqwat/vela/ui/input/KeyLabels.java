@@ -5,9 +5,15 @@ import java.util.Locale;
 /** Stable compact labels independent of the current Minecraft translation. */
 public final class KeyLabels {
     private KeyLabels(){}
-    public static String of(int key,String fallback){
+    /** "Ctrl+F", "Shift+M4" or a single key name. */
+    public static String of(int code,String fallback){
+        if(code<0)return "None";
+        int mods=BindInput.modifiers(code);
+        String prefix=((mods&BindInput.CTRL)!=0?"Ctrl+":"")+((mods&BindInput.SHIFT)!=0?"Shift+":"")+((mods&BindInput.ALT)!=0?"Alt+":"");
+        return prefix+single(BindInput.base(code),fallback);
+    }
+    private static String single(int key,String fallback){
         if(BindInput.isMouse(key))return "M"+(BindInput.mouseButton(key)+1);
-        if(key<0)return "None";
         if(key>=65&&key<=90||key>=48&&key<=57)return Character.toString((char)key);
         if(key>=290&&key<=314)return "F"+(key-289);
         if(key>=320&&key<=329)return "Num "+(key-320);

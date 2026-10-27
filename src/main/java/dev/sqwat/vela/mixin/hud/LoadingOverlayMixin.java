@@ -117,13 +117,16 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
             }
             String percent=Integer.toString(Math.round(currentProgress*100))+"%";
             if(minecraft.getTextureManager().getTexture(id("startup_digits")) instanceof StartupLogoTexture){
-                // Digit cells are 72x96 with the glyph centred; drawn at 24x32, advanced by 9 so they read as one number.
-                float advance=9f,startX=cx-percent.length()*advance/2f;
+                // Proportional digits: each glyph's measured left edge and width in its 72x96 cell (drawn at 1/3 scale).
+                int[] glyphLeft={29,31,30,30,28,29,30,30,30,30,27},wide={13,7,12,13,15,13,12,12,12,12,18};
+                float total=0;
+                for(int i=0;i<percent.length();i++){int d=percent.charAt(i)=='%'?10:percent.charAt(i)-'0';total+=wide[d]/3f+(i>0?1.3f:0);}
+                float pen=cx-total/2f;
                 for(int i=0;i<percent.length();i++){
                     int digit=percent.charAt(i)=='%'?10:percent.charAt(i)-'0';
-                    // The % cell has extra side bearing: pull it next to the digits.
-                    float dx=digit==10?-3.5f:0;
-                    VelaDraw.blit(g,id("startup_digits"),startX+i*advance-7.5f+dx,barY+6,24,32,digit*72,0,72,96,792,96,color(0xFF9AA3BC,alpha));
+                    if(i>0)pen+=1.3f;
+                    VelaDraw.blit(g,id("startup_digits"),pen-glyphLeft[digit]/3f,barY+1,24,32,digit*72,0,72,96,792,96,color(0xFF9AA3BC,alpha));
+                    pen+=wide[digit]/3f;
                 }
             }
         }finally{g.pose().popMatrix();}

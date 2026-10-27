@@ -117,9 +117,9 @@ public final class VelaDashboardScreen extends DashboardPanels {
             for(var hit:settingHits)if(hit.setting()==editingText&&hit.visible().contains(event.x(),event.y())){inside=true;break;}
             if(!inside)finishTextSetting();
         }
-        if(capturingSetting!=null){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.mouse(event.button()));capturingSetting=null;services.configs().requestSave();return true;}
+        if(capturingSetting!=null){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.combo(dev.sqwat.vela.ui.input.BindInput.mouse(event.button()),event.modifiers()));capturingSetting=null;services.configs().requestSave();return true;}
         if(section==VelaSection.MARKERS&&markerPanel.captureMouse(event.button()))return true;
-        if(binding!=null&&capturing){draftKey=dev.sqwat.vela.ui.input.BindInput.mouse(event.button());draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,"");capturing=false;saveBind();return true;}
+        if(binding!=null&&capturing){draftKey=dev.sqwat.vela.ui.input.BindInput.combo(dev.sqwat.vela.ui.input.BindInput.mouse(event.button()),event.modifiers());draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,"");capturing=false;saveBind();return true;}
         double mx = event.x(), my = event.y();
         if(rgbPicker.open()){if(event.button()==0&&rgbPicker.click(mx,my))services.configs().requestSave();return true;}
         if(event.button()==0&&section==VelaSection.FRIENDS&&friendFocused){for(var hit:suggestionHits.entrySet())if(hit.getKey().contains(mx,my)){friendInput=hit.getValue();friendEdit.set(friendInput);suggestionHits.clear();return true;}}
@@ -290,7 +290,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
             if(event.key()==GLFW.GLFW_KEY_ENTER||event.key()==GLFW.GLFW_KEY_ESCAPE){finishTextSetting();return true;}
             dev.sqwat.vela.ui.input.GameTextInput.key(settingTextEdit,event,24);return true;
         }
-        if(capturingSetting!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:event.key());services.configs().requestSave();}capturingSetting=null;return true;}
+        if(capturingSetting!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers()));services.configs().requestSave();}capturingSetting=null;return true;}
         if(rgbPicker.open()){if(event.key()==GLFW.GLFW_KEY_ESCAPE)rgbPicker.close();return true;}
         if(friendFocused&&section==VelaSection.FRIENDS&&!suggestions.isEmpty()){
             if(event.key()==GLFW.GLFW_KEY_DOWN||event.key()==GLFW.GLFW_KEY_UP){suggestionSelection=Math.clamp(suggestionSelection+(event.key()==GLFW.GLFW_KEY_DOWN?1:-1),0,suggestions.size()-1);suggestionOffset=Math.clamp(suggestionOffset,Math.max(0,suggestionSelection-4),suggestionSelection);return true;}
@@ -327,7 +327,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
         if(binding!=null){
             if(event.key()==GLFW.GLFW_KEY_ESCAPE){capturing=false;binding=null;return true;}
             if(event.key()==GLFW.GLFW_KEY_DELETE){draftKey=-1;draftLabel="None";saveBind();capturing=false;return true;}
-            if(capturing){draftKey=event.key();draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(draftKey,0));capturing=false;saveBind();}
+            if(capturing){draftKey=dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers());draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(event.key(),0));capturing=false;saveBind();}
             return true;
         }
         if((event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0&&event.key()==services.configs().current().searchKey){searchFocused=true;return true;}

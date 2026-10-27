@@ -62,6 +62,7 @@ public final class VelaClient implements ClientModInitializer {
         HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.render.shader.TemporalBlur.draw(g);});
         HudElementRegistry.addLast(id("markers"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());});
         HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active()&&Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
+        dev.sqwat.vela.module.utility.LootMemory.initialize();
         net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->{
             if(player==Minecraft.getInstance().player&&services.configs().current().protectFriends
                 &&entity instanceof net.minecraft.world.entity.player.Player friend

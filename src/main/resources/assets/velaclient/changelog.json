@@ -52,6 +52,14 @@
               "ru": "Mace Smash: трещины в земле, молния, ударная волна и осколки при сокрушительном ударе булавой."
             },
             {
+              "en": "Knockback Predictor: see where your hit will send the target, and a warning when it lands in lava, fire, the void or falls far.",
+              "ru": "Knockback Predictor: куда отлетит цель от вашего удара — и предупреждение, если она упадёт в лаву, огонь, пустоту или с высоты."
+            },
+            {
+              "en": "Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.",
+              "ru": "Loot Memory: обысканные сундуки, сломанные спавнеры и открытые хранилища испытаний отмечены — не обыскиваете одно место дважды."
+            },
+            {
               "en": "Vela players are marked with the Vela logo in the tab list.",
               "ru": "Игроки с Vela отмечены логотипом Vela в списке игроков."
             },

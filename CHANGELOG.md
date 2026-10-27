@@ -17,6 +17,8 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - What's new: this list of changes in the main menu.
 - English interface, with Russian available in the settings.
 - Mace Smash: cracks in the ground, lightning, a shockwave and debris when you land a mace smash attack.
+- Knockback Predictor: see where your hit will send the target, and a warning when it lands in lava, fire, the void or falls far.
+- Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.
 - Vela players are marked with the Vela logo in the tab list.
 - Fog culling: terrain fully hidden by fog, as in the Nether, is not drawn.
 - Hit Sound: recorded impact sounds.

@@ -20,8 +20,9 @@ abstract class VisualGizmosMixin {
         var hitboxes=services.modules().byId("hitboxes");
         var trajectories=services.modules().byId("trajectories");
         var mace=dev.sqwat.vela.module.visual.MaceSmash.current();
+        var knockback=dev.sqwat.vela.module.utility.KnockbackPredictor.current();
         boolean storage=dev.sqwat.vela.marker.MarkerRuntime.hasHighlights(services.markers());
-        if(!storage&&(circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled())&&(mace==null||!mace.active()))return;
+        if(!storage&&(circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled())&&(mace==null||!mace.active())&&(knockback==null||!knockback.active()))return;
         try(var collection=((LevelRenderer)(Object)this).collectPerFrameRenderThreadGizmos()){
             if(circle instanceof dev.sqwat.vela.module.visual.JumpCircle effect&&effect.enabled())effect.submit();
             if(hat instanceof dev.sqwat.vela.module.visual.ChinaHat effect&&effect.enabled())effect.submit();
@@ -32,6 +33,7 @@ abstract class VisualGizmosMixin {
             if(trajectories instanceof dev.sqwat.vela.module.utility.Trajectories effect&&effect.enabled())effect.submit();
             if(storage)dev.sqwat.vela.marker.MarkerRuntime.submitHighlights(services.markers());
             if(mace!=null&&mace.active())mace.submit();
+            if(knockback!=null&&knockback.active())knockback.submit(net.minecraft.client.Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         }
     }
 }

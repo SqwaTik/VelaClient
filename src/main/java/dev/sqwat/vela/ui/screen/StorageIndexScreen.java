@@ -128,7 +128,7 @@ public final class StorageIndexScreen extends VelaScreen {
     private void mark(StorageStore.Container c,StorageStore.Hit hit){
         var services=dev.sqwat.vela.VelaClient.services();if(services==null||minecraft.level==null)return;
         var key=c.key();
-        try{services.markers().add(hit.name(),MarkerRuntime.world(minecraft),MarkerRuntime.dimension(minecraft),key.x()+.5,key.y()+1,key.z()+.5,VelaTheme.PRIMARY,"markers",false);}
+        try{services.markers().addStorage(hit.name(),MarkerRuntime.world(minecraft),MarkerRuntime.dimension(minecraft),key.x(),key.y(),key.z(),VelaTheme.PRIMARY,hit.item());}
         catch(IllegalArgumentException full){dev.sqwat.vela.ui.Notifications.show("Метка не создана",full.getMessage(),"markers");return;}
         onClose();
     }

@@ -5,8 +5,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class MarkerService {
-    public record Point(String id,String name,String world,String dimension,double x,double y,double z,int color,String icon,boolean death) {
+    /** {@code item}: item id for a Storage Index marker (drawn as an event marker on the container), else null. */
+    public record Point(String id,String name,String world,String dimension,double x,double y,double z,int color,String icon,boolean death,String item) {
         public Point {x=Math.floor(x);y=Math.floor(y);z=Math.floor(z);}
+        public Point(String id,String name,String world,String dimension,double x,double y,double z,int color,String icon,boolean death){this(id,name,world,dimension,x,y,z,color,icon,death,null);}
+        public boolean storage(){return item!=null&&!item.isEmpty();}
     }
     public static final class State {
         public boolean death,latest,limited,quick;
@@ -30,7 +33,14 @@ public final class MarkerService {
     public void remove(String id){state.points.removeIf(p->p.id().equals(id));save();}
     public void update(String id,String name,double x,double y,double z,int color,String icon){
         if(!Double.isFinite(x)||!Double.isFinite(y)||!Double.isFinite(z))throw new IllegalArgumentException("Проверьте координаты");
-        for(int i=0;i<state.points.size();i++){Point p=state.points.get(i);if(p.id().equals(id)){state.points.set(i,new Point(id,name.isBlank()?"Метка":name.strip(),p.world(),p.dimension(),x,y,z,color,icon,p.death()));save();return;}}
+        for(int i=0;i<state.points.size();i++){Point p=state.points.get(i);if(p.id().equals(id)){state.points.set(i,new Point(id,name.isBlank()?"Метка":name.strip(),p.world(),p.dimension(),x,y,z,color,icon,p.death(),p.item()));save();return;}}
+    }
+    /** A marker on a container found with the Storage Index; the same container replaces its previous marker. */
+    public void addStorage(String name,String world,String dimension,int x,int y,int z,int color,String item){
+        state.points.removeIf(p->p.storage()&&p.world().equals(world)&&p.dimension().equals(dimension)&&p.x()==x&&p.y()==y&&p.z()==z);
+        if(state.limited&&state.points.size()>=state.limit)throw new IllegalArgumentException("Достигнут лимит меток");
+        Point point=new Point(UUID.randomUUID().toString(),name.isBlank()?"Метка":name.strip(),world,dimension,x,y,z,color,"markers",false,item);
+        state.points.add(point);save();created.accept(point);
     }
     public void add(String name,String world,String dimension,double x,double y,double z,int color,String icon,boolean death){
         if(!Double.isFinite(x)||!Double.isFinite(y)||!Double.isFinite(z))throw new IllegalArgumentException("Проверьте координаты");

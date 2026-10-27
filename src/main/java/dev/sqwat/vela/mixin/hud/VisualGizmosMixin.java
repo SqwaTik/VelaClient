@@ -19,7 +19,8 @@ abstract class VisualGizmosMixin {
         var kill=services.modules().byId("kill_effect");
         var hitboxes=services.modules().byId("hitboxes");
         var trajectories=services.modules().byId("trajectories");
-        if((circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled()))return;
+        boolean storage=dev.sqwat.vela.marker.MarkerRuntime.hasHighlights(services.markers());
+        if(!storage&&(circle==null||!circle.enabled())&&(hat==null||!hat.enabled())&&(target==null||!target.enabled())&&(trail==null||!trail.enabled())&&(kill==null||!kill.enabled())&&(hitboxes==null||!hitboxes.enabled())&&(trajectories==null||!trajectories.enabled()))return;
         try(var collection=((LevelRenderer)(Object)this).collectPerFrameRenderThreadGizmos()){
             if(circle instanceof dev.sqwat.vela.module.visual.JumpCircle effect&&effect.enabled())effect.submit();
             if(hat instanceof dev.sqwat.vela.module.visual.ChinaHat effect&&effect.enabled())effect.submit();
@@ -28,6 +29,7 @@ abstract class VisualGizmosMixin {
             if(kill instanceof dev.sqwat.vela.module.visual.KillEffect effect&&effect.enabled())effect.submit();
             if(hitboxes instanceof dev.sqwat.vela.module.visual.Hitboxes effect&&effect.enabled())effect.submit();
             if(trajectories instanceof dev.sqwat.vela.module.utility.Trajectories effect&&effect.enabled())effect.submit();
+            if(storage)dev.sqwat.vela.marker.MarkerRuntime.submitHighlights(services.markers());
         }
     }
 }

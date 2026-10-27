@@ -76,4 +76,12 @@ class RecentMixinTargetsTest {
         assertNotNull(method(pack,"listResources",null));assertNotNull(method(pack,"getNamespaces",null));
         assertNotNull(method(load("net.minecraft.server.packs.FilePackResources$SharedZipFileAccess"),"getOrCreateZipFile","()Ljava/util/zip/ZipFile;"));
     }
+    @Test void replayHooks()throws Exception{
+        assertNotNull(method(load("net.minecraft.client.renderer.GameRenderer"),"renderItemInHand",null));
+        assertNotNull(method(load("net.minecraft.client.multiplayer.ClientLevel"),"tickNonPassenger","(Lnet/minecraft/world/entity/Entity;)V"));
+        var walk=load("net.minecraft.world.entity.WalkAnimationState");
+        assertNotNull(method(walk,"position","(F)F"));assertNotNull(method(walk,"speed","(F)F"));
+        var gui=method(load("net.minecraft.client.gui.Gui"),"extractRenderState",null);
+        assertNotNull(gui);assertTrue(calls(gui,"net/minecraft/client/gui/Hud","extractRenderState"));
+    }
 }

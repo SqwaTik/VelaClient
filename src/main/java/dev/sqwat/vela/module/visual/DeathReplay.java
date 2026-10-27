@@ -25,6 +25,7 @@ public final class DeathReplay {
     private static Recording recording;
     private static final Map<UUID,Entity> ghosts=new HashMap<>();
     private static final Set<Entity> ghostSet=Collections.newSetFromMap(new IdentityHashMap<>());
+    private static final Set<WalkAnimationState> ghostWalks=Collections.newSetFromMap(new IdentityHashMap<>());
     private static ClientLevel level;
     private static float time;           // ticks since the first frame
     private static boolean playing=true;
@@ -38,7 +39,9 @@ public final class DeathReplay {
 
     public static void open(Recording r){Minecraft.getInstance().gui.setScreen(new dev.sqwat.vela.ui.screen.DeathRecapScreen(r,Minecraft.getInstance().gui.screen()));}
     public static boolean active(){return recording!=null;}
-    public static boolean isGhost(Entity e){return ghostSet.contains(e);}
+    public static boolean isGhost(Entity e){return !ghostSet.isEmpty()&&ghostSet.contains(e);}
+    /** Limb state of a ghost: its phase is set per frame, so the renderer must not extrapolate it. */
+    public static boolean isGhostWalk(WalkAnimationState state){return !ghostWalks.isEmpty()&&ghostWalks.contains(state);}
     /** Real entities that are being replayed (and the local player) are hidden while their ghosts play. */
     public static boolean hides(Entity e){
         if(recording==null||ghostSet.contains(e))return false;
@@ -46,29 +49,42 @@ public final class DeathReplay {
         return recording.actors().containsKey(e.getUUID());
     }
 
-    public static void start(Recording r){
+    private static boolean hud;
+    /** A saved replay may keep the game HUD visible; the live recap never shows it. */
+    public static boolean showsHud(){return hud;}
+    public static void start(Recording r){start(r,View.ORBIT,false,.5f);}
+    public static void start(Recording r,View initial,boolean showHud,float playbackSpeed){
         stop();
         var mc=Minecraft.getInstance();if(mc.level==null||r.frames().isEmpty())return;
-        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;
+        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;hud=showHud;speed=playbackSpeed;
         var first=r.frames().getFirst().snaps().get(r.self());
-        orbitYaw=first==null?0:first.yRot()+150;orbitPitch=22;orbitDistance=5.5f;view=View.ORBIT;
+        orbitYaw=first==null?0:first.yRot()+150;orbitPitch=22;orbitDistance=5.5f;view=initial==View.KILLER&&r.killer()==null?View.ORBIT:initial;
         int id=Integer.MAX_VALUE-1024;
         for(var actor:r.actors().values()){
             Entity ghost=create(actor);if(ghost==null)continue;
             while(level.getEntity(id)!=null)id--;
             ghost.setId(id--);ghost.setNoGravity(true);
             ghosts.put(actor.uuid(),ghost);ghostSet.add(ghost);
+            if(ghost instanceof LivingEntity living)ghostWalks.add(living.walkAnimation);
             apply(ghost,actor,0);
             level.addEntity(ghost);
         }
     }
     private static Entity create(Actor actor){
-        if(actor.skin()!=null)return new Ghost(level,new GameProfile(UUID.randomUUID(),actor.name()),actor.skin());
+        if(actor.player())return new Ghost(level,new GameProfile(UUID.randomUUID(),actor.name()),skin(actor));
         try{return actor.type().create(level,EntitySpawnReason.LOAD);}catch(RuntimeException unsupported){return null;}
+    }
+    /** Recorded skin, or for a saved replay the player's current skin if they are online, else their default one. */
+    private static PlayerSkin skin(Actor actor){
+        if(actor.skin()!=null)return actor.skin();
+        var connection=Minecraft.getInstance().getConnection();
+        var info=connection==null?null:connection.getPlayerInfo(actor.uuid());
+        if(info==null&&connection!=null)info=connection.getPlayerInfo(actor.name());
+        return info!=null?info.getSkin():net.minecraft.client.resources.DefaultPlayerSkin.get(actor.uuid());
     }
     public static void stop(){
         if(level!=null)for(var ghost:ghosts.values())level.removeEntity(ghost.getId(),Entity.RemovalReason.DISCARDED);
-        ghosts.clear();ghostSet.clear();recording=null;level=null;cameraPos=null;
+        ghosts.clear();ghostSet.clear();ghostWalks.clear();recording=null;hud=false;level=null;cameraPos=null;
     }
 
     public static float length(){return recording==null?0:recording.lastTick()-recording.firstTick();}

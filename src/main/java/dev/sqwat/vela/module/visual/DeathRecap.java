@@ -30,11 +30,11 @@ public final class DeathRecap extends ClientModule {
     public record Snap(UUID uuid,double x,double y,double z,float yRot,float xRot,float headYaw,float bodyYaw,Pose pose,
                        float walkPosition,float walkSpeed,float attackAnim,boolean swinging,InteractionHand arm,int swingTime,int hurtTime,int deathTime,ItemStack[] gear){}
     /** Who an entity in the recording is; recorded once. {@code skin} only for players. */
-    public record Actor(UUID uuid,EntityType<?> type,String name,boolean self,PlayerSkin skin,float eyeHeight){}
+    public record Actor(UUID uuid,EntityType<?> type,String name,boolean self,boolean player,PlayerSkin skin,float eyeHeight){}
     public record Frame(int tick,float health,float absorption,float maxHealth,int armor,int ping,Map<UUID,Snap> snaps){}
     public enum Kind{HIT,TOTEM,CONSUME,EFFECT}
     public record Event(int tick,Kind kind,String title,String detail,float amount,UUID source){}
-    public record Recording(List<Frame> frames,Map<UUID,Actor> actors,List<Event> events,UUID self,UUID killer,String killerName,Component message,int deathTick,long recordedAt){
+    public record Recording(List<Frame> frames,Map<UUID,Actor> actors,List<Event> events,UUID self,UUID killer,String killerName,Component message,int deathTick,long recordedAt,String world,String dimension){
         public int firstTick(){return frames.getFirst().tick();}
         public int lastTick(){return frames.getLast().tick();}
     }
@@ -83,25 +83,24 @@ public final class DeathRecap extends ClientModule {
         var mc=Minecraft.getInstance();
         if(mc.player==null||mc.level==null){if(deathTick>=0)finish();reset();player=null;return;}
         boolean down=dev.sqwat.vela.ui.input.BindInput.down(mc.getWindow().handle(),openKey.value());
-        if(down&&!keyHeld&&mc.gui.screen()==null&&recording!=null)DeathReplay.open(recording);
+        if(down&&!keyHeld&&mc.gui.screen()==null)openLatest(mc);
         keyHeld=down;
         if(DeathReplay.active())return; // the replay moves ghosts in this level; do not record them
         if(player!=mc.player){if(deathTick>=0)finish();reset();player=mc.player;}
         tick++;
         var self=mc.player;
-        Map<UUID,Snap> snaps=new HashMap<>();
+        Map<UUID,Snap> snaps=new HashMap<>(MAX_ENTITIES*2);
         snaps.put(self.getUUID(),snap(self,true));
-        double r=radius.value();int count=0;
-        for(var entity:mc.level.entitiesForRendering()){
-            if(count>=MAX_ENTITIES)break;
-            if(entity==self||!(entity instanceof LivingEntity living)||entity.isRemoved()||DeathReplay.isGhost(entity))continue;
-            if(!(entity instanceof AbstractClientPlayer)&&(!mobs.value()||entity instanceof net.minecraft.world.entity.decoration.ArmorStand))continue;
-            if(entity.distanceToSqr(self)>r*r)continue;
-            snaps.put(entity.getUUID(),snap(living,false));count++;
+        double r=radius.value();boolean withMobs=mobs.value();
+        // Section lookup around the player instead of walking every rendered entity each tick.
+        for(var living:mc.level.getEntitiesOfClass(LivingEntity.class,self.getBoundingBox().inflate(r),e->e!=self&&!e.isRemoved()&&!DeathReplay.isGhost(e)
+                &&(e instanceof AbstractClientPlayer||withMobs&&!(e instanceof net.minecraft.world.entity.decoration.ArmorStand))&&e.distanceToSqr(self)<=r*r)){
+            if(snaps.size()>MAX_ENTITIES)break;
+            snaps.put(living.getUUID(),snap(living,false));
         }
         float health=self.getHealth(),absorption=self.getAbsorptionAmount();
         var info=mc.getConnection()==null?null:mc.getConnection().getPlayerInfo(self.getUUID());
-        frames.addLast(new Frame(tick,health,absorption,self.getMaxHealth(),armor(self),info==null?0:info.getLatency(),Map.copyOf(snaps)));
+        frames.addLast(new Frame(tick,health,absorption,self.getMaxHealth(),armor(self),info==null?0:info.getLatency(),Collections.unmodifiableMap(snaps)));
         observe(self,health+absorption);
         int keep=seconds.value().intValue()*20+AFTER_DEATH;
         while(frames.size()>keep)frames.removeFirst();
@@ -110,9 +109,17 @@ public final class DeathRecap extends ClientModule {
         if(dead&&deathTick<0)deathTick=tick;
         if(deathTick>=0&&(tick-deathTick>=AFTER_DEATH||!dead))finish();
     }
+    /** The last death, or else the newest replay saved in this world and dimension. */
+    private void openLatest(Minecraft mc){
+        if(recording!=null){DeathReplay.open(recording);return;}
+        var saved=ReplayFiles.list(dev.sqwat.vela.marker.MarkerRuntime.world(mc),dev.sqwat.vela.marker.MarkerRuntime.dimension(mc));
+        if(saved.isEmpty())return;
+        try{mc.gui.setScreen(new dev.sqwat.vela.ui.screen.DeathRecapScreen(ReplayFiles.load(saved.getFirst()),null,saved.getFirst().options()));}
+        catch(Exception error){org.slf4j.LoggerFactory.getLogger("Vela/Recap").warn("Cannot open replay",error);}
+    }
     private Snap snap(LivingEntity e,boolean self){
         var uuid=e.getUUID();
-        actors.computeIfAbsent(uuid,k->new Actor(uuid,e.getType(),e.getName().getString(),self,e instanceof AbstractClientPlayer p?p.getSkin():null,e.getEyeHeight()));
+        actors.computeIfAbsent(uuid,k->new Actor(uuid,e.getType(),e.getName().getString(),self,e instanceof AbstractClientPlayer,e instanceof AbstractClientPlayer p?p.getSkin():null,e.getEyeHeight()));
         // Equipment rarely changes: frames share one array until something differs.
         var old=lastGear.get(uuid);boolean same=old!=null;
         for(int i=0;same&&i<GEAR.length;i++)same=ItemStack.matches(old[i],e.getItemBySlot(GEAR[i]));
@@ -136,7 +143,7 @@ public final class DeathRecap extends ClientModule {
                 var hit=hits.isEmpty()?null:hits.getLast();
                 var attacker=hit==null?null:Minecraft.getInstance().level.getEntity(hit.causeId());
                 String title=attacker!=null?attacker.getName().getString():hit!=null?damageName(hit.type()):"Урон";
-                String weapon=attacker instanceof LivingEntity l&&!l.getMainHandItem().isEmpty()?l.getMainHandItem().getHoverName().getString():"";
+                String weapon=attacker==null?"":weaponAt(attacker);
                 if(attacker!=null){lastAttacker=attacker.getUUID();lastAttackerName=title;}
                 events.addLast(new Event(tick,Kind.HIT,title,weapon,drop,attacker==null?null:attacker.getUUID()));
                 hits.clear();
@@ -157,6 +164,18 @@ public final class DeathRecap extends ClientModule {
         if(using!=null&&!using.equals(usingItem))usingCount=countOf(self,using);
         usingItem=using;
     }
+    /**
+     * What the attacker held when they swung, read from the recording: the damage packet arrives a little later, and by
+     * then they may already have switched to another item.
+     */
+    private String weaponAt(net.minecraft.world.entity.Entity attacker){
+        var uuid=attacker.getUUID();int checked=0;
+        for(var it=frames.descendingIterator();it.hasNext()&&checked<10;checked++){
+            var snap=it.next().snaps().get(uuid);
+            if(snap!=null&&(snap.swinging()||snap.attackAnim()>0)&&!snap.gear()[0].isEmpty())return snap.gear()[0].getHoverName().getString();
+        }
+        return attacker instanceof LivingEntity l&&!l.getMainHandItem().isEmpty()?l.getMainHandItem().getHoverName().getString():"";
+    }
     private static int countOf(LivingEntity self,String name){
         if(!(self instanceof net.minecraft.world.entity.player.Player p))return 0;
         int n=0;var inv=p.getInventory();
@@ -171,7 +190,9 @@ public final class DeathRecap extends ClientModule {
     private void finish(){
         if(deathTick<0||frames.isEmpty()){deathTick=-1;return;}
         var self=frames.getLast().snaps().keySet().stream().filter(u->actors.get(u)!=null&&actors.get(u).self()).findFirst().orElse(null);
-        recording=new Recording(List.copyOf(frames),Map.copyOf(actors),List.copyOf(events),self,lastAttacker,lastAttackerName,deathMessage,deathTick,System.currentTimeMillis());
+        var mc=Minecraft.getInstance();
+        String world=mc.level==null?"":dev.sqwat.vela.marker.MarkerRuntime.world(mc),dimension=mc.level==null?"":dev.sqwat.vela.marker.MarkerRuntime.dimension(mc);
+        recording=new Recording(List.copyOf(frames),Map.copyOf(actors),List.copyOf(events),self,lastAttacker,lastAttackerName,deathMessage,deathTick,System.currentTimeMillis(),world,dimension);
         deathTick=-1;
     }
 

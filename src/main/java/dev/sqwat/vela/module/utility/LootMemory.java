@@ -31,13 +31,14 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * Remembers what you have already looted, per world: every chest, barrel, dispenser and chest minecart you opened
- * (and how much you left in it), every spawner you broke and every trial vault you unlocked. Nearby those places get a
- * small tag ("Обыскан · пусто", "Спавнер сломан"), so in a dungeon, a stronghold or on a busy server you never search
+ * Remembers what you have already looted, per world, and marks it like a Vela marker, visible from afar: every chest, barrel, dispenser and chest minecart you opened
+ * (and how much you left in it), every spawner you broke and every trial vault you unlocked. Those places get a
+ * marker ("Обыскан · пусто", "Спавнер сломан"), so in a dungeon, a stronghold or on a busy server you never search
  * the same spot twice. Records go away by themselves once the block is gone. Saved in config/velaclient/loot.
  */
 public final class LootMemory extends ClientModule {
-    private final NumberSetting radius=setting(new NumberSetting("radius","Радиус","Показывать отметки ближе, блоков",24,8,64,4));
+    private final NumberSetting range=setting(new NumberSetting("range","Дальность меток","Дальше этого метки скрыты, блоков",512,32,2048,32));
+    private final NumberSetting detail=setting(new NumberSetting("detail","Подробно ближе","Ближе этого — полная подпись, дальше — компактная метка, блоков",12,4,48,2));
     private final BooleanSetting spawners=setting(new BooleanSetting("spawners","Спавнеры","Отмечать сломанные спавнеры",true));
     private final BooleanSetting vaults=setting(new BooleanSetting("vaults","Хранилища испытаний","Отмечать открытые ключом хранилища",true));
     private final BooleanSetting age=setting(new BooleanSetting("age","Давность","Показывать, когда место было обыскано",true));
@@ -171,18 +172,21 @@ public final class LootMemory extends ClientModule {
         }
     }
 
-    /** Tags over remembered places near you (HUD, every frame). */
+    /**
+     * Remembered places as markers (HUD, every frame): visible at any distance up to the range, like Vela markers —
+     * a compact marker with the distance far away, the full tag (what is left, when) up close. Nearest 48 only.
+     */
     public void draw(GuiGraphicsExtractor g){
         var mc=Minecraft.getInstance();
         if(records.isEmpty()||mc.player==null||mc.level==null||!dev.sqwat.vela.ui.hud.HudVisibility.allowed(mc))return;
-        String dimension=MarkerRuntime.dimension(mc);double r=radius.value(),r2=r*r;
+        String dimension=MarkerRuntime.dimension(mc);double limit=range.value(),limitSq=limit*limit,close=detail.value();
         var camera=mc.gameRenderer.mainCamera();var origin=camera.position();
         var near=new ArrayList<Record>();
         for(var rec:records.values()){
             if(!rec.dimension().equals(dimension))continue;
             if(rec.kind()==Kind.SPAWNER&&!spawners.value()||rec.kind()==Kind.VAULT&&!vaults.value())continue;
             double dx=rec.x()+.5-origin.x,dy=rec.y()+.5-origin.y,dz=rec.z()+.5-origin.z;
-            if(dx*dx+dy*dy+dz*dz<=r2)near.add(rec);
+            if(dx*dx+dy*dy+dz*dz<=limitSq)near.add(rec);
         }
         if(near.isEmpty())return;
         near.sort(Comparator.comparingDouble(rec->origin.distanceToSqr(rec.x()+.5,rec.y()+.5,rec.z()+.5)));
@@ -190,20 +194,33 @@ public final class LootMemory extends ClientModule {
         float density=1.5f/Math.max(1,mc.getWindow().getGuiScale());long now=System.currentTimeMillis();
         g.pose().pushMatrix();g.pose().identity();
         try{
-            for(int i=Math.min(near.size(),24)-1;i>=0;i--){ // nearest drawn last, on top
+            for(int i=Math.min(near.size(),48)-1;i>=0;i--){ // nearest drawn last, on top
                 var rec=near.get(i);
-                double top=rec.kind()==Kind.MINECART?1.1:rec.kind()==Kind.SPAWNER?.6:1.25;
+                double distance=Math.sqrt(origin.distanceToSqr(rec.x()+.5,rec.y()+.5,rec.z()+.5));
+                boolean full=distance<=close;
+                double top=rec.kind()==Kind.MINECART?1.1:rec.kind()==Kind.SPAWNER?.6:full?1.25:1.05;
                 point.set((float)(rec.x()+.5-origin.x),(float)(rec.y()+top-origin.y),(float)(rec.z()+.5-origin.z),1).mul(matrix);
                 if(point.w<=.05f)continue;
                 float x=(point.x/point.w+1)*g.guiWidth()/2f,y=(1-point.y/point.w)*g.guiHeight()/2f;
-                if(x<-40||y<-20||x>g.guiWidth()+40||y>g.guiHeight()+20)continue;
-                double distance=Math.sqrt(origin.distanceToSqr(rec.x()+.5,rec.y()+.5,rec.z()+.5));
-                float alpha=(float)Math.clamp(1.15-distance/r,.35,1);
+                if(x<-60||y<-40||x>g.guiWidth()+60||y>g.guiHeight()+40)continue;
                 g.pose().pushMatrix();
-                try{g.pose().translate(x,y);g.pose().scale(density*(float)Math.clamp(10/Math.max(1,distance),.75,1));tag(g,rec,now,alpha);}
-                finally{g.pose().popMatrix();}
+                try{
+                    g.pose().translate(x,y);g.pose().scale(density);
+                    if(full)tag(g,rec,now,1);
+                    else dev.sqwat.vela.ui.render.MarkerOverlayChrome.label(new GameUiCanvas(g),shortTitle(rec),Math.round(distance)+Lang.pick(" m"," м"),"check",accent(rec));
+                }finally{g.pose().popMatrix();}
             }
         }finally{g.pose().popMatrix();}
+    }
+    private static String shortTitle(Record rec){
+        return switch(rec.kind()){
+            case CONTAINER,MINECART->rec.left()==0?Lang.pick("Searched","Обыскан"):Lang.pick("Searched · "+rec.left(),"Обыскан · "+rec.left());
+            case SPAWNER->Lang.pick("Spawner broken","Спавнер сломан");
+            case VAULT->Lang.pick("Vault opened","Хранилище открыто");
+        };
+    }
+    private static int accent(Record rec){
+        return switch(rec.kind()){case CONTAINER,MINECART->rec.left()==0?0xFF8A93A6:0xFFFFA24D;case SPAWNER->VelaTheme.DANGER;case VAULT->0xFFFFC94D;};
     }
     private void tag(GuiGraphicsExtractor g,Record rec,long now,float alpha){
         String title=switch(rec.kind()){
@@ -215,7 +232,7 @@ public final class LootMemory extends ClientModule {
         var c=new GameUiCanvas(g);
         float tw=c.textWidth(title,8,UiCanvas.Weight.MEDIUM),dw=detail.isEmpty()?0:c.textWidth(detail,7,UiCanvas.Weight.REGULAR);
         float width=Math.max(tw,dw)+28,height=detail.isEmpty()?17:26;
-        int accent=switch(rec.kind()){case CONTAINER,MINECART->rec.left()==0?0xFF8A93A6:0xFFFFA24D;case SPAWNER->VelaTheme.DANGER;case VAULT->0xFFFFC94D;};
+        int accent=accent(rec);
         c.round(-width/2,-height,width,height,6,mul(VelaTheme.SURFACE,alpha*.92f));
         c.border(-width/2,-height,width,height,6,mul(VelaTheme.BORDER,alpha));
         c.image("check",-width/2+6,-height+4,9,mul(accent,alpha));

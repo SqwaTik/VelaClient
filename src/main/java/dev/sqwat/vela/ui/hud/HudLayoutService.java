@@ -242,7 +242,7 @@ public final class HudLayoutService {
         if(modules.byId("particles") instanceof dev.sqwat.vela.module.visual.Particles particles&&particles.enabled())particles.draw(g);
         if(modules.byId("world_particles") instanceof dev.sqwat.vela.module.visual.WorldParticles ambient&&ambient.enabled())ambient.draw(g);
         if(modules.byId("trajectories") instanceof dev.sqwat.vela.module.utility.Trajectories trajectories&&trajectories.enabled())trajectories.draw(g);
-        if(modules.byId("knockback_predictor") instanceof dev.sqwat.vela.module.utility.KnockbackPredictor knockback&&knockback.enabled())knockback.draw(g);
+        if(modules.byId("mace_smash") instanceof dev.sqwat.vela.module.visual.MaceSmash mace&&mace.enabled())mace.draw(g);
         if(modules.byId("loot_memory") instanceof dev.sqwat.vela.module.utility.LootMemory loot&&loot.enabled())loot.draw(g);
         if(modules.byId("pinger") instanceof dev.sqwat.vela.module.utility.Pinger pinger&&pinger.screenWarningActive()){
             var config=dev.sqwat.vela.VelaClient.services().configs().current();

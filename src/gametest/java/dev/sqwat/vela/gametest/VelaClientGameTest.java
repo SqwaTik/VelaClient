@@ -155,24 +155,19 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                     VelaClient.services().modules().byId("mace_smash").setEnabled(true);
                 });
                 context.waitTicks(5);
-                context.runOnClient(mc->{
-                    mc.player.setXRot(35);mc.player.fallDistance=6;
-                    var target=mc.level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class,mc.player.getBoundingBox().inflate(16)).stream()
-                        .min(java.util.Comparator.comparingDouble(v->v.distanceToSqr(mc.player))).orElseThrow();
-                    dev.sqwat.vela.module.visual.MaceSmash.attacked(mc.player,target);
-                    mc.player.fallDistance=0;
-                });
-                context.waitTicks(4);context.takeScreenshot("vela-mace-smash");
-                context.waitTicks(14);context.takeScreenshot("vela-mace-smash-late");
-                // Knockback predictor: a villager in front, a lava pool behind it.
-                world.getServer().runCommand("fill 37 -61 32 43 -61 35 minecraft:lava");
-                world.getServer().runCommand("summon villager 40 -60 36.5 {NoAI:1b}");
-                world.getServer().runCommand("tp @a 41.2 -60 38.6 160 22");
-                context.runOnClient(mc->{mc.player.getInventory().setSelectedSlot(0);VelaClient.services().modules().byId("knockback_predictor").setEnabled(true);mc.player.setSprinting(true);});
-                context.waitTicks(30);context.takeScreenshot("vela-knockback-predictor");
-                System.out.println("[Vela gametest] Knockback: "+context.computeOnClient(mc->((dev.sqwat.vela.module.utility.KnockbackPredictor)VelaClient.services().modules().byId("knockback_predictor")).describe()
-                    +"; crosshair "+mc.hitResult+"; module enabled "+VelaClient.services().modules().byId("knockback_predictor").enabled()));
-                context.runOnClient(mc->VelaClient.services().modules().byId("knockback_predictor").setEnabled(false));
+                for(String mode:List.of("Гроза","Трещины","Жидкое стекло","Цунами")){
+                    context.runOnClient(mc->{
+                        for(var setting:VelaClient.services().modules().byId("mace_smash").settings())if(setting.id().equals("mode"))setString(setting,mode);
+                        mc.player.setXRot(35);mc.player.fallDistance=6;
+                        var target=mc.level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class,mc.player.getBoundingBox().inflate(16)).stream()
+                            .min(java.util.Comparator.comparingDouble(v->v.distanceToSqr(mc.player))).orElseThrow();
+                        dev.sqwat.vela.module.visual.MaceSmash.attacked(mc.player,target);
+                        mc.player.fallDistance=0;
+                    });
+                    context.waitTicks(mode.equals("Гроза")?8:mode.equals("Цунами")?7:10);
+                    context.takeScreenshot("vela-mace-"+(mode.equals("Гроза")?"storm":mode.equals("Трещины")?"cracks":mode.equals("Жидкое стекло")?"glass":"tsunami"));
+                    context.waitTicks(40);
+                }
                 // Loot memory: open a real chest with something in it, close it, see the tag.
                 world.getServer().runCommand("setblock 44 -60 39 minecraft:chest");
                 world.getServer().runCommand("item replace block 44 -60 39 container.0 with minecraft:diamond 3");
@@ -187,6 +182,8 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                 context.waitTicks(10);
                 context.runOnClient(mc->{mc.player.setYRot(-60);mc.player.setXRot(20);});
                 context.waitTicks(5);context.takeScreenshot("vela-loot-memory");
+                world.getServer().runCommand("tp @a 80 -58 39 90 5");
+                context.waitTicks(20);context.takeScreenshot("vela-loot-memory-far");
                 System.out.println("[Vela gametest] Loot: "+context.computeOnClient(mc->((dev.sqwat.vela.module.utility.LootMemory)VelaClient.services().modules().byId("loot_memory")).describe()));
                 context.runOnClient(mc->mc.options.renderDistance().set(12));
                 world.getServer().runCommand("gamemode creative @a");

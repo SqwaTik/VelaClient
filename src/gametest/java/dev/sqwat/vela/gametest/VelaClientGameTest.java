@@ -34,7 +34,18 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         context.waitTicks(10);context.takeScreenshot("vela-changelog");
         context.setScreen(()->new dev.sqwat.vela.ui.screen.VelaSettingsScreen(null,VelaClient.services()));
         context.waitTicks(10);
+        context.setScreen(()->new dev.sqwat.vela.ui.screen.VelaTitleScreen(VelaClient.services()));
+        context.waitTicks(20);context.takeScreenshot("vela-title");
+        context.setScreen(()->new dev.sqwat.vela.ui.screen.CommandEditorScreen(new dev.sqwat.vela.ui.screen.VelaDashboardScreen(null,VelaClient.services()),VelaClient.services(),false));
+        context.waitTicks(10);context.takeScreenshot("vela-macros");
+        context.setScreen(()->new dev.sqwat.vela.ui.screen.CommandEditorScreen(new dev.sqwat.vela.ui.screen.VelaDashboardScreen(null,VelaClient.services()),VelaClient.services(),true));
+        context.waitTicks(10);context.takeScreenshot("vela-interval");
         context.setScreen(()->null);
+
+        // Resource reload: the loading overlay draws, the reload finishes and the overlay goes away.
+        context.runOnClient(mc->mc.reloadResourcePacks());
+        context.waitTicks(3);context.takeScreenshot("vela-loading");
+        context.waitFor(mc->mc.gui.overlay()==null,ClientGameTestContext.DEFAULT_TIMEOUT);
 
         context.runOnClient(mc->{
             mc.options.framerateLimit().set(260); // unlimited
@@ -66,6 +77,11 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         }
     }
 
+    /**
+     * The baseline is the median of the last five passing runs (perf/fps-baseline.properties), not one number: the
+     * same code measured 894 and 721 on this machine at different times, so a single recording made the gate
+     * unreliable. A passing run joins the history; a run below 85% of the baseline fails the build.
+     */
     private static void check(List<Integer> samples){
         Collections.sort(samples);
         int median=samples.get(samples.size()/2);
@@ -73,17 +89,21 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         var props=new Properties();
         try{
             if(Files.exists(file))try(var in=Files.newInputStream(file)){props.load(in);}
-            String recorded=props.getProperty("median");
-            System.out.println("[Vela gametest] FPS samples "+samples+", median "+median+(recorded==null?"":", baseline "+recorded));
-            if(recorded==null||Boolean.getBoolean("vela.fpsRebaseline")){
-                props.setProperty("median",Integer.toString(median));
-                Files.createDirectories(file.getParent());
-                try(var out=Files.newOutputStream(file)){props.store(out,"Vela FPS baseline (fixed gametest scene). Delete or run with -Dvela.fpsRebaseline=true to re-record.");}
-                return;
-            }
-            int baseline=Integer.parseInt(recorded.strip());
-            if(median<baseline*ALLOWED_DROP)
+            var history=new ArrayList<Integer>();
+            for(String part:props.getProperty("history",props.getProperty("median","")).split(","))if(!part.isBlank())history.add(Integer.parseInt(part.strip()));
+            boolean rebaseline=Boolean.getBoolean("vela.fpsRebaseline");
+            if(rebaseline)history.clear();
+            var sorted=new ArrayList<>(history);Collections.sort(sorted);
+            Integer baseline=sorted.isEmpty()?null:sorted.get(sorted.size()/2);
+            System.out.println("[Vela gametest] FPS samples "+samples+", median "+median+(baseline==null?"":", baseline "+baseline+" from "+history));
+            if(baseline!=null&&median<baseline*ALLOWED_DROP)
                 throw new AssertionError("FPS regression: median "+median+" < "+Math.round(ALLOWED_DROP*100)+"% of baseline "+baseline+" (samples "+samples+")");
+            history.add(median);
+            while(history.size()>5)history.removeFirst();
+            props.remove("median");
+            props.setProperty("history",String.join(",",history.stream().map(String::valueOf).toList()));
+            Files.createDirectories(file.getParent());
+            try(var out=Files.newOutputStream(file)){props.store(out,"Vela FPS history of the fixed gametest scene (last 5 passing medians). Run with -Prebaseline to start over.");}
         }catch(java.io.IOException error){throw new AssertionError("Cannot read or write the FPS baseline "+file,error);}
     }
 }

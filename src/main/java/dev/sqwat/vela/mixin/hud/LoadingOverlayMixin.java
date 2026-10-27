@@ -95,27 +95,37 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
                 VelaDraw.centeredText(g,vela$farewell,view.width()/2f,y+32,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,9);
                 return;
             }
-            float cx=view.width()/2f,cy=y-46;
-            for(int i=0;i<64;i++){
-                double angle=i*Math.PI*2/64+(vela$clock%2.4f)/2.4*Math.PI*2;
-                int shade=i<12?color(0xB8918BFF,alpha*(1-i/14f)):color(0x19918BFF,alpha);
-                int px=Math.round(cx+(float)Math.cos(angle)*31),py=Math.round(cy+(float)Math.sin(angle)*31);
-                g.fill(px,py,px+1,py+1,shade);
+            // Simple and robust: the logo breathing over its own soft glow, a thin bar with a moving sheen, the percent.
+            // Only startup textures and plain fills: fonts and UI atlases may not be loaded yet.
+            float cx=view.width()/2f,cy=view.height()/2f-22;
+            boolean logo=minecraft.getTextureManager().getTexture(id("logo_128")) instanceof StartupLogoTexture;
+            float breathe=1+.035f*(float)Math.sin(vela$clock*Math.PI*2/2.2);
+            if(logo){
+                for(int i=3;i>=1;i--){float size=40*breathe*(1+i*.35f);VelaDraw.blit(g,id("logo_128"),cx-size/2,cy-size/2,size,size,0,0,128,128,128,128,color(0x1A918BFF,alpha/i));}
+                float size=40*breathe;
+                VelaDraw.blit(g,id("logo_128"),cx-size/2,cy-size/2,size,size,0,0,128,128,128,128,color(0xFFFFFFFF,alpha));
             }
-            float logoSize=31;
-            if(minecraft.getTextureManager().getTexture(id("logo_128")) instanceof StartupLogoTexture)
-                VelaDraw.blit(g,id("logo_128"),cx-logoSize/2,cy-logoSize/2,logoSize,logoSize,0,0,128,128,128,128,color(0xFFFFFFFF,alpha));
-            label(g,out>=0?"ready":"title",cx-128,y+1,0xFFF3F5FA,alpha);
-            label(g,currentProgress>.85?"initializing":"resources",cx-128,y+25,0xFF929CAF,alpha);
-            int left=Math.round(cx-100);g.fill(left,y+86,left+200,y+88,color(0xFF252B38,alpha));
-            int progress=Math.round(200*currentProgress);
-            if(progress>0)g.fill(left,y+86,left+progress,y+88,color(0xFF918BFF,alpha));
+            int barW=180,left=Math.round(cx-barW/2f),barY=Math.round(cy+44);
+            g.fill(left,barY,left+barW,barY+3,color(0x26FFFFFF,alpha));
+            int progress=Math.round(barW*currentProgress);
+            if(progress>0){
+                g.fill(left,barY,left+progress,barY+3,color(0xFF918BFF,alpha));
+                // Sheen: a short bright band running along the filled part.
+                float phase=(vela$clock%1.4f)/1.4f;int band=24,bx=left+Math.round((progress+band)*phase)-band;
+                int from=Math.max(left,bx),to=Math.min(left+progress,bx+band);
+                if(to>from)g.fill(from,barY,to,barY+3,color(0x66FFFFFF,alpha));
+            }
             String percent=Integer.toString(Math.round(currentProgress*100))+"%";
-            if(minecraft.getTextureManager().getTexture(id("startup_digits")) instanceof StartupLogoTexture)
+            if(minecraft.getTextureManager().getTexture(id("startup_digits")) instanceof StartupLogoTexture){
+                // Digit cells are 72x96 with the glyph centred; drawn at 24x32, advanced by 9 so they read as one number.
+                float advance=9f,startX=cx-percent.length()*advance/2f;
                 for(int i=0;i<percent.length();i++){
                     int digit=percent.charAt(i)=='%'?10:percent.charAt(i)-'0';
-                    VelaDraw.blit(g,id("startup_digits"),left+200-(percent.length()-i)*7-9,y+57,24,32,digit*72,0,72,96,792,96,color(0xFF8D88DC,alpha));
+                    // The % cell has extra side bearing: pull it next to the digits.
+                    float dx=digit==10?-3.5f:0;
+                    VelaDraw.blit(g,id("startup_digits"),startX+i*advance-7.5f+dx,barY+6,24,32,digit*72,0,72,96,792,96,color(0xFF9AA3BC,alpha));
                 }
+            }
         }finally{g.pose().popMatrix();}
     }
     @Unique private static void label(GuiGraphicsExtractor g,String name,float x,float y,int tint,float alpha){if(Minecraft.getInstance().getTextureManager().getTexture(id("startup_"+name)) instanceof StartupLogoTexture)VelaDraw.blit(g,id("startup_"+name),x,y,256,32,0,0,768,96,768,96,color(tint,alpha));}

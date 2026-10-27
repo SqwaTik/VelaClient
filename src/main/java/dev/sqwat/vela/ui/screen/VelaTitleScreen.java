@@ -51,11 +51,12 @@ public final class VelaTitleScreen extends VelaScreen {
         VelaDraw.centeredText(g,dateLabel,center,y+45,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,9);
         hits.clear();
         String[] labels={"Singleplayer","Multiplayer","Accounts","Settings","Quit"};
+        PILL_W=Math.max(96,Math.round(maxLabel(labels)+50));ROW=PILL_W*4+PILL_GAP*3;
         String[] icons={"singleplayer","multiplayer","account","settings","power"};
         Action[] actions={Action.SINGLEPLAYER,Action.MULTIPLAYER,Action.ACCOUNTS,Action.SETTINGS,Action.QUIT};
         for(int i=0;i<5;i++){
             int slot=i<2?i:i-1;
-            Rect rect=i==2?new Rect(width-140,12,128,30):new Rect(center-98+slot*52,y+86,40,40);
+            Rect rect=i==2?new Rect(width-140,12,128,30):new Rect(center-ROW/2+slot*(PILL_W+PILL_GAP),y+86,PILL_W,PILL_H);
             boolean hovered=rect.contains(mouseX,mouseY)||i==2&&minecraft.gui.screen() instanceof VelaAccountScreen;
             buttonHover[i]=Motion.approach(buttonHover[i],hovered?1:0,services.configs().current().reducedMotion?60:13,dt);
             float h=buttonHover[i];
@@ -70,10 +71,14 @@ public final class VelaTitleScreen extends VelaScreen {
                 g.pose().popMatrix();
                 hits.add(new MenuHit(rect,actions[i]));continue;
             }
-            VelaDraw.roundedOutline(g,rect.x()-1,rect.y()-1,42,42,21,VelaTheme.mix(VelaTheme.BORDER,VelaTheme.PRIMARY,h*.6f),VelaTheme.mix(VelaTheme.SURFACE_DEEP,VelaTheme.SURFACE_HOVER,h));
-            g.pose().pushMatrix();g.pose().translate(rect.x()+20,rect.y()+20);
-            dev.sqwat.vela.ui.render.VelaIcons.draw(g,icons[i],-8,-8,16,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.PRIMARY,h));g.pose().popMatrix();
-            if(h>.002f)VelaDraw.centeredText(g,labels[i],rect.x()+20,rect.y()+46,(VelaTheme.TEXT&0xFFFFFF)|(Math.round(h*255)<<24),VelaDraw.Weight.MEDIUM,9);
+            // Labelled pill: the hover is a clear accent border, a tinted fill and a small lift; Quit turns red.
+            int accent=i==4?VelaTheme.DANGER:VelaTheme.PRIMARY;
+            float lift=h*2;
+            Rect pill=new Rect(rect.x(),Math.round(rect.y()-lift),rect.width(),rect.height());
+            if(h>.01f)VelaDraw.roundedRect(g,pill.x()-3,pill.y()-3,pill.width()+6,pill.height()+6,13,(Math.round(h*40)<<24)|(accent&0xFFFFFF));
+            VelaDraw.roundedOutline(g,pill.x(),pill.y(),pill.width(),pill.height(),11,VelaTheme.mix(0xFF262E3F,accent,h),VelaTheme.mix(0xE0121722,VelaTheme.mix(0xFF121722,accent,.16f),h));
+            dev.sqwat.vela.ui.render.VelaIcons.draw(g,icons[i],pill.x()+14,pill.y()+(pill.height()-14)/2,14,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,accent,h));
+            VelaDraw.text(g,labels[i],pill.x()+35,pill.y()+(pill.height()-9)/2f,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,h),VelaDraw.Weight.MEDIUM,9);
             hits.add(new MenuHit(rect,actions[i]));
         }
         dev.sqwat.vela.ui.render.UiCursor.hand(hits.stream().anyMatch(hit->hit.rect.contains(mouseX,mouseY))||changelogHit.contains(mouseX,mouseY));
@@ -99,8 +104,31 @@ public final class VelaTitleScreen extends VelaScreen {
         VelaDraw.text(g,label,tx,y+5,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,changelogHover),VelaDraw.Weight.MEDIUM,8f);
     }
 
+    private static final int PILL_H=34,PILL_GAP=10;
+    private static final net.minecraft.resources.Identifier GLOW=net.minecraft.resources.Identifier.fromNamespaceAndPath("velaclient","textures/gui/glow.png");
+    private int PILL_W=104,ROW=PILL_W*4+PILL_GAP*3;
+    private static float maxLabel(String[] labels){float m=0;for(int i=0;i<labels.length;i++)if(i!=2)m=Math.max(m,VelaDraw.textWidth(labels[i],VelaDraw.Weight.MEDIUM,9));return m;}
+    /**
+     * Deep base with three soft light blobs in the accent colour drifting slowly (one radial-glow quad each), and a
+     * vignette that keeps the edges dark.
+     */
     private void drawBackground(GuiGraphicsExtractor g) {
-        g.fillGradient(0,0,width,height,0xFF101820,0xFF060A0E);
+        g.fillGradient(0,0,width,height,0xFF0B0F17,0xFF05070B);
+        double t=System.currentTimeMillis()/1000.0;
+        boolean still=services.configs().current().reducedMotion;
+        int accent=VelaTheme.PRIMARY&0xFFFFFF;
+        float[][] blobs={{.28f,.30f,.42f,0},{.74f,.62f,.38f,2.1f},{.52f,.92f,.50f,4.2f}};
+        for(int b=0;b<blobs.length;b++){
+            float phase=blobs[b][3];
+            float cx=width*(blobs[b][0]+(still?0:(float)Math.sin(t*.07+phase)*.05f)),cy=height*(blobs[b][1]+(still?0:(float)Math.cos(t*.06+phase)*.05f));
+            float radius=Math.max(width,height)*blobs[b][2];
+            int tint=b==1?VelaTheme.mix(accent|0xFF000000,0xFF43C7F4,.45f)&0xFFFFFF:accent;
+            // One soft radial texture, tinted and scaled: a real round glow in a single quad.
+            VelaDraw.blit(g,GLOW,cx-radius,cy-radius,radius*2,radius*2,0,0,256,256,256,256,(b==1?0x30000000:0x3C000000)|tint);
+        }
+        // Vignette
+        g.fillGradient(0,0,width,height/3,0xB005070B,0x0005070B);
+        g.fillGradient(0,height*2/3,width,height,0x0005070B,0xC005070B);
     }
 
     @Override

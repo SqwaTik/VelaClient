@@ -19,10 +19,8 @@ public final class Lang {
     private static final List<Template> TEMPLATES=new ArrayList<>();
     private static final Pattern CYRILLIC=Pattern.compile("[\\u0400-\\u04FF]");
     private static final Pattern SLOT=Pattern.compile("\\{\\}");
-    /** Translations of strings seen recently, so a repeated label costs one map lookup per frame. */
-    private static final Map<String,String> CACHE=Collections.synchronizedMap(new LinkedHashMap<>(256,.75f,true){
-        @Override protected boolean removeEldestEntry(Map.Entry<String,String> e){return size()>2048;}
-    });
+    /** Results of template matching (run-time text), lock-free; cleared when it grows or the language changes. */
+    private static final Map<String,String> CACHE=new java.util.concurrent.ConcurrentHashMap<>();
     static{load();}
     private Lang(){}
 
@@ -47,13 +45,25 @@ public final class Lang {
     public static String pick(String english,String russian){return english()?english:russian;}
 
     /** English for a Russian interface string, or the string unchanged. */
+    /**
+     * English for a Russian interface string, or the string unchanged. Called for every label drawn, so the common
+     * cases are lock-free: an exact dictionary hit, or text without Cyrillic (returned as is).
+     */
     public static String tr(String text){
         if(current==Language.RU||text==null||text.isEmpty())return text;
+        String exact=EXACT.get(text);
+        if(exact!=null)return exact;
+        if(!hasCyrillic(text))return text;
         String hit=CACHE.get(text);
         if(hit!=null)return hit;
         String result=translate(text);
+        if(CACHE.size()>4096)CACHE.clear();
         CACHE.put(text,result);
         return result;
+    }
+    private static boolean hasCyrillic(String text){
+        for(int i=0;i<text.length();i++){char c=text.charAt(i);if(c>='Ѐ'&&c<='ӿ')return true;}
+        return false;
     }
     static String translate(String text){
         String exact=EXACT.get(text);

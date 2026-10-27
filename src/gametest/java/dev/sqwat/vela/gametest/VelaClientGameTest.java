@@ -28,8 +28,11 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         context.runOnClient(mc->org.spongepowered.asm.mixin.MixinEnvironment.getCurrentEnvironment().audit());
 
         // 2. Vela screens render without errors.
-        context.setScreen(()->new dev.sqwat.vela.ui.screen.VelaDashboardScreen(null,VelaClient.services()));
-        context.waitTicks(10);context.takeScreenshot("vela-dashboard");
+        // Every dashboard section renders (module cards, markers, friends, configs).
+        for(var section:dev.sqwat.vela.ui.screen.VelaSection.values()){
+            context.setScreen(()->new dev.sqwat.vela.ui.screen.VelaDashboardScreen(null,VelaClient.services(),section));
+            context.waitTicks(8);context.takeScreenshot("vela-dashboard-"+section.name().toLowerCase(java.util.Locale.ROOT));
+        }
         context.setScreen(()->new dev.sqwat.vela.ui.screen.ChangelogScreen(null));
         context.waitTicks(10);context.takeScreenshot("vela-changelog");
         context.setScreen(()->new dev.sqwat.vela.ui.screen.VelaSettingsScreen(null,VelaClient.services()));

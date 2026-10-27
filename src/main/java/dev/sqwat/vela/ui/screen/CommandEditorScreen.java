@@ -64,6 +64,7 @@ public final class CommandEditorScreen extends VelaScreen {
         Rect add=new Rect(x+lw-6,y+50,16,16);
         float addHover=controls.animate("create-hover",add.contains(mx,my)?1:0);
         VelaDraw.roundedRect(g,add.x(),add.y(),16,16,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.25f+.5f*addHover));
+        if(addHover>.02f)new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(add.x(),add.y(),16,16,5,(VelaTheme.PRIMARY&0xFFFFFF)|(Math.round(255*addHover)<<24));
         VelaIcons.draw(g,"plus",add.x()+4,add.y()+4,8,VelaTheme.TEXT);
         actions.add(new Action(add,()->transition(this::fresh)));
         list=new Rect(x+10,y+70,lw,h-80);
@@ -113,7 +114,7 @@ public final class CommandEditorScreen extends VelaScreen {
             VelaDraw.text(g,"Клавиша",formX,fy-10,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,7.5f);
             Rect keyRect=new Rect(formX,fy,formW,22);
             float kh=controls.animate("key-hover",keyRect.contains(mx,my)?1:0);
-            VelaDraw.roundedOutline(g,keyRect.x(),keyRect.y(),keyRect.width(),keyRect.height(),5,capturing?VelaTheme.PRIMARY:VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,kh),VelaTheme.SURFACE_DEEP);
+            VelaDraw.roundedOutline(g,keyRect.x(),keyRect.y(),keyRect.width(),keyRect.height(),5,capturing?VelaTheme.PRIMARY:VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,kh),VelaTheme.mix(VelaTheme.SURFACE_DEEP,VelaTheme.SURFACE_HOVER,kh));
             String keyLabel=capturing?"Нажмите клавишу…":key<0?"Назначить клавишу":dev.sqwat.vela.ui.input.KeyLabels.of(key,"");
             VelaDraw.centeredText(g,keyLabel,keyRect.x()+keyRect.width()/2f,keyRect.y()+7,key<0&&!capturing?VelaTheme.TEXT_MUTED:VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
             actions.add(new Action(keyRect,()->{capturing=true;focus=-1;}));
@@ -122,7 +123,7 @@ public final class CommandEditorScreen extends VelaScreen {
         fy+=30;
         Rect toggle=new Rect(formX,fy,formW,20);
         float th=controls.animate("toggle-row-hover",toggle.contains(mx,my)?1:0);
-        if(th>.01f)VelaDraw.roundedRect(g,toggle.x()-4,toggle.y(),toggle.width()+8,toggle.height(),5,VelaTheme.mix(0x00000000,0x10FFFFFF,th));
+        if(th>.01f){VelaDraw.roundedRect(g,toggle.x()-4,toggle.y(),toggle.width()+8,toggle.height(),5,VelaTheme.mix(0x00000000,0x10FFFFFF,th));new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(toggle.x()-4,toggle.y(),toggle.width()+8,toggle.height(),5,UiKit.hoverBorder(th));}
         VelaDraw.text(g,interval?"Таймер включён":"Макрос включён",toggle.x(),toggle.y()+6,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
         VelaDraw.toggle(g,formX+formW-24,toggle.y()+2,controls.animate("entry-enabled",enabled?1:0),toggle.contains(mx,my));
         actions.add(new Action(toggle,()->enabled=!enabled));

@@ -25,7 +25,17 @@ public final class ReplayFiles {
     public record Saved(Path file,String title,long recordedAt,Options options,String world,String dimension){}
     private ReplayFiles(){}
 
-    private static Path dir(){return net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("velaclient/replays");}
+    /** Visible folder next to saves and screenshots; replays saved by earlier builds in the config folder move here once. */
+    public static Path dir(){
+        var game=net.fabricmc.loader.api.FabricLoader.getInstance();
+        Path dir=game.getGameDir().resolve("vela-replays"),old=game.getConfigDir().resolve("velaclient/replays");
+        if(Files.isDirectory(old))try(var files=Files.list(old)){
+            Files.createDirectories(dir);
+            for(var f:(Iterable<Path>)files::iterator)Files.move(f,dir.resolve(f.getFileName()),StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(old);
+        }catch(java.io.IOException ignored){}
+        return dir;
+    }
 
     public static Path save(Recording r,Options options)throws java.io.IOException{
         var mc=Minecraft.getInstance();
@@ -80,10 +90,17 @@ public final class ReplayFiles {
         for(var e:r.events()){var t=new CompoundTag();t.putInt("tick",e.tick());t.putString("kind",e.kind().name());t.putString("title",e.title());t.putString("detail",e.detail());t.putFloat("amount",e.amount());if(e.source()!=null)t.putString("source",e.source().toString());events.add(t);}
         root.put("events",events);
         Files.createDirectories(dir());
-        Path file=dir().resolve(r.recordedAt()+"-"+System.currentTimeMillis()%100000+".vrec");
+        Path file=dir().resolve(fileName(options.title(),r.recordedAt())+".vrec");
         NbtIo.writeCompressed(root,file);
         prune();
         return file;
+    }
+    /** "2026-10-27 18-04 Killer name": readable in the folder, safe on every file system. */
+    static String fileName(String title,long recordedAt){
+        String time=java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss").format(java.time.Instant.ofEpochMilli(recordedAt).atZone(java.time.ZoneId.systemDefault()));
+        String clean=title==null?"":title.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]","").strip();
+        if(clean.length()>40)clean=clean.substring(0,40).strip();
+        return clean.isEmpty()?time:time+" "+clean;
     }
     private static int paletteIndex(List<ItemStack> palette,ListTag tags,ItemStack stack,com.mojang.serialization.DynamicOps<Tag> ops){
         for(int i=0;i<palette.size();i++)if(palette.get(i)==stack||ItemStack.matches(palette.get(i),stack))return i;

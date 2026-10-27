@@ -66,8 +66,7 @@ public final class ChangelogScreen extends VelaScreen {
         content(g,window,mx,my,dt);
         var close=new Rect(window.x()+window.width()-30,window.y()+10,20,20);
         float ch=controls.animate("close",close.contains(mx,my)?1:0);
-        if(ch>.01f)VelaDraw.roundedRect(g,close.x(),close.y(),20,20,6,VelaTheme.mix(0x00000000,VelaTheme.SURFACE_HOVER,ch));
-        VelaIcons.draw(g,"x",close.x()+5,close.y()+5,10,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,ch));
+        UiKit.iconAction(g,close,"x",10,ch,VelaTheme.TEXT);
         actions.add(Map.entry(close,this::onClose));
     }
     private void sidebar(GuiGraphicsExtractor g,Rect window,int mx,int my){

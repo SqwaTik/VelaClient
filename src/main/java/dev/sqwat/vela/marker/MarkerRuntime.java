@@ -77,26 +77,37 @@ public final class MarkerRuntime {
         if(down&&!held&&s.enabled&&s.quick&&!dead&&c.gui.screen()==null&&c.isWindowActive()){var pos=c.player.pick(5,1,false).getLocation();try{service.add(service.nextName(world(c),dimension(c)),world(c),dimension(c),pos.x,pos.y,pos.z,VelaTheme.PRIMARY,"markers",false);}catch(IllegalArgumentException ignored){}}
         held=down;
     }
+    // Per-frame work is projection only: labels are measured once per name and distance strings are reused.
+    private static final java.util.Map<String,String> LABELS=new java.util.HashMap<>();
+    private static final String[] DISTANCES=new String[4096];
+    private static final org.joml.Vector4f POINT=new org.joml.Vector4f();
+    private static final org.joml.Matrix4f VIEW=new org.joml.Matrix4f();
+    private static String distance(long meters){
+        if(meters<0||meters>=DISTANCES.length)return meters+"m";
+        String s=DISTANCES[(int)meters];if(s==null)s=DISTANCES[(int)meters]=meters+"m";
+        return s;
+    }
     public static void draw(GuiGraphicsExtractor g,MarkerService service){
         var c=Minecraft.getInstance();if(c.player==null||c.level==null||!service.state().enabled||!dev.sqwat.vela.ui.hud.HudVisibility.allowed(c))return;
         g.pose().pushMatrix();g.pose().identity();
         try {
         var camera=c.gameRenderer.mainCamera();var origin=camera.position();
-        var matrix=camera.getViewRotationProjectionMatrix(new org.joml.Matrix4f());
+        var matrix=camera.getViewRotationProjectionMatrix(VIEW);
         int w=c.getWindow().getGuiScaledWidth(),h=c.getWindow().getGuiScaledHeight();String world=world(c),dim=dimension(c);
         for(var p:service.state().points){
             if(!p.world().equals(world)||!p.dimension().equals(dim)||p.death()&&!service.state().death)continue;
             // Storage markers sit on the centre of the top of the container; plain markers keep their point.
             double ax=p.storage()?p.x()+.5:p.x(),ay=p.storage()?p.y()+1:p.y(),az=p.storage()?p.z()+.5:p.z();
-            var v=new org.joml.Vector4f((float)(ax-origin.x),(float)(ay-origin.y),(float)(az-origin.z),1).mul(matrix);
+            var v=POINT.set((float)(ax-origin.x),(float)(ay-origin.y),(float)(az-origin.z),1).mul(matrix);
             if(v.w<=0)continue;float nx=v.x/v.w,ny=v.y/v.w;
             float anchorX=MarkerLabelGeometry.screenX(nx,w),anchorY=MarkerLabelGeometry.screenY(ny,h);
             // Project only the anchor. All label geometry uses a fixed physical-pixel density.
             float density=1.5f/Math.max(1,c.getWindow().getGuiScale());
             if(!MarkerLabelGeometry.visible(anchorX,anchorY,density,w,h))continue;
             g.pose().pushMatrix();g.pose().translate(anchorX,anchorY);g.pose().scale(density);
-            String label=VelaDraw.ellipsize(p.name(),76,VelaDraw.Weight.MEDIUM,8);
-            String distance=Math.round(Math.sqrt(c.player.distanceToSqr(p.x(),p.y(),p.z())))+"m";
+            if(LABELS.size()>256)LABELS.clear();
+            String label=LABELS.computeIfAbsent(p.name(),name->VelaDraw.ellipsize(name,76,VelaDraw.Weight.MEDIUM,8));
+            String distance=distance(Math.round(Math.sqrt(c.player.distanceToSqr(p.x(),p.y(),p.z()))));
             if(p.storage())StorageMarkerChrome.draw(g,label,distance,icon(p.item()),p.color());
             else MarkerOverlayChrome.label(new GameUiCanvas(g),label,distance,p.icon(),p.death()?VelaTheme.PRIMARY:p.color());
             g.pose().popMatrix();

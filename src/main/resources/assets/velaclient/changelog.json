@@ -16,8 +16,8 @@
               "ru": "Death Recap: последние секунды перед смертью — свободная камера, от первого лица или глазами убийцы, замедление, таймлайн ударов, тотемов, зелий, брони и пинга."
             },
             {
-              "en": "Save replays with your own camera, speed and length, and watch them again later.",
-              "ru": "Сохранение повторов со своей камерой, скоростью и длиной — их можно пересмотреть позже."
+              "en": "Save replays with your own camera, speed and length to the vela-replays folder, optionally as a video file you can share.",
+              "ru": "Сохранение повторов со своей камерой, скоростью и длиной в папку vela-replays — по желанию ещё и видеофайлом, которым можно поделиться."
             },
             {
               "en": "Storage Index: search everything in the chests, barrels and shulkers you have opened and mark the right one.",
@@ -26,6 +26,14 @@
             {
               "en": "Smart chat: clickable coordinates, mentions of your name, private messages in tabs.",
               "ru": "Умный чат: кликабельные координаты, упоминания вашего ника, личные сообщения во вкладках."
+            },
+            {
+              "en": "Key combinations such as Ctrl+F for every bind.",
+              "ru": "Сочетания клавиш вроде Ctrl+F для любых биндов."
+            },
+            {
+              "en": "Chat privacy: a button above the chat hides what you type after /login and /register.",
+              "ru": "Приватность чата: кнопка над чатом скрывает то, что вы вводите после /login и /register."
             },
             {
               "en": "What's new: this list of changes in the main menu.",

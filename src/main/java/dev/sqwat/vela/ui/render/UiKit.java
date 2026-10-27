@@ -20,6 +20,7 @@ public final class UiKit {
         int w=chipWidth(label);var r=new Rect(x,y,w,CHIP_H);
         int base=VelaTheme.mix(0x14FFFFFF,0x24FFFFFF,hover);
         VelaDraw.roundedRect(g,x,y,w,CHIP_H,5,VelaTheme.mix(base,(VelaTheme.PRIMARY&0xFFFFFF)|0x48000000,active));
+        if(hover>.02f)new GameUiCanvas(g).border(x,y,w,CHIP_H,5,hoverBorder(hover));
         int text=VelaTheme.mix(0xFFDDE3EF,VelaTheme.TEXT,Math.max(active,hover));
         VelaDraw.text(g,label,x+PAD,y+3,text,VelaDraw.Weight.MEDIUM,LABEL);
         if(underline&&hover>.02f){int tw=w-PAD*2;g.fill(x+PAD,y+11,x+PAD+Math.round(tw*hover),y+12,text);}
@@ -36,6 +37,19 @@ public final class UiKit {
     public static void card(GuiGraphicsExtractor g,Rect r,float hover,float selected){
         VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),RADIUS,VelaTheme.mix(VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,hover),VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.16f),selected));
         new GameUiCanvas(g).border(r.x(),r.y(),r.width(),r.height(),RADIUS,VelaTheme.mix(VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,hover),VelaTheme.PRIMARY,selected));
+    }
+    /**
+     * The one hover principle: every interactive element fades the same way, its surface lightens and a hairline
+     * border lights up. Accent actions keep their accent; icon-only buttons get a soft backdrop.
+     */
+    public static int hoverBorder(float hover){return (VelaTheme.BORDER_HOVER&0xFFFFFF)|(Math.round(255*Math.clamp(hover,0,1))<<24);}
+    /** Icon-only button: backdrop and border fade in, the icon tints from muted to {@code accent}. */
+    public static void iconAction(GuiGraphicsExtractor g,Rect r,String icon,int size,float hover,int accent){
+        if(hover>.02f){
+            VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),5,(VelaTheme.SURFACE_HOVER&0xFFFFFF)|(Math.round(0xC0*hover)<<24));
+            new GameUiCanvas(g).border(r.x(),r.y(),r.width(),r.height(),5,hoverBorder(hover));
+        }
+        VelaIcons.draw(g,icon,r.x()+(r.width()-size)/2,r.y()+(r.height()-size)/2,size,VelaTheme.mix(VelaTheme.TEXT_MUTED,accent,hover));
     }
     /** Search/text field with a magnifier and placeholder; returns the editable text area. */
     public static Rect searchField(GuiGraphicsExtractor g,Rect r,TextEdit edit,boolean focused,String placeholder){

@@ -78,6 +78,7 @@ public final class StorageIndexScreen extends VelaScreen {
                 boolean over=r.contains(mx,my)&&listArea.contains(mx,my);
                 float hover=controls.animate("row-"+i,over?1:0),active=controls.animate("sel-"+i,i==selected?1:0);
                 if(hover>.01f||active>.01f)VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),5,VelaTheme.mix(VelaTheme.mix(0x00000000,0x14FFFFFF,hover),(VelaTheme.PRIMARY&0xFFFFFF)|0x30000000,active));
+                if(hover>.02f&&active<.98f)new GameUiCanvas(g).border(r.x(),r.y(),r.width(),r.height(),5,UiKit.hoverBorder(hover*(1-active)));
                 g.item(icon(hit.item()),r.x()+3,r.y()+2);
                 String total="×"+hit.total();float tw=VelaDraw.textWidth(total,VelaDraw.Weight.MEDIUM,8f);
                 VelaDraw.text(g,VelaDraw.ellipsize(hit.name(),r.width()-tw-34,VelaDraw.Weight.MEDIUM,8.5f),r.x()+24,r.y()+6,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8.5f);

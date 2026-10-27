@@ -73,6 +73,8 @@ public final class VelaClientGameTest implements FabricClientGameTest {
 
             // 4. FPS of a fixed scene with the default modules.
             context.runOnClient(mc->{mc.player.setYRot(0);mc.player.setXRot(10);});
+            // Losing focus (another window in front) would drop the game to the 30 FPS inactivity limit mid-sample.
+            context.runOnClient(c->c.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED));
             context.waitTicks(300); // warm-up: shader and chunk compilation settle (a cold run measured half the FPS)
             var samples=new ArrayList<Integer>();
             for(int i=0;i<20;i++){context.waitTicks(20);samples.add(context.computeOnClient(Minecraft::getFps));}

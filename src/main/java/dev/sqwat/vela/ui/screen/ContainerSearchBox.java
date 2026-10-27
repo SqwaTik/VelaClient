@@ -24,6 +24,7 @@ import org.lwjgl.glfw.GLFW;
  * book takes keys first) and creative. While focused it keeps every key except Escape. Render thread only.
  */
 public final class ContainerSearchBox {
+    private static final dev.sqwat.vela.ui.animation.AnimationState HOVER=new dev.sqwat.vela.ui.animation.AnimationState();
     private static final int W=104,H=18;
     private static final TextEdit EDIT=new TextEdit();
     private static Screen owner;
@@ -62,8 +63,8 @@ public final class ContainerSearchBox {
     private static void draw(Screen screen,GuiGraphicsExtractor g,int mouseX,int mouseY){
         if(screen!=owner||!active())return;
         Rect r=bounds=layout(screen);
-        boolean hover=r.contains(mouseX,mouseY);
-        int border=focused?VelaTheme.PRIMARY:hover?VelaTheme.BORDER_HOVER:VelaTheme.BORDER;
+        float hover=HOVER.value("box",r.contains(mouseX,mouseY)?1:0,false,24);
+        int border=focused?VelaTheme.PRIMARY:VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,hover);
         VelaDraw.roundedOutline(g,r.x(),r.y(),r.width(),r.height(),6,border,VelaTheme.SURFACE_DEEP);
         VelaIcons.draw(g,"search",r.x()+6,r.y()+5,8,focused?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED);
         int textRight=r.x()+r.width()-6;

@@ -93,7 +93,7 @@ abstract class DashboardPanels extends DashboardModules {
             VelaDraw.text(g,online?"В сети":"Не в сети",card.x()+37,card.y()+24,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
             Rect star=new Rect(card.x()+cw-42,card.y()+11,18,20),remove=new Rect(card.x()+cw-22,card.y()+11,18,20);
             controls.favorite(g,"friend-favorite-"+friend.id(),new Rect(star.x()+4,star.y()+5,10,10),friend.favorite(),star.contains(pointerX,pointerY));
-            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"trash",remove.x()+4,remove.y()+5,10,remove.contains(pointerX,pointerY)?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED);
+            dev.sqwat.vela.ui.render.UiKit.iconAction(g,remove,"trash",10,controls.animate("friend-remove-"+friend.id(),remove.contains(pointerX,pointerY)?1:0),VelaTheme.DANGER);
             if(card.y()>=top&&card.y()+40<=bottom){friendHits.add(new FriendHit(friend.id(),star,true));friendHits.add(new FriendHit(friend.id(),remove,false));}
         }
         g.disableScissor();scrollLimit=Math.max(0,((friends.size()+1)/2)*48-(bottom-top));targetScroll=Math.min(targetScroll,scrollLimit);
@@ -127,7 +127,7 @@ abstract class DashboardPanels extends DashboardModules {
             String[] icons={"copy","folder","trash","download","save"};
             for(int i=0;i<5;i++){
                 Rect hit=new Rect(card.x()+card.width()-111+i*21,y+11,18,22);
-                dev.sqwat.vela.ui.render.VelaIcons.draw(g,icons[i],hit.x()+3,hit.y()+5,12,hit.contains(pointerX,pointerY)?VelaTheme.PRIMARY:VelaTheme.TEXT_MUTED);
+                dev.sqwat.vela.ui.render.UiKit.iconAction(g,hit,icons[i],12,controls.animate("profile-action-"+i,hit.contains(pointerX,pointerY)?1:0),VelaTheme.PRIMARY);
                 if(hit.contains(pointerX,pointerY))showHint(g,new String[]{"Копировать ключ","Открыть папку","Удалить","Загрузить","Сохранить"}[i],hit.x(),hit.y()+23);
                 final int action=i;
                 if(rowIntersects(card,listTop,content.y()+content.height()-20))profileHits.add(new ProfileHit(name,hit,action));

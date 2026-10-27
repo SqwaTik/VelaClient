@@ -116,6 +116,7 @@
     "hud.TabPingMixin",
     "hud.DeathRecapHudMixin",
     "hud.DeathRecapHandMixin",
+    "hud.ReplayVideoFrameMixin",
     "entity.DeathRecapTickMixin",
     "entity.DeathRecapWalkMixin",
     "camera.DeathRecapCameraMixin",

@@ -28,6 +28,7 @@ public final class ChatThreads {
     private static final LinkedHashMap<String,Integer> THREADS=new LinkedHashMap<>();
     private static String selected;
     private static final List<Map.Entry<Rect,String>> HITS=new ArrayList<>();
+    private static final dev.sqwat.vela.ui.animation.AnimationState HOVER=new dev.sqwat.vela.ui.animation.AnimationState();
     private ChatThreads(){}
 
     public static void initialize(){
@@ -74,9 +75,10 @@ public final class ChatThreads {
         String badge=unread>0?String.valueOf(Math.min(unread,99)):"";
         int badgeWidth=badge.isEmpty()?0:(int)Math.ceil(VelaDraw.textWidth(badge,VelaDraw.Weight.SEMIBOLD,7f))+8;
         var r=new Rect(x,y,textWidth+12+(badgeWidth>0?badgeWidth+4:0),14);
-        boolean hover=r.contains(mouseX,mouseY);
-        int fill=active?(VelaTheme.PRIMARY&0xFFFFFF)|0x48000000:hover?0xC0232B3D:0xB0141923;
+        float hover=HOVER.value(label,r.contains(mouseX,mouseY)?1:0,false,24);
+        int fill=VelaTheme.mix(VelaTheme.mix(0xB0141923,0xC0232B3D,hover),(VelaTheme.PRIMARY&0xFFFFFF)|0x48000000,active?1:0);
         VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),5,fill);
+        if(hover>.02f)new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(r.x(),r.y(),r.width(),r.height(),5,dev.sqwat.vela.ui.render.UiKit.hoverBorder(hover));
         VelaDraw.text(g,label,r.x()+6,r.y()+3,active?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,8f);
         if(badgeWidth>0){
             int bx=r.x()+6+textWidth+4;

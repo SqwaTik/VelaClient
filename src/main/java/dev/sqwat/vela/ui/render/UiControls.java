@@ -26,6 +26,7 @@ int fill=VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.readableAccentFill(),h);
     public void iconButton(GuiGraphicsExtractor g,String id,Rect rect,String icon,boolean open,boolean hovered){
         float h=animate(id+"hover",hovered?1:0);boolean close=icon.equals("x");
         VelaDraw.roundedRect(g,rect.x(),rect.y(),rect.width(),rect.height(),6,VelaTheme.mix(close?0x00141923:open?VelaTheme.PRIMARY_SOFT:VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h));
+        if(h>.02f)new GameUiCanvas(g).border(rect.x(),rect.y(),rect.width(),rect.height(),6,UiKit.hoverBorder(h));
         g.pose().pushMatrix();g.pose().translate(rect.x()+rect.width()/2f,rect.y()+rect.height()/2f);
         if(!close)g.pose().scale(1+h*.04f);
         if(icon.equals("chevron"))g.pose().rotate(ControlChrome.disclosureAngle(animate(id+"rotation",open?1:0)));
@@ -37,8 +38,9 @@ int fill=VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.readableAccentFill(),h);
     public float animate(String id,float target,float speed){var services=dev.sqwat.vela.VelaClient.services();boolean immediate=services!=null&&(!services.configs().current().animations||services.configs().current().reducedMotion);return animations.value(id,target,immediate,speed);}
     public void button(GuiGraphicsExtractor g,String id,Rect r,String label,boolean hovered){
         float h=animate(id+"hover",hovered?1:0);
-        VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),6,VelaTheme.mix(VelaTheme.SURFACE_DEEP,VelaTheme.readableAccentFill(),h));
         boolean action=label.equals("Добавить")||label.equals("Создать")||label.startsWith("Назначить");
+        VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),6,VelaTheme.mix(VelaTheme.SURFACE_DEEP,action?VelaTheme.readableAccentFill():VelaTheme.SURFACE_HOVER,h));
+        new GameUiCanvas(g).border(r.x(),r.y(),r.width(),r.height(),6,VelaTheme.mix(VelaTheme.BORDER,action?VelaTheme.PRIMARY:VelaTheme.BORDER_HOVER,h));
         float shift=action?ActionGeometry.textShift(h):0;
         VelaDraw.centeredText(g,label,r.x()+r.width()/2f+shift,r.y()+(r.height()-VelaDraw.BODY)/2f,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,VelaDraw.BODY);
         if(action&&h>.02f)VelaDraw.text(g,">",r.x()+(r.width()-VelaDraw.textWidth(label,VelaDraw.Weight.MEDIUM))/2f+shift-10,r.y()+(r.height()-9)/2f,(Math.round(255*h)<<24)|(VelaTheme.TEXT&0xFFFFFF),VelaDraw.Weight.MEDIUM,8);

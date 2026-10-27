@@ -29,7 +29,11 @@ public final class DeathReplay {
     private static ClientLevel level;
     private static float time;           // ticks since the first frame
     private static boolean playing=true;
-    private static float speed=.5f;
+    private static float speed=1f;
+    private static boolean exporting;
+    /** Per actor: for every frame, the newest frame at or before it that contains the actor (-1 before it appears). */
+    private static final Map<UUID,int[]> lastSeen=new HashMap<>();
+    private static int endIndex;
     private static View view=View.ORBIT;
     private static float orbitYaw,orbitPitch=22,orbitDistance=5.5f;
     private static boolean autoOrbit=true;
@@ -52,11 +56,24 @@ public final class DeathReplay {
     private static boolean hud;
     /** A saved replay may keep the game HUD visible; the live recap never shows it. */
     public static boolean showsHud(){return hud;}
-    public static void start(Recording r){start(r,View.ORBIT,false,.5f);}
+    public static void showHud(boolean value){hud=value;}
+    public static void start(Recording r){start(r,View.ORBIT,false,1f);}
+    /** While a video is written the replay is stepped by ReplayVideo, one video frame at a time, not by real time. */
+    public static void pauseForExport(boolean value){exporting=value;lastFrame=0;}
+    public static boolean exporting(){return exporting;}
     public static void start(Recording r,View initial,boolean showHud,float playbackSpeed){
         stop();
         var mc=Minecraft.getInstance();if(mc.level==null||r.frames().isEmpty())return;
-        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;hud=showHud;speed=playbackSpeed;
+        recording=r;level=mc.level;time=0;playing=true;autoOrbit=true;lastFrame=0;hud=showHud;speed=playbackSpeed;exporting=false;
+        // The replay ends one second after the death; nothing after that is interesting.
+        endIndex=r.frames().size()-1;
+        for(int i=0;i<r.frames().size();i++)if(r.frames().get(i).tick()>r.deathTick()+20){endIndex=Math.max(1,i-1);break;}
+        lastSeen.clear();
+        for(var actor:r.actors().keySet()){
+            int[] seen=new int[r.frames().size()];int last=-1;
+            for(int i=0;i<seen.length;i++){if(r.frames().get(i).snaps().containsKey(actor))last=i;seen[i]=last;}
+            lastSeen.put(actor,seen);
+        }
         var first=r.frames().getFirst().snaps().get(r.self());
         orbitYaw=first==null?0:first.yRot()+150;orbitPitch=22;orbitDistance=5.5f;view=initial==View.KILLER&&r.killer()==null?View.ORBIT:initial;
         int id=Integer.MAX_VALUE-1024;
@@ -84,10 +101,10 @@ public final class DeathReplay {
     }
     public static void stop(){
         if(level!=null)for(var ghost:ghosts.values())level.removeEntity(ghost.getId(),Entity.RemovalReason.DISCARDED);
-        ghosts.clear();ghostSet.clear();ghostWalks.clear();recording=null;hud=false;level=null;cameraPos=null;
+        ghosts.clear();ghostSet.clear();ghostWalks.clear();lastSeen.clear();recording=null;hud=false;exporting=false;level=null;cameraPos=null;
     }
 
-    public static float length(){return recording==null?0:recording.lastTick()-recording.firstTick();}
+    public static float length(){return recording==null?0:recording.frames().get(endIndex).tick()-recording.firstTick();}
     public static float time(){return time;}
     public static void seek(float ticks){time=Math.clamp(ticks,0,length());}
     public static boolean playing(){return playing;}
@@ -105,14 +122,22 @@ public final class DeathReplay {
         if(recording==null)return;
         if(Minecraft.getInstance().level!=level){stop();return;}
         long now=System.nanoTime();float dt=lastFrame==0?0:Math.min(.1f,(now-lastFrame)/1e9f);lastFrame=now;
-        if(playing){time+=dt*20*speed;if(time>=length()){time=length();playing=false;}}
+        if(exporting)dt=1f/ReplayVideo.FPS*speed; // camera motion follows video time
+        else if(playing){time+=dt*20*speed;if(time>=length()){time=length();playing=false;}}
         if(autoOrbit)orbitYaw+=dt*9;
         for(var e:ghosts.entrySet())apply(e.getValue(),recording.actors().get(e.getKey()),time);
         place();
     }
+    /**
+     * State at a frame; an entity that is no longer in the recording (left the radius, or the recording stopped seeing
+     * it) holds its last recorded state instead of vanishing.
+     */
     private static Snap at(UUID uuid,int index){
         var frames=recording.frames();index=Math.clamp(index,0,frames.size()-1);
-        return frames.get(index).snaps().get(uuid);
+        var direct=frames.get(index).snaps().get(uuid);
+        if(direct!=null)return direct;
+        var seen=lastSeen.get(uuid);
+        return seen==null||seen[index]<0?null:frames.get(seen[index]).snaps().get(uuid);
     }
     /** Interpolated state; ghosts absent from both neighbouring frames are made invisible. */
     private static void apply(Entity ghost,Actor actor,float t){

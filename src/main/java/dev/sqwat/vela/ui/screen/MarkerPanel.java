@@ -65,7 +65,9 @@ final class MarkerPanel {
             if(!p.name().toLowerCase(Locale.ROOT).contains(query.toLowerCase(Locale.ROOT)))continue;
             int column=row%2,cx=x+column*(cw+8),cy=columns[column];row++;
             float cardExpansion=controls.animate("card-expand:"+p.id(),p.id().equals(editingId)?1:0);int extra=Math.round((MarkerGeometry.EDITOR_HEIGHT+30)*cardExpansion);
-            VelaDraw.roundedRect(g,cx,cy,cw,44+extra,7,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,controls.animate("card:"+p.id(),new Rect(cx,cy,cw,44).contains(mx,my)?1:0)));if(p.storage()){g.pose().pushMatrix();g.pose().translate(cx+7,cy+8);g.pose().scale(.9375f);g.item(dev.sqwat.vela.marker.MarkerRuntime.icon(p.item()),0,0);g.pose().popMatrix();}
+            float cardHover=controls.animate("card:"+p.id(),new Rect(cx,cy,cw,44).contains(mx,my)?1:0);
+            VelaDraw.roundedRect(g,cx,cy,cw,44+extra,7,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,cardHover));
+            new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(cx,cy,cw,44+extra,7,VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,cardHover));if(p.storage()){g.pose().pushMatrix();g.pose().translate(cx+7,cy+8);g.pose().scale(.9375f);g.item(dev.sqwat.vela.marker.MarkerRuntime.icon(p.item()),0,0);g.pose().popMatrix();}
             else VelaIcons.draw(g,p.icon(),cx+8,cy+9,13,p.death()?VelaTheme.PRIMARY:p.color());SearchText.draw(g,VelaDraw.ellipsize(p.name(),cw-77,VelaDraw.Weight.MEDIUM,9),query,cx+27,cy+8,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,9);label(g,Math.round(p.x())+" / "+Math.round(p.y())+" / "+Math.round(p.z()),cx+8,cy+28);final String id=p.id();iconButton(g,"delete:"+id,new Rect(cx+cw-25,cy+6,20,23),"trash",false,mx,my,()->services.markers().remove(id));Rect setting=new Rect(cx+cw-49,cy+6,20,23);iconButton(g,"edit:"+id,setting,"contact_options",id.equals(editingId),mx,my,()->edit(p));
             columns[column]=cy+52+extra;
             if(extra>0&&(p.id().equals(editingId)||(editingId==null&&p.id().equals(lastEditingId)))){int first=actions.size();UiClip.enable(g,cx,cy+44,cx+cw,cy+44+extra);drawEditor(g,cx,cy+44,cw,mx,my);button(g,new Rect(cx+8,cy+44+MarkerGeometry.EDITOR_HEIGHT,cw-16,24),"Сохранить",mx,my,this::create);g.disableScissor();if(cardExpansion<.95f){while(actions.size()>first)actions.removeLast();fields.clear();}}
@@ -113,6 +115,7 @@ final class MarkerPanel {
             final int index=i;Rect r=e.icon(i,ICONS.length);float hover=controls.animate("icon-hover:"+scope+":"+i,r.contains(mx,my)?1:0);
             float selected=controls.animate("icon-selected:"+scope+":"+i,i==icon?1:0);
             VelaDraw.roundedRect(g,r.x()+1,r.y(),r.width()-2,r.height(),5,VelaTheme.mix((Math.round(hover*30)<<24)|0xFFFFFF,color(),selected));
+            if(hover>.02f&&selected<.98f)new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(r.x()+1,r.y(),r.width()-2,r.height(),5,dev.sqwat.vela.ui.render.UiKit.hoverBorder(hover*(1-selected)));
             VelaIcons.draw(g,ICONS[i],r.x()+(r.width()-13)/2,r.y()+5,13,i==icon?0xFFFFFFFF:VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,hover));
             actions.add(new Action(r,()->icon=index));
         }

@@ -26,7 +26,13 @@ public final class ShulkerPreview extends ClientModule {
     private Object screen,world;
     private boolean seen;
     private int x,y;
-    public ShulkerPreview(){super("shulker_preview","Shulker Preview","Содержимое шалкера; удерживайте Ctrl для просмотра предметов",ModuleCategory.UTILITIES);}
+    private final dev.sqwat.vela.module.setting.KeySetting inspectKey=setting(new dev.sqwat.vela.module.setting.KeySetting("inspect_key","Просмотр предметов",org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL));
+    public ShulkerPreview(){super("shulker_preview","Shulker Preview","Содержимое шалкера в подсказке, с закреплением",ModuleCategory.UTILITIES);}
+    /** The inspect key from the settings; Left Ctrl also accepts Right Ctrl, as before. */
+    public boolean inspectHeld(long window){
+        int key=inspectKey.value();
+        return dev.sqwat.vela.ui.input.BindInput.down(window,key)||key==org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL&&dev.sqwat.vela.ui.input.BindInput.down(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL);
+    }
     @Override protected void onDisable(){cached=null;preview=null;candidate=pinned=null;screen=world=null;seen=false;}
     @Override public void onClientTick(){var mc=net.minecraft.client.Minecraft.getInstance();if(mc.level!=world){onDisable();world=mc.level;}if(mc.level==null||mc.gui.screen()==null)onDisable();}
     public static ShulkerPreview current(){return dev.sqwat.vela.module.Modules.active(ShulkerPreview.class);}

@@ -14,14 +14,16 @@ import java.util.Locale;
  * Shift+LMB sweeping (ItemScrollerMixin).
  */
 public final class ContainerTools extends ClientModule {
-    private final BooleanSetting search=setting(new BooleanSetting("search","Поиск","Поле поиска над окном; Ctrl+F",true));
+    private final BooleanSetting search=setting(new BooleanSetting("search","Поиск","Поле поиска над окном контейнера",true));
     private final BooleanSetting remember=setting(new BooleanSetting("remember","Запоминать запрос","Сохранять текст поиска между окнами",false));
-    private final BooleanSetting scroller=setting(new BooleanSetting("scroller","Быстрый перенос","Shift + ЛКМ с протягиванием переносит предметы",true));
+    private final BooleanSetting scroller=setting(new BooleanSetting("scroller","Быстрый перенос","Зажмите клавишу и проведите ЛКМ по слотам",true));
     private final NumberSetting delay=setting(new NumberSetting("delay_ms","Задержка, мс","Пауза между переносом соседних слотов",20,0,100,1));
+    private final dev.sqwat.vela.module.setting.KeySetting searchKey=setting(new dev.sqwat.vela.module.setting.KeySetting("search_key","Клавиша поиска (с Ctrl)",org.lwjgl.glfw.GLFW.GLFW_KEY_F));
+    private final dev.sqwat.vela.module.setting.KeySetting sweepKey=setting(new dev.sqwat.vela.module.setting.KeySetting("sweep_key","Клавиша переноса",org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT));
     private String query="";
     public ContainerTools(){
-        super("container_tools","Container Tools","Поиск предметов (Ctrl+F) и быстрый перенос Shift + ЛКМ",ModuleCategory.UTILITIES);
-        remember.visibleWhen(search::value);delay.visibleWhen(scroller::value);
+        super("container_tools","Container Tools","Поиск предметов и быстрый перенос в контейнерах",ModuleCategory.UTILITIES);
+        remember.visibleWhen(search::value);delay.visibleWhen(scroller::value);searchKey.visibleWhen(search::value);sweepKey.visibleWhen(scroller::value);
     }
     private static ContainerTools module(){
         return dev.sqwat.vela.module.Modules.active(ContainerTools.class);
@@ -30,6 +32,13 @@ public final class ContainerTools extends ClientModule {
     public static ContainerTools search(){var m=module();return m!=null&&m.search.value()?m:null;}
     /** Sweep delay in ms, or -1 when sweeping is off. */
     public static int sweepDelay(){var m=module();return m!=null&&m.scroller.value()?m.delay.value().intValue():-1;}
+    /** Key that, with Ctrl, focuses the search box. */
+    public int searchKey(){return searchKey.value();}
+    /** Whether the quick-move key is held (Left Shift by default; either Shift then). */
+    public static boolean sweepHeld(long window){
+        var m=module();if(m==null)return false;int key=m.sweepKey.value();
+        return dev.sqwat.vela.ui.input.BindInput.down(window,key)||key==org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT&&dev.sqwat.vela.ui.input.BindInput.down(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
+    }
     public String initialQuery(){if(!remember.value())query="";return query;}
     public void query(String value){query=value==null?"":value;}
     /** Case-insensitive match on the shown name and the item id (so English ids work in a Russian client). */

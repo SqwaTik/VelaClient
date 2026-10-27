@@ -36,7 +36,7 @@ public final class BrewViewer extends ClientModule {
     private Object level;
     private BrewingStandMenu menu;
     private BlockPos menuPos;
-    public BrewViewer(){super("brew_viewer","Brew Viewer","Варка при наводке на зельеварку; Ctrl — закрепить",ModuleCategory.VISUALS);}
+    public BrewViewer(){super("brew_viewer","Brew Viewer","Ход варки при наводке на зельеварку, с закреплением",ModuleCategory.VISUALS);}
     @Override protected void onDisable(){stands.clear();level=null;menu=null;menuPos=null;}
 
     @Override public void onClientTick(){

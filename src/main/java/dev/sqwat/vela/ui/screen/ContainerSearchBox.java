@@ -87,7 +87,7 @@ public final class ContainerSearchBox {
         if(!active())return true;
         boolean ctrl=(event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0;
         if(!focused){
-            if(ctrl&&event.key()==GLFW.GLFW_KEY_F){focused=true;EDIT.selectAll();return false;}
+            if(ctrl&&event.key()==ContainerTools.search().searchKey()){focused=true;EDIT.selectAll();return false;}
             return true;
         }
         switch(event.key()){

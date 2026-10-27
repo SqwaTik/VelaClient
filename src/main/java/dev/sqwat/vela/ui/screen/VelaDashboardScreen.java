@@ -120,14 +120,16 @@ public final class VelaDashboardScreen extends VelaScreen {
     private void jumpTo(ClientModule module){
         section=sectionOf(module);sideReveal=sideScroll=sideScrollTarget=0;friendFocused=configKeyFocused=configNameFocused=false;
         search="";searchEdit.set("");searchFocused=false;targetScroll=scroll=0;
-        revealModule=flashModule=module.id();flashUntil=System.nanoTime()+FLASH_NANOS;
+        revealModule=flashModule=module.id();flashUntil=System.nanoTime()+FLASH_NANOS;sectionSwitchAt=System.nanoTime();
         dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TAB);persistView();
     }
     private float flash(ClientModule module){
         if(!module.id().equals(flashModule))return 0;
         float left=(flashUntil-System.nanoTime())/(float)FLASH_NANOS;
         if(left<=0){flashModule=null;return 0;}
-        return Math.min(1,left*2.5f);
+        // Eases in while the tab slides in, holds, then fades out.
+        float rise=Math.clamp((1-left)*FLASH_NANOS/1.8e8f,0,1);
+        return rise*rise*(3-2*rise)*Math.min(1,left*2.5f);
     }
     private void persistView(){services.configs().current().lastSection=section.name();services.configs().current().expandedModules=new java.util.LinkedHashSet<>(expandedModules);services.configs().current().friendOptionsOpen=friendSettings;services.configs().requestSave();}
     private void saveBind(){if(binding!=null){binding.bind(draftKey,draftLabel,draftMode);services.configs().requestSave();}}
@@ -150,7 +152,7 @@ public final class VelaDashboardScreen extends VelaScreen {
         drawSidePanel(g,l);
         drawPopup(g,mouseX,mouseY);
         drawFriendSuggestions(g);
-        boolean clickable=gearHit.contains(mouseX,mouseY)||actionHit.contains(mouseX,mouseY)||navHits.values().stream().anyMatch(r->r.contains(mouseX,mouseY))||cardHits.stream().anyMatch(h->h.card.contains(mouseX,mouseY))||settingHits.stream().anyMatch(h->h.visible.contains(mouseX,mouseY))||popupHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||profileHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||friendHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||locationHits.keySet().stream().anyMatch(r->r.contains(mouseX,mouseY));
+        boolean clickable=gearHit.contains(mouseX,mouseY)||versionHit.contains(mouseX,mouseY)||actionHit.contains(mouseX,mouseY)||navHits.values().stream().anyMatch(r->r.contains(mouseX,mouseY))||cardHits.stream().anyMatch(h->h.card.contains(mouseX,mouseY))||settingHits.stream().anyMatch(h->h.visible.contains(mouseX,mouseY))||popupHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||profileHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||friendHits.stream().anyMatch(h->h.rect.contains(mouseX,mouseY))||locationHits.keySet().stream().anyMatch(r->r.contains(mouseX,mouseY));
         clickable|=section==VelaSection.FRIENDS&&friendOptionsHit.contains(mouseX,mouseY)||section==VelaSection.CONFIGS&&configOptionsHit.contains(mouseX,mouseY)||sideOpen()&&(sideCloseHit.contains(mouseX,mouseY)||importHit.contains(mouseX,mouseY));
         dev.sqwat.vela.ui.render.UiCursor.hand(clickable);
         if(section==VelaSection.MARKERS){dev.sqwat.vela.ui.render.UiCursor.hand(clickable||markerPanel.hovered(mouseX,mouseY));if(markerPanel.textHovered(mouseX,mouseY))g.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.IBEAM);}
@@ -166,6 +168,8 @@ public final class VelaDashboardScreen extends VelaScreen {
             hovers[entry.ordinal()]=animate("nav-"+entry.name(),hit.contains(mouseX,mouseY),dt);
         }
         searchHit=chrome.search();gearHit=chrome.settings();contentHit=chrome.content();actionHit=new Rect(0,0,0,0);
+        versionHit=new Rect(l.x+l.sidebar/2-24,l.y+l.h-19,48,14);
+        dev.sqwat.vela.ui.render.DashboardChrome.versionHover=animate("version",versionHit.contains(mouseX,mouseY),dt);
         dev.sqwat.vela.ui.render.DashboardChrome.draw(canvas,chrome,section.ordinal(),section.description(),null,searchFocused,hovers,gearHit.contains(mouseX,mouseY),VelaTheme.PRIMARY);
         drawerButton(g,gearHit,"settings",false);
         if(section==VelaSection.HUD){
@@ -179,6 +183,9 @@ public final class VelaDashboardScreen extends VelaScreen {
                 VelaDraw.text(g,"Dragmode",dx+18,dy+5,(VelaTheme.TEXT_SECONDARY&0xFFFFFF)|(Math.round(dh*255)<<24),VelaDraw.Weight.MEDIUM,8);g.disableScissor();}
         }
         searchEdit.set(search);dev.sqwat.vela.ui.render.TextFieldDraw.draw(g,searchEdit,new Rect(searchHit.x()+20,searchHit.y()+4,searchHit.width()-26,14),searchFocused,"Поиск…");
+        // Switching tabs (also from a search result) slides the new content up a little and fades it in.
+        float switchT=reducedMotion()?1:Math.clamp((System.nanoTime()-sectionSwitchAt)/2.8e8f,0,1),switchEase=1-(1-switchT)*(1-switchT)*(1-switchT);
+        g.pose().pushMatrix();g.pose().translate(0,(1-switchEase)*8);
         dev.sqwat.vela.ui.render.UiClip.enable(g,contentHit.x()-1,contentHit.y()-1,contentHit.x()+contentHit.width()+1,contentHit.y()+contentHit.height()+1);
         if(section==VelaSection.HUD)drawHudModules(g,contentHit,mouseX,mouseY,dt);
         else if(section==VelaSection.MARKERS){int total=markerPanel.draw(g,new Rect(contentHit.x(),contentHit.y()-Math.round(scroll),contentHit.width(),contentHit.height()),mouseX,mouseY,search);scrollLimit=Math.max(0,total-contentHit.height());targetScroll=Math.clamp(targetScroll,0,scrollLimit);}
@@ -186,6 +193,12 @@ public final class VelaDashboardScreen extends VelaScreen {
         else if(section==VelaSection.FRIENDS)drawFriends(g,contentHit);
         else drawConfigs(g,contentHit);
         g.disableScissor();
+        g.pose().popMatrix();
+        if(switchEase<1){
+            dev.sqwat.vela.ui.render.UiClip.enable(g,contentHit.x()-1,contentHit.y()-1,contentHit.x()+contentHit.width()+1,contentHit.y()+contentHit.height()+1);
+            g.fill(contentHit.x()-1,contentHit.y()-1,contentHit.x()+contentHit.width()+1,contentHit.y()+contentHit.height()+1,(Math.round((1-switchEase)*255)<<24)|(VelaTheme.WINDOW&0xFFFFFF));
+            g.disableScissor();
+        }
         float scrollbarReveal=controls.animate("scrollbar-reveal",scrollLimit>0?1:0);
         if(scrollLimit>0){int thumb=Math.max(18,Math.round(contentHit.height()*contentHit.height()/(contentHit.height()+scrollLimit)));int sy=contentHit.y()+Math.round((contentHit.height()-thumb)*scroll/scrollLimit);Rect bar=ControlChrome.verticalReveal(new Rect(contentHit.x()+contentHit.width()+4,sy,2,thumb),scrollbarReveal);if(bar.height()>0)VelaDraw.roundedRect(g,bar.x(),bar.y(),bar.width(),bar.height(),1,VelaTheme.PRIMARY);}
         drawToast(g,l);
@@ -231,7 +244,8 @@ public final class VelaDashboardScreen extends VelaScreen {
         targetScroll = Math.max(0, Math.min(targetScroll, scrollLimit));
     }
 
-    private Rect dragModeHit=new Rect(0,0,0,0);
+    private Rect dragModeHit=new Rect(0,0,0,0),versionHit=new Rect(0,0,0,0);
+    private long sectionSwitchAt;
     private void drawDescriptionHint(GuiGraphicsExtractor g,int mx,int my){
         if(sideOpen()||hasModal()||!contentHit.contains(mx,my))return;
         for(var hit:cardHits){
@@ -670,8 +684,10 @@ public final class VelaDashboardScreen extends VelaScreen {
         configNameFocused=configKeyFocused=false;
         if(section==VelaSection.HUD&&dragModeHit.contains(mx,my)){minecraft.gui.setScreen(new HudPositionScreen(this,services.hudLayout()));return true;}
         if(gearHit.contains(mx,my)){dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.EXPAND);minecraft.gui.setScreen(new VelaSettingsScreen(this,services));return true;}
+        if(versionHit.contains(mx,my)){dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.EXPAND);minecraft.gui.setScreen(new ChangelogScreen(this));return true;}
         for (Map.Entry<VelaSection, Rect> entry : navHits.entrySet()) {
             if (entry.getValue().contains(mx, my)) {
+                if(section!=entry.getKey())sectionSwitchAt=System.nanoTime();
                 section = entry.getKey();sideReveal=sideScroll=sideScrollTarget=0;friendFocused=false;configKeyFocused=false;configNameFocused=false;
                 dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TAB);
                 searchFocused = false;

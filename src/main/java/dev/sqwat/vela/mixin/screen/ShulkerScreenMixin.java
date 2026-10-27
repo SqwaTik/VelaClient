@@ -11,7 +11,7 @@ abstract class ShulkerScreenMixin {
     private void vela$frame(GuiGraphicsExtractor g,int mx,int my,float partial,CallbackInfo ci){
         var p=ShulkerPreview.current();if(p==null)return;
         long window=net.minecraft.client.Minecraft.getInstance().getWindow().handle();
-        p.frame(this,dev.sqwat.vela.ui.input.BindInput.down(window,org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL)||dev.sqwat.vela.ui.input.BindInput.down(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL));
+        p.frame(this,p.inspectHeld(window));
     }
     @Inject(method="extractRenderStateWithTooltipAndSubtitles",at=@At(value="INVOKE",target="Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements(IIF)V"))
     private void vela$pin(GuiGraphicsExtractor g,int mx,int my,float partial,CallbackInfo ci){var p=ShulkerPreview.current();if(p!=null)p.drawPinned(g,mx,my);}

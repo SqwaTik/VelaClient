@@ -15,7 +15,7 @@ public abstract class VelaScreen extends Screen {
         scale=viewport.scale();width=viewport.width();height=viewport.height();
         boolean previousSubpixel=dev.sqwat.vela.ui.render.VelaDraw.subpixelText(true);
         g.pose().pushMatrix();g.pose().scale(scale);
-        try{renderVela(g,Math.round(mx/scale),Math.round(my/scale),delta);}finally{g.pose().popMatrix();dev.sqwat.vela.ui.render.VelaDraw.subpixelText(previousSubpixel);}
+        try{renderVela(g,Math.round(mx/scale),Math.round(my/scale),delta);dev.sqwat.vela.ui.LangTransition.draw(g,width,height);}finally{g.pose().popMatrix();dev.sqwat.vela.ui.render.VelaDraw.subpixelText(previousSubpixel);}
     }
     public final void renderAsBackdrop(GuiGraphicsExtractor g,int logicalWidth,int logicalHeight,float delta){
         width=logicalWidth;height=logicalHeight;renderVela(g,-10000,-10000,delta);

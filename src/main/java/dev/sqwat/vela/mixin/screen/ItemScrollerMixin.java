@@ -18,7 +18,7 @@ abstract class ItemScrollerMixin {
     @Unique private boolean vela$sweeping;
     @Unique private boolean vela$allowed(MouseButtonEvent e){
         var services=VelaClient.services();var c=Minecraft.getInstance();
-        return services!=null&&dev.sqwat.vela.module.utility.ContainerTools.sweepDelay()>=0&&e.button()==0&&(e.modifiers()&1)!=0&&c.player!=null&&c.gameMode!=null&&c.isWindowActive()&&c.player.containerMenu.getCarried().isEmpty()&&!((Object)this instanceof CreativeModeInventoryScreen);
+        return services!=null&&dev.sqwat.vela.module.utility.ContainerTools.sweepDelay()>=0&&e.button()==0&&dev.sqwat.vela.module.utility.ContainerTools.sweepHeld(c.getWindow().handle())&&c.player!=null&&c.gameMode!=null&&c.isWindowActive()&&c.player.containerMenu.getCarried().isEmpty()&&!((Object)this instanceof CreativeModeInventoryScreen);
     }
     @Unique private boolean vela$move(MouseButtonEvent e){
         var slot=getHoveredSlot(e.x(),e.y());var player=Minecraft.getInstance().player;

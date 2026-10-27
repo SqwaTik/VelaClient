@@ -109,21 +109,23 @@ public final class ChangelogScreen extends VelaScreen {
         UiClip.enable(g,body.x()-4,body.y(),body.x()+body.width()+4,body.y()+body.height());
         int cy=body.y()-Math.round(scroll);
         try{
+            boolean first=true;
             for(var section:v.sections()){
+                if(!first)cy+=12;first=false;
                 int color=switch(section.kind()){case NEW->VelaTheme.PRIMARY;case IMPROVED->VelaTheme.CYAN;case FIXED->VelaTheme.POSITIVE;};
                 String label=switch(section.kind()){case NEW->Lang.pick("New","Новое");case IMPROVED->Lang.pick("Improved","Улучшено");case FIXED->Lang.pick("Fixed","Исправлено");};
-                int lw=(int)Math.ceil(VelaDraw.textWidth(label,VelaDraw.Weight.SEMIBOLD,8f))+14;
-                VelaDraw.roundedRect(g,x,cy,lw,15,7,(color&0xFFFFFF)|0x30000000);
-                VelaDraw.roundedRect(g,x+5,cy+5,5,5,3,color);
-                VelaDraw.text(g,label,x+13,cy+3.5f,VelaTheme.mix(color,0xFFFFFFFF,.55f),VelaDraw.Weight.SEMIBOLD,8f);
-                cy+=22;
+                // Pill: same padding on every side, the dot and the text centred on one line.
+                int textW=(int)Math.ceil(VelaDraw.textWidth(label,VelaDraw.Weight.SEMIBOLD,8f)),pillH=16,pillW=8+5+5+textW+9;
+                VelaDraw.roundedRect(g,x,cy,pillW,pillH,8,(color&0xFFFFFF)|0x2A000000);
+                VelaDraw.roundedRect(g,x+8,cy+6,5,5,3,color);
+                VelaDraw.text(g,label,x+18,cy+4,VelaTheme.mix(color,0xFFFFFFFF,.6f),VelaDraw.Weight.SEMIBOLD,8f);
+                cy+=pillH+9;
                 for(String item:section.items()){
-                    var lines=UiKit.wrap(item,width-14,VelaDraw.Weight.REGULAR,8.5f);
-                    VelaDraw.roundedRect(g,x+3,cy+4,4,4,2,(color&0xFFFFFF)|0xB0000000);
-                    for(String line:lines){VelaDraw.text(g,line,x+14,cy,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8.5f);cy+=LINE;}
-                    cy+=5;
+                    var lines=UiKit.wrap(item,width-16,VelaDraw.Weight.REGULAR,8.5f);
+                    VelaDraw.roundedRect(g,x+4,cy+4,4,4,2,(color&0xFFFFFF)|0xC0000000); // centred on the first line
+                    for(String line:lines){VelaDraw.text(g,line,x+16,cy,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8.5f);cy+=LINE;}
+                    cy+=6;
                 }
-                cy+=8;
             }
         }finally{g.disableScissor();}
         maxScroll=Math.max(0,cy+Math.round(scroll)-body.y()-body.height());

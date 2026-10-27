@@ -69,6 +69,10 @@ public final class ViewModelEditorScreen extends VelaScreen {
             else VelaDraw.text(g,String.format(Locale.ROOT,"%.2f",setting.value()),text.x(),text.y(),VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
         }
         if(!error.isEmpty())VelaDraw.text(g,error,x+12,y+337,VelaTheme.PRIMARY,VelaDraw.Weight.REGULAR,8);
+        // Contents fade into the panel during the first part of the collapse (and back in when expanding),
+        // instead of staying fully visible until the panel is almost closed.
+        float fade=Math.clamp(reveal*1.7f,0,1);
+        if(fade>0)VelaDraw.roundedRect(g,x+1,y+1,w-2,h-2,8,(Math.round(fade*fade*(3-2*fade)*255)<<24)|(VelaTheme.WINDOW&0xFFFFFF));
         }
         g.disableScissor();
         float hover=controls.animate("collapse-hover",collapse.contains(mx,my)?1:0);

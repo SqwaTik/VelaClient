@@ -14,6 +14,8 @@ public final class DashboardChrome {
     }
     private DashboardChrome(){}
     public static Layout layout(int width,int height){int w=Math.min(547,width-32),h=Math.min(334,height-32);return new Layout((width-w)/2,(height-h)/2,w,h,109);}
+    /** Hover amount of the version label, set by the dashboard before drawing. */
+    public static float versionHover;
     public static void draw(UiCanvas c,Layout l,int section,String description,String query,boolean focused,float[] hovers,boolean gearHover,int accent){
         float x=l.x,y=l.y,w=l.width,h=l.height,side=l.sidebar;
         c.round(x+1,y+3,w,h,9,0x30000000);
@@ -36,7 +38,10 @@ public final class DashboardChrome {
             c.text(SECTIONS[i],r.x()+24+shift,r.y()+6,26f/3,active?VelaTheme.TEXT:VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT_SECONDARY,hover),active?MEDIUM:REGULAR);
         }
         c.line(x,y+h-23,side,0xFF1A2030);
-        c.centered("v"+dev.sqwat.vela.ui.Changelog.current(),x+side/2,y+h-15,20f/3,VelaTheme.TEXT_MUTED,REGULAR);
+        // The version opens the changelog (VelaDashboardScreen); it brightens on hover.
+        float version=Math.max(0,Math.min(1,versionHover));
+        if(version>.01f)c.round(x+side/2f-24,y+h-19,48,14,7,VelaTheme.mix(VelaTheme.SIDEBAR,0xFF1C2333,version));
+        c.centered("v"+dev.sqwat.vela.ui.Changelog.current(),x+side/2,y+h-15,20f/3,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,version),REGULAR);
 
         c.text(SECTIONS[section],x+side+11,y+14,10,VelaTheme.TEXT,MEDIUM);
 

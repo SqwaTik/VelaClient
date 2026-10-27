@@ -164,7 +164,11 @@ public final class VelaSettingsScreen extends VelaScreen {
                 case "motion"->c.reducedMotion=!c.reducedMotion;
                 case "sounds"->c.uiSounds=!c.uiSounds;
                 case "mainmenu"->c.replaceMainMenu=!c.replaceMainMenu;
-                case "lang-en","lang-ru"->{c.language=hit.id.substring(5);dev.sqwat.vela.ui.Lang.set(c.language.equals("ru")?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);}
+                case "lang-en","lang-ru"->{
+                    String id=hit.id.substring(5);var target=id.equals("ru")?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN;
+                    // The text changes only while the transition overlay covers the screen.
+                    if(!id.equals(c.language))dev.sqwat.vela.ui.LangTransition.begin(target,()->{c.language=id;dev.sqwat.vela.ui.Lang.set(target);services.configs().requestSave();});
+                }
                 case "resetbinds"->{for(var module:services.modules().all())module.bind(-1,"None",dev.sqwat.vela.module.ClientModule.BindMode.TOGGLE);}
                 case "preview"->UiSounds.play(services,true);
                 case "preset"->c.uiSoundPreset=c.uiSoundPreset.equals("Soft")?"Classic":"Soft";

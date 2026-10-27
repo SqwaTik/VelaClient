@@ -9,6 +9,7 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 ### New
 - Death Recap: watch the last seconds before death from a free camera, your own eyes or the killer's, slowed down, with a timeline of hits, totems, potions, armour and ping.
 - Save replays with your own camera, speed and length to the vela-replays folder, optionally as a video file you can share.
+- Recordings: every saved replay and its video in one list, opened from the death screen, the module settings or its own key.
 - Storage Index: search everything in the chests, barrels and shulkers you have opened and mark the right one.
 - Smart chat: clickable coordinates, mentions of your name, private messages in tabs.
 - Key combinations such as Ctrl+F for every bind.

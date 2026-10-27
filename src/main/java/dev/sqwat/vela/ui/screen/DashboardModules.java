@@ -172,7 +172,7 @@ abstract class DashboardModules extends DashboardBase {
             if(!(setting instanceof dev.sqwat.vela.module.setting.ActionSetting))dev.sqwat.vela.ui.render.VelaIcons.draw(g,dev.sqwat.vela.ui.render.SettingIcons.of(setting),x,cursor-1,10,VelaTheme.TEXT_MUTED);
             if(setting instanceof dev.sqwat.vela.module.setting.KeySetting key){
                 VelaDraw.text(g,key.name(),x+15,cursor,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
-                Rect hit=new Rect(x+width-70,cursor-4,70,18);controls.button(g,"key-setting-"+module.id()+key.id(),hit,capturingSetting==key?"Нажмите…":dev.sqwat.vela.ui.input.KeyLabels.of(key.value(),"None"),hit.contains(pointerX,pointerY));
+                Rect hit=new Rect(x+width-70,cursor-4,70,18);controls.button(g,"key-setting-"+module.id()+key.id(),hit,capturingSetting==key?dev.sqwat.vela.ui.input.BindCapture.prompt("Нажмите…"):dev.sqwat.vela.ui.input.KeyLabels.of(key.value(),"None"),hit.contains(pointerX,pointerY));
                 if(setting.visible()&&reveal>.97f)settingHits.add(new SettingHit(key,hit));g.pose().popMatrix();cursor+=Math.round(rowHeight*reveal);continue;
             }
             if(setting instanceof dev.sqwat.vela.module.setting.ActionSetting action){

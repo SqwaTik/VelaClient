@@ -128,7 +128,7 @@ public final class ReplayFiles {
                     String killer=root.getStringOr("killerName",""),message=root.getStringOr("message","");
                     DeathReplay.View view;try{view=DeathReplay.View.valueOf(root.getStringOr("view","ORBIT"));}catch(IllegalArgumentException bad){view=DeathReplay.View.ORBIT;}
                     String title=root.getStringOr("title","");if(title.isBlank())title=!message.isEmpty()?message:killer;
-                    var options=new Options(title,view,root.getBooleanOr("hud",false),root.getFloatOr("speed",.5f),0);
+                    var options=new Options(title,view,root.getBooleanOr("hud",false),root.getFloatOr("speed",1f),0);
                     out.add(new Saved(file,title,root.getLongOr("recordedAt",0),options,w,d));
                 }catch(Exception unreadable){/* skip damaged files */}
             }

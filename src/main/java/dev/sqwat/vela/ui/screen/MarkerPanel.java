@@ -94,7 +94,7 @@ final class MarkerPanel {
         limitBar=new Rect(0,0,0,0);
         if(limit>.005f){Rect r=groups.limit();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,Integer.toString(state.limit),r.x()+r.width()-26,r.y()+33);Rect track=new Rect(r.x()+8,r.y()+52,r.width()-16,5);bar(g,track,(state.limit-10)/240f,"limit");if(limit>.95f)limitBar=track;g.disableScissor();}
         settingGroup(g,groups.quick(),"Быстрая метка","Установить точку по взгляду",state.quick,()->state.quick=!state.quick);
-        if(quick>.005f){Rect r=groups.quick();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,"Клавиша",r.x()+8,r.y()+42);Rect key=new Rect(r.x()+r.width()-64,r.y()+34,56,23);controls.button(g,"quick-bind",key,binding?"…":state.key<0?"Нет":dev.sqwat.vela.ui.input.KeyLabels.of(state.key,"Клавиша"),key.contains(mx,my));if(quick>.95f)actions.add(new Action(key,()->binding=true));g.disableScissor();}
+        if(quick>.005f){Rect r=groups.quick();UiClip.enable(g,r.x(),r.y()+31,r.x()+r.width(),r.y()+r.height());label(g,"Клавиша",r.x()+8,r.y()+42);Rect key=new Rect(r.x()+r.width()-64,r.y()+34,56,23);controls.button(g,"quick-bind",key,binding?dev.sqwat.vela.ui.input.BindCapture.prompt("…"):state.key<0?"Нет":dev.sqwat.vela.ui.input.KeyLabels.of(state.key,"Клавиша"),key.contains(mx,my));if(quick>.95f)actions.add(new Action(key,()->binding=true));g.disableScissor();}
     }
     private void settingGroup(GuiGraphicsExtractor g,Rect r,String title,String description,boolean checked,Runnable toggle){
         MarkerChrome.group(new GameUiCanvas(g),r,title,description);
@@ -134,9 +134,14 @@ final class MarkerPanel {
     }
     boolean drag(double x,double y){if(drag<0)return false;switch(drag){case 0->{sat=(float)Math.clamp((x-sv.x())/sv.width(),0,1);value=1-(float)Math.clamp((y-sv.y())/sv.height(),0,1);}case 1->hue=(float)Math.clamp((x-hueBar.x())/hueBar.width(),0,1);case 2->alpha=(float)Math.clamp((x-alphaBar.x())/alphaBar.width(),0,1);case 3->{services.markers().state().limit=10+Math.round((float)Math.clamp((x-limitBar.x())/limitBar.width(),0,1)*24)*10;save();}}syncHex();sound(UiSounds.Event.SLIDER);return true;}
     void release(){boolean changed=drag==3;drag=-1;if(changed)save();}
+    boolean bindReleased(int code){if(!binding)return false;services.markers().state().key=code;save();binding=false;return true;}
     boolean key(KeyEvent e){
         if(binding&&e.key()==GLFW.GLFW_KEY_ESCAPE){binding=false;return true;}
-        if(binding){services.markers().state().key=dev.sqwat.vela.ui.input.BindInput.clears(e.key())?-1:dev.sqwat.vela.ui.input.BindInput.combo(e.key(),e.modifiers());save();binding=false;return true;}
+        if(binding){
+            int code=dev.sqwat.vela.ui.input.BindInput.clears(e.key())?-1:dev.sqwat.vela.ui.input.BindCapture.press(e.key(),e.modifiers());
+            if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING){services.markers().state().key=code;save();binding=false;}
+            return true;
+        }
         if(focus<0)return false;
         if(e.key()==GLFW.GLFW_KEY_ESCAPE||e.key()==GLFW.GLFW_KEY_ENTER){focus=-1;return true;}
         dev.sqwat.vela.ui.input.GameTextInput.key(edits[focus],e,focus==0?40:16);parseHex();return true;

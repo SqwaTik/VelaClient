@@ -115,7 +115,7 @@ public final class CommandEditorScreen extends VelaScreen {
             Rect keyRect=new Rect(formX,fy,formW,22);
             float kh=controls.animate("key-hover",keyRect.contains(mx,my)?1:0);
             VelaDraw.roundedOutline(g,keyRect.x(),keyRect.y(),keyRect.width(),keyRect.height(),5,capturing?VelaTheme.PRIMARY:VelaTheme.mix(VelaTheme.BORDER,VelaTheme.BORDER_HOVER,kh),VelaTheme.mix(VelaTheme.SURFACE_DEEP,VelaTheme.SURFACE_HOVER,kh));
-            String keyLabel=capturing?"Нажмите клавишу…":key<0?"Назначить клавишу":dev.sqwat.vela.ui.input.KeyLabels.of(key,"");
+            String keyLabel=capturing?dev.sqwat.vela.ui.input.BindCapture.prompt("Нажмите клавишу…"):key<0?"Назначить клавишу":dev.sqwat.vela.ui.input.KeyLabels.of(key,"");
             VelaDraw.centeredText(g,keyLabel,keyRect.x()+keyRect.width()/2f,keyRect.y()+7,key<0&&!capturing?VelaTheme.TEXT_MUTED:VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
             actions.add(new Action(keyRect,()->{capturing=true;focus=-1;}));
         }
@@ -167,9 +167,21 @@ public final class CommandEditorScreen extends VelaScreen {
         for(var e:inputs.entrySet())if(e.getKey().contains(event.x(),event.y())){focus=e.getValue();capturing=false;Rect r=e.getKey();TextFieldDraw.click(fields[focus],new Rect(r.x()+7,r.y()+5,r.width()-14,14),event.x(),false);if(doubled)fields[focus].selectAll();return true;}
         focus=-1;for(var action:actions)if(action.rect.contains(event.x(),event.y())){action.run.run();return true;}return true;
     }
+    @Override public boolean keyReleased(KeyEvent event){
+        int code=dev.sqwat.vela.ui.input.BindCapture.release(event.key());
+        if(capturing&&code!=dev.sqwat.vela.ui.input.BindCapture.PENDING){key=code;capturing=false;return true;}
+        return super.keyReleased(event);
+    }
     @Override public boolean keyPressed(KeyEvent event){
         if(closing)return true;
-        if(capturing){if(event.key()!=GLFW.GLFW_KEY_ESCAPE)key=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers());capturing=false;return true;}
+        if(capturing){
+            if(event.key()!=GLFW.GLFW_KEY_ESCAPE){
+                int code=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindCapture.press(event.key(),event.modifiers());
+                if(code==dev.sqwat.vela.ui.input.BindCapture.PENDING)return true;
+                key=code;
+            }
+            dev.sqwat.vela.ui.input.BindCapture.reset();capturing=false;return true;
+        }
         if(event.key()==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}
         if(focus>=0){dev.sqwat.vela.ui.input.GameTextInput.key(fields[focus],event,focus==0?40:focus==1?256:5);return true;}return true;
     }

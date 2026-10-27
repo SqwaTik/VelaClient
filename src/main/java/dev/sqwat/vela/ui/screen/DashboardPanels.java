@@ -223,7 +223,7 @@ abstract class DashboardPanels extends DashboardModules {
             int x=popupRect.x()+13,y=popupRect.y()+12;
             VelaDraw.text(g,"Бинд",x,y,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,10);
             Rect input=new Rect(x,y+24,150,29);
-            popupButton(g,input,capturing?"Нажмите клавишу…":draftKey<0?"Назначить":draftLabel,()->capturing=true,capturing);
+            popupButton(g,input,capturing?dev.sqwat.vela.ui.input.BindCapture.prompt("Нажмите клавишу…"):draftKey<0?"Назначить":draftLabel,()->capturing=true,capturing);
             VelaDraw.text(g,"Режим",x,y+64,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);
             popupButton(g,new Rect(x,y+78,73,25),"Toggle",()->{draftMode=ClientModule.BindMode.TOGGLE;saveBind();},draftMode==ClientModule.BindMode.TOGGLE);
             popupButton(g,new Rect(x+77,y+78,73,25),"Hold",()->{draftMode=ClientModule.BindMode.HOLD;saveBind();},draftMode==ClientModule.BindMode.HOLD);

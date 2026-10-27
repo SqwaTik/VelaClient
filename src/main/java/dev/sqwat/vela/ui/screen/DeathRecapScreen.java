@@ -87,7 +87,7 @@ public final class DeathRecapScreen extends VelaScreen {
     @Override public void removed(){ReplayVideo.cancel();DeathReplay.stop();super.removed();}
     @Override public void onClose(){
         var player=minecraft.player;
-        minecraft.gui.setScreen(player!=null&&player.isDeadOrDying()&&parent!=null?parent:null);
+        minecraft.gui.setScreen(parent instanceof ReplayLibraryScreen||player!=null&&player.isDeadOrDying()&&parent!=null?parent:null);
     }
     @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float delta){}
 

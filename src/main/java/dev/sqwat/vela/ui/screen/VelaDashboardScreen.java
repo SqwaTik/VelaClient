@@ -284,13 +284,32 @@ public final class VelaDashboardScreen extends DashboardPanels {
         return true;
     }
 
+    private void finishCapture(int code,int key){draftKey=code;draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(key,0));capturing=false;saveBind();}
+    /** A modifier pressed and released alone during capture becomes the bind itself. */
+    @Override
+    public boolean keyReleased(KeyEvent event) {
+        int code=dev.sqwat.vela.ui.input.BindCapture.release(event.key());
+        if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING){
+            if(capturingSetting!=null){capturingSetting.set(code);services.configs().requestSave();capturingSetting=null;return true;}
+            if(binding!=null&&capturing){finishCapture(code,event.key());return true;}
+            if(section==VelaSection.MARKERS&&markerPanel.bindReleased(code))return true;
+        }
+        return super.keyReleased(event);
+    }
     @Override
     public boolean keyPressed(KeyEvent event) {
         if(editingText!=null){
             if(event.key()==GLFW.GLFW_KEY_ENTER||event.key()==GLFW.GLFW_KEY_ESCAPE){finishTextSetting();return true;}
             dev.sqwat.vela.ui.input.GameTextInput.key(settingTextEdit,event,24);return true;
         }
-        if(capturingSetting!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){capturingSetting.set(dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers()));services.configs().requestSave();}capturingSetting=null;return true;}
+        if(capturingSetting!=null){
+            if(event.key()!=GLFW.GLFW_KEY_ESCAPE){
+                int code=dev.sqwat.vela.ui.input.BindInput.clears(event.key())?-1:dev.sqwat.vela.ui.input.BindCapture.press(event.key(),event.modifiers());
+                if(code==dev.sqwat.vela.ui.input.BindCapture.PENDING)return true;
+                capturingSetting.set(code);services.configs().requestSave();
+            }
+            dev.sqwat.vela.ui.input.BindCapture.reset();capturingSetting=null;return true;
+        }
         if(rgbPicker.open()){if(event.key()==GLFW.GLFW_KEY_ESCAPE)rgbPicker.close();return true;}
         if(friendFocused&&section==VelaSection.FRIENDS&&!suggestions.isEmpty()){
             if(event.key()==GLFW.GLFW_KEY_DOWN||event.key()==GLFW.GLFW_KEY_UP){suggestionSelection=Math.clamp(suggestionSelection+(event.key()==GLFW.GLFW_KEY_DOWN?1:-1),0,suggestions.size()-1);suggestionOffset=Math.clamp(suggestionOffset,Math.max(0,suggestionSelection-4),suggestionSelection);return true;}
@@ -327,7 +346,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
         if(binding!=null){
             if(event.key()==GLFW.GLFW_KEY_ESCAPE){capturing=false;binding=null;return true;}
             if(event.key()==GLFW.GLFW_KEY_DELETE){draftKey=-1;draftLabel="None";saveBind();capturing=false;return true;}
-            if(capturing){draftKey=dev.sqwat.vela.ui.input.BindInput.combo(event.key(),event.modifiers());draftLabel=dev.sqwat.vela.ui.input.KeyLabels.of(draftKey,GLFW.glfwGetKeyName(event.key(),0));capturing=false;saveBind();}
+            if(capturing){int code=dev.sqwat.vela.ui.input.BindCapture.press(event.key(),event.modifiers());if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING)finishCapture(code,event.key());}
             return true;
         }
         if((event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0&&event.key()==services.configs().current().searchKey){searchFocused=true;return true;}

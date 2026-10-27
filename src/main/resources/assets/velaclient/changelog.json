@@ -20,6 +20,10 @@
               "ru": "Сохранение повторов со своей камерой, скоростью и длиной в папку vela-replays — по желанию ещё и видеофайлом, которым можно поделиться."
             },
             {
+              "en": "Recordings: every saved replay and its video in one list, opened from the death screen, the module settings or its own key.",
+              "ru": "«Записи»: все сохранённые повторы и их видео в одном списке — с экрана смерти, из настроек модуля или по своей клавише."
+            },
+            {
               "en": "Storage Index: search everything in the chests, barrels and shulkers you have opened and mark the right one.",
               "ru": "Storage Index: поиск по всем открытым сундукам, бочкам и шалкерам и метка на нужном."
             },

@@ -43,6 +43,9 @@ public final class DeathRecap extends ClientModule {
     private final NumberSetting radius=setting(new NumberSetting("radius","Радиус","Записывать сущности ближе, блоков",32,8,64,4));
     private final BooleanSetting mobs=setting(new BooleanSetting("mobs","Мобы","Записывать не только игроков",true));
     private final KeySetting openKey=setting(new KeySetting("open_key","Последняя смерть",-1));
+    private final KeySetting libraryKey=setting(new KeySetting("library_key","Все записи",-1));
+    {setting(new dev.sqwat.vela.module.setting.ActionSetting("library","Открыть записи",dev.sqwat.vela.ui.screen.ReplayLibraryScreen::open));}
+    private boolean libraryHeld;
 
     private final ArrayDeque<Frame> frames=new ArrayDeque<>();
     private final ArrayDeque<Event> events=new ArrayDeque<>();
@@ -63,13 +66,19 @@ public final class DeathRecap extends ClientModule {
     public static void initialize(){
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client,screen,width,height)->{
             var recap=current();
-            if(!(screen instanceof net.minecraft.client.gui.screens.DeathScreen)||recap==null||!recap.hasRecording())return;
+            if(!(screen instanceof net.minecraft.client.gui.screens.DeathScreen)||recap==null)return;
             int y=Wasted.presenting()?Wasted.buttonTop(height)+52:height/4+124;
-            var button=net.minecraft.client.gui.components.Button.builder(Component.literal(dev.sqwat.vela.ui.Lang.tr("Повтор смерти")),b->{
+            // "Death replay" when there is one, and "Recordings" for everything saved; side by side like vanilla rows.
+            var buttons=new java.util.ArrayList<net.minecraft.client.gui.components.Button>();
+            boolean replay=recap.hasRecording();
+            if(replay)buttons.add(net.minecraft.client.gui.components.Button.builder(Component.literal(dev.sqwat.vela.ui.Lang.tr("Повтор смерти")),b->{
                 var r=recap.recording();if(r!=null)DeathReplay.open(r);
-            }).bounds(width/2-100,y,200,20).build();
-            net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(button);
-            net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.beforeExtract(screen).register((s,g,mx,my,partial)->button.setAlpha(Wasted.presenting()?Wasted.buttonAlpha():1));
+            }).bounds(width/2-100,y,98,20).build());
+            buttons.add(net.minecraft.client.gui.components.Button.builder(Component.literal(dev.sqwat.vela.ui.Lang.tr("Записи")),b->dev.sqwat.vela.ui.screen.ReplayLibraryScreen.open())
+                .bounds(replay?width/2+2:width/2-100,y,replay?98:200,20).build());
+            var widgets=net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen);
+            widgets.addAll(buttons);
+            net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.beforeExtract(screen).register((s,g,mx,my,partial)->{for(var button:buttons)button.setAlpha(Wasted.presenting()?Wasted.buttonAlpha():1);});
         });
     }
     @Override protected void onDisable(){reset();recording=null;DeathReplay.stop();}
@@ -85,6 +94,9 @@ public final class DeathRecap extends ClientModule {
         boolean down=dev.sqwat.vela.ui.input.BindInput.down(mc.getWindow().handle(),openKey.value());
         if(down&&!keyHeld&&mc.gui.screen()==null)openLatest(mc);
         keyHeld=down;
+        boolean library=dev.sqwat.vela.ui.input.BindInput.down(mc.getWindow().handle(),libraryKey.value());
+        if(library&&!libraryHeld&&mc.gui.screen()==null)dev.sqwat.vela.ui.screen.ReplayLibraryScreen.open();
+        libraryHeld=library;
         if(DeathReplay.active())return; // the replay moves ghosts in this level; do not record them
         if(player!=mc.player){if(deathTick>=0)finish();reset();player=mc.player;}
         tick++;

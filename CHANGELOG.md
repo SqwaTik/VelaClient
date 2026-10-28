@@ -20,6 +20,8 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.
 - Vela players are marked with the Vela logo in the tab list.
 - Fog culling: terrain fully hidden by fog, as in the Nether, is not drawn.
+- Upscaler (MineSR): the world is drawn at a lower resolution and a neural network rebuilds it to full; the interface stays sharp.
+- Optimization settings: fog culling, hiding entities behind walls and other optimizations can be switched in Settings.
 - Hit Sound: recorded impact sounds.
 
 ## 0.1.12 — 2026-10-26

@@ -1,8 +1,13 @@
 {
   "required": true,
   "package": "dev.sqwat.vela.mixin",
+  "plugin": "dev.sqwat.vela.VelaMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "upscale.GameRendererMixin",
+    "upscale.SkyRendererMixin",
+    "upscale.ShaderManagerMixin",
+    "upscale.GlobalSettingsUniformMixin",
     "perf.TerrainAllocationMapMixin",
     "screen.StreamerFontMixin",
     "screen.StreamerChatWrapMixin",

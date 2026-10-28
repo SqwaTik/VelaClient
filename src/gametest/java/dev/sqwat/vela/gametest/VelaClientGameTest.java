@@ -113,6 +113,30 @@ public final class VelaClientGameTest implements FabricClientGameTest {
             int on=with.get(with.size()/2),off=without.get(without.size()/2);
             System.out.println("[Vela gametest] Vela cost: modules off "+off+" FPS, default modules "+on+" FPS ("+Math.round(100f*(off-on)/Math.max(1,off))+"%), enabled: "
                 +defaults.stream().map(ClientModule::id).toList());
+            // Upscaler (MineSR inside Vela): screenshots per mode, its own status line, and FPS off/quality/performance.
+            if(Boolean.getBoolean("vela.visualChecks")){
+                var upscaler=VelaClient.services().modules().byId("upscaler");
+                var fps=new java.util.LinkedHashMap<String,ArrayList<Integer>>();
+                for(String mode:List.of("off","Качество","Производительность"))fps.put(mode,new ArrayList<>());
+                for(int round=0;round<3;round++)for(String mode:fps.keySet()){
+                    context.runOnClient(mc->{
+                        if(mode.equals("off")){upscaler.setEnabled(false);return;}
+                        for(var setting:upscaler.settings())if(setting.id().equals("mode"))setString(setting,mode);
+                        upscaler.setEnabled(true);
+                    });
+                    context.waitTicks(40);
+                    for(int i=0;i<3;i++){context.waitTicks(20);fps.get(mode).add(context.computeOnClient(Minecraft::getFps));}
+                    if(round==0&&!mode.equals("off")){
+                        context.takeScreenshot("vela-upscaler-"+(mode.equals("Качество")?"quality":"performance"));
+                        System.out.println("[Vela gametest] Upscaler "+mode+": "+context.computeOnClient(mc->dev.sqwat.vela.upscale.UpscalerRuntime.describe()));
+                    }
+                }
+                context.runOnClient(mc->upscaler.setEnabled(false));
+                var line=new StringBuilder("[Vela gametest] Upscaler FPS:");
+                for(var e:fps.entrySet()){Collections.sort(e.getValue());line.append(' ').append(e.getKey()).append(' ').append(e.getValue().get(e.getValue().size()/2));}
+                System.out.println(line);
+                context.takeScreenshot("vela-upscaler-off");
+            }
             // 6. Optional (-PperfBreakdown): each module alone against all off, to find the expensive ones.
             if(Boolean.getBoolean("vela.perfBreakdown")){
                 context.runOnClient(mc->{for(var m:defaults)m.setEnabled(false);});

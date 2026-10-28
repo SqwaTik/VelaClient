@@ -31,6 +31,7 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.render.shader.HandShaderRenderer.initialize();
         dev.sqwat.vela.render.shader.SkyShaderRenderer.initialize();
         dev.sqwat.vela.render.perf.PerformanceCapture.initialize();
+        dev.sqwat.vela.upscale.UpscalerRuntime.initialize();
         net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message,overlay)->{
             var accept=dev.sqwat.vela.module.utility.AutoTpAccept.instance();
             if(accept!=null)accept.message(message.getString(),overlay);

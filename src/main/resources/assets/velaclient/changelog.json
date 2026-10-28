@@ -64,6 +64,14 @@
               "ru": "Отсечение тумана: рельеф, полностью скрытый туманом (как в Незере), не рисуется."
             },
             {
+              "en": "Upscaler (MineSR): the world is drawn at a lower resolution and a neural network rebuilds it to full; the interface stays sharp.",
+              "ru": "Upscaler (MineSR): мир рисуется в меньшем разрешении, нейросеть достраивает его до полного; интерфейс остаётся чётким."
+            },
+            {
+              "en": "Optimization settings: fog culling, hiding entities behind walls and other optimizations can be switched in Settings.",
+              "ru": "Настройки оптимизации: отсечение тумана, скрытие сущностей за стенами и другие оптимизации включаются в настройках."
+            },
+            {
               "en": "Hit Sound: recorded impact sounds.",
               "ru": "Hit Sound: записанные звуки ударов."
             }

@@ -21,7 +21,7 @@ public final class ConfigService implements AutoCloseable {
     private static final Gson GSON = new Gson();
     private final Path profilesDirectory;
     private final ModuleRegistry modules;
-    private final dev.sqwat.vela.module.ZakoOptimization optimization;
+    private final dev.sqwat.vela.module.Optimization optimization;
     private final JsonFileStore<String> activeProfileStore;
     private final ScheduledExecutorService writer = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "Vela config writer");
@@ -39,7 +39,7 @@ public final class ConfigService implements AutoCloseable {
     public ConfigService(Path root, ModuleRegistry modules) {
         this(root,modules,null);
     }
-    public ConfigService(Path root, ModuleRegistry modules,dev.sqwat.vela.module.ZakoOptimization optimization) {
+    public ConfigService(Path root, ModuleRegistry modules,dev.sqwat.vela.module.Optimization optimization) {
         this.optimization=optimization;
         this.profilesDirectory = root.resolve("profiles");
         this.modules = Objects.requireNonNull(modules);
@@ -67,6 +67,10 @@ public final class ConfigService implements AutoCloseable {
             }
             config.favorites.remove("zako_optimization");
             config.expandedModules.remove("zako_optimization");
+            // The bundled Zako optimizations were removed: drop their saved switches, keep Vela's own.
+            config.modules.remove("zako_optimization");
+            var known=new java.util.HashSet<String>();for(var setting:optimization.settings())known.add(setting.id());
+            config.optimization.keySet().retainAll(known);
             applyOptimization();
         }
         config.uiScale = Float.isFinite(config.uiScale) ? Math.max(0.75f, Math.min(1.25f, config.uiScale)) : 1f;
@@ -212,9 +216,6 @@ public final class ConfigService implements AutoCloseable {
     private void captureModules() {
         if(optimization!=null){
             for(var setting:optimization.settings())config.optimization.put(setting.id(),GSON.toJsonTree(setting.value()));
-            // Keep a rollback-compatible copy; it is no longer registered or bindable.
-            var legacy=config.modules.get("zako_optimization");
-            if(legacy!=null)legacy.settings=new java.util.LinkedHashMap<>(config.optimization);
         }
         for (ClientModule module : modules.all()) {
             ClientConfig.ModuleState state = config.modules.computeIfAbsent(module.id(), ignored -> new ClientConfig.ModuleState());

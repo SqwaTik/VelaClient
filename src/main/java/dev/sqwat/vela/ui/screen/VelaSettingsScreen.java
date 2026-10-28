@@ -87,10 +87,11 @@ public final class VelaSettingsScreen extends VelaScreen {
             cy=toggle(g,"motion","Уменьшение движения",c.reducedMotion,cy);
             cy=toggle(g,"mainmenu","Кастомное главное меню",c.replaceMainMenu,cy);
             cy+=8;
-            VelaDraw.text(g,dev.sqwat.vela.module.ZakoOptimization.TITLE,content.x(),cy,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,8);
-            cy+=15;
-            VelaDraw.text(g,services.zakoOptimization().available()?"Встроена в клиент":"Используется внешний ZakoOpt",content.x(),cy,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
-            cy+=23;
+            VelaDraw.text(g,"ОПТИМИЗАЦИЯ",content.x(),cy,VelaTheme.TEXT_MUTED,VelaDraw.Weight.MEDIUM,7);
+            cy+=16;
+            // Vela's own optimizations: each skips invisible or repeated work and can be switched off to compare.
+            for(var setting:services.optimization().settings())
+                if(setting instanceof dev.sqwat.vela.module.setting.BooleanSetting flag)cy=toggle(g,"opt:"+flag.id(),flag.name(),flag.value(),cy);
         } else if(tab==2){
             cy=toggle(g,"sounds","Звуки интерфейса",c.uiSounds,cy);
             cy=slider(g,"volume","Громкость",c.uiSoundVolume,0,1,cy);
@@ -155,6 +156,8 @@ public final class VelaSettingsScreen extends VelaScreen {
         for(Control hit:controls)if(hit.rect.contains(event.x(),event.y())){
             var c=services.configs().current();
             if(hit.id.startsWith("#")){c.accentColor=hit.id;hex=hit.id;VelaTheme.setPrimary(VelaTheme.parseHex(hex));}
+            if(hit.id.startsWith("opt:"))for(var setting:services.optimization().settings())
+                if(setting instanceof dev.sqwat.vela.module.setting.BooleanSetting flag&&hit.id.equals("opt:"+flag.id()))flag.set(!flag.value());
             switch(hit.id){
                 case "scale","volume","brightness"->{dragging=hit.id;dragRect=hit.rect;dragScale=renderScale();drag(event.x(),event.y());}
                 case "bind-open"->capturingKey="open";

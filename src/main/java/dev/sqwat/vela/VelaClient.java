@@ -23,7 +23,6 @@ public final class VelaClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        dev.sqwat.vela.zako.hud.HudCache.initialize();
         dev.sqwat.vela.ui.render.GlassSurface.initialize();
         dev.sqwat.vela.render.effect.WorldSprite.initialize();
         dev.sqwat.vela.ui.render.DissolveBody.initialize();
@@ -46,22 +45,16 @@ public final class VelaClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents.ALLOW_CHAT.register(dev.sqwat.vela.module.utility.ChatTweaks::allowChat);
         dev.sqwat.vela.module.utility.ChatThreads.initialize();
         dev.sqwat.vela.marker.MarkerRuntime.registerCommand(services.markers());
-        services.zakoOptimization().require(()->!FabricLoader.getInstance().isModLoaded("zakoopt"));
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> dev.sqwat.vela.zako.IntegrationRuntime.clear());
         dev.sqwat.vela.marker.MarkerNotices.initialize(services.markers());
         services.modules().byId("speakers").require(()->FabricLoader.getInstance().isModLoaded("voicechat"));
         KeyMapping.Category category = KeyMapping.Category.register(id("controls"));
         openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.velaclient.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, category
         ));
-        // Under the HUD cache this layer only runs on refresh frames: panels go into the cached texture, effects stay live.
-        HudElementRegistry.addLast(id("hud"),(g,delta)->{
-            if(!dev.sqwat.vela.zako.hud.HudCache.active())services.hudLayout().extractRenderState(g,delta);
-            else if(services.zakoOptimization().cachedPanels())services.hudLayout().extractPanels(g,delta);
-        });
-        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.render.shader.TemporalBlur.draw(g);});
-        HudElementRegistry.addLast(id("markers"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active())dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());});
-        HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(!dev.sqwat.vela.zako.hud.HudCache.active()&&Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
+        HudElementRegistry.addLast(id("hud"),(g,delta)->services.hudLayout().extractRenderState(g,delta));
+        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->dev.sqwat.vela.render.shader.TemporalBlur.draw(g));
+        HudElementRegistry.addLast(id("markers"),(g,delta)->dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers()));
+        HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
         dev.sqwat.vela.module.utility.LootMemory.initialize();
         net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->{
             if(player==Minecraft.getInstance().player&&services.configs().current().protectFriends
@@ -117,17 +110,5 @@ public final class VelaClient implements ClientModInitializer {
     public static String openKeyLabel(){return openKey==null?"RShift":openKey.getTranslatedKeyMessage().getString();}
     public static void rebindOpenKey(int key){if(openKey!=null){openKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(key));KeyMapping.resetMapping();Minecraft.getInstance().options.save();}}
     public static VelaServices services() { return services; }
-    /** Every frame while the HUD cache is active, below the cached HUD. */
-    public static void extractLiveEffects(net.minecraft.client.gui.GuiGraphicsExtractor g,net.minecraft.client.DeltaTracker delta){
-        if(services==null)return;
-        // Diagnostics: with cached panels off, the whole Vela HUD is drawn live every frame as before.
-        if(services.zakoOptimization().cachedPanels())services.hudLayout().extractEffects(g,delta);
-        else services.hudLayout().extractRenderState(g,delta);
-    }
-    public static void extractLiveHud(net.minecraft.client.gui.GuiGraphicsExtractor g,net.minecraft.client.DeltaTracker delta){
-        if(services==null)return;
-        dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());
-        if(Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);
-    }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(MOD_ID, path); }
 }

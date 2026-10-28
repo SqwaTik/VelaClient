@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import dev.sqwat.vela.zako.ZakoOptConfig;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import org.joml.Matrix4f;
@@ -21,13 +20,13 @@ public abstract class TerrainAllocationMixin {
     @WrapOperation(method="prepareChunkRenders",at=@At(value="INVOKE",target="Lnet/minecraft/client/renderer/chunk/ChunkSectionLayer;values()[Lnet/minecraft/client/renderer/chunk/ChunkSectionLayer;"),require=2)
     private ChunkSectionLayer[] vela$reuseLayers(Operation<ChunkSectionLayer[]> original){
         // Both vanilla loops only read this private array.
-        return ZakoOptConfig.microOpts()?vela$layers:original.call();
+        return dev.sqwat.vela.module.Optimization.fewerAllocationsOn()?vela$layers:original.call();
     }
 
     @WrapOperation(method="prepareChunkRenders",at=@At(value="NEW",target="(Lorg/joml/Matrix4fc;)Lorg/joml/Matrix4f;"))
     private Matrix4f vela$oneViewSnapshot(Matrix4fc source,Operation<Matrix4f> original,
             @Share("vela$terrainView") LocalRef<Matrix4f> snapshot){
-        if(!ZakoOptConfig.microOpts())return original.call(source);
+        if(!dev.sqwat.vela.module.Optimization.fewerAllocationsOn())return original.call(source);
         // ChunkSectionInfo only reads this matrix while writing uniforms in this invocation.
         // Invocation-local ownership also covers reentry and exceptions without stale camera data.
         Matrix4f value=snapshot.get();

@@ -18,7 +18,7 @@ public final class VelaServices implements AutoCloseable {
     private final ModuleRegistry modules = new ModuleRegistry();
     private final dev.sqwat.vela.module.utility.Far far = new dev.sqwat.vela.module.utility.Far();
     private final dev.sqwat.vela.module.utility.RenderTweaks renderTweaks = new dev.sqwat.vela.module.utility.RenderTweaks();
-    private final dev.sqwat.vela.module.ZakoOptimization zakoOptimization = new dev.sqwat.vela.module.ZakoOptimization();
+    private final dev.sqwat.vela.module.Optimization optimization = new dev.sqwat.vela.module.Optimization();
     private final FriendService friends;
     private final AccountService accounts;
     private final ConfigService configs;
@@ -34,7 +34,7 @@ public final class VelaServices implements AutoCloseable {
         friends = new FriendService(configRoot);
         dev.sqwat.vela.friend.VelaUsers.initialize(configRoot);
         accounts = new AccountService(configRoot);
-        configs = new ConfigService(configRoot, modules,zakoOptimization);
+        configs = new ConfigService(configRoot, modules,optimization);
         hudLayout = new HudLayoutService(configRoot, modules);
         markers=new dev.sqwat.vela.marker.MarkerService(configRoot);
     }
@@ -140,7 +140,7 @@ public final class VelaServices implements AutoCloseable {
     public ModuleRegistry modules() { return modules; }
     public dev.sqwat.vela.module.utility.Far far() { return far; }
     public dev.sqwat.vela.module.utility.RenderTweaks renderTweaks() { return renderTweaks; }
-    public dev.sqwat.vela.module.ZakoOptimization zakoOptimization() { return zakoOptimization; }
+    public dev.sqwat.vela.module.Optimization optimization() { return optimization; }
     public FriendService friends() { return friends; }
     public AccountService accounts() { return accounts; }
     public ConfigService configs() { return configs; }

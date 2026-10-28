@@ -24,7 +24,9 @@ public final class FogCulling {
     /** After the fog of this frame is known (FogRenderer.setupFog, including Vela's fog tweaks). */
     public static void fog(FogData fog){
         lastEnvironmentalEnd=fog.environmentalEnd;lastRenderDistanceEnd=fog.renderDistanceEnd;
-        float next=enabled&&fog.environmentalEnd<fog.renderDistanceEnd-16?fog.environmentalEnd+MARGIN:Float.POSITIVE_INFINITY;
+        var options=dev.sqwat.vela.module.Optimization.current();
+        boolean on=enabled&&(options==null||options.fogCulling());
+        float next=on&&fog.environmentalEnd<fog.renderDistanceEnd-16?fog.environmentalEnd+MARGIN:Float.POSITIVE_INFINITY;
         distance=next;
         // Fog moved by more than a few blocks (lava, blindness, leaving the Nether): rebuild the section list.
         boolean changed=Float.isInfinite(next)!=Float.isInfinite(applied)||!Float.isInfinite(next)&&Math.abs(next-applied)>8;

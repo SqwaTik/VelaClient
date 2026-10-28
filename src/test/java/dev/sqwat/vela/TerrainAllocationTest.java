@@ -28,8 +28,7 @@ class TerrainAllocationTest {
                 &&m.desc.equals("(Lnet/minecraft/util/FormattedCharSequence;)I")).count());
     }
     @Test void blockVisibilityHooksDoNotRequestPerEntityCallbacks() throws Exception {
-        for(String name:java.util.List.of("dev/sqwat/vela/mixin/entity/StorageVisibilityMixin",
-                "dev/sqwat/vela/zako/mixin/block/BlockEntityRenderDispatcherCullMixin")){
+        for(String name:java.util.List.of("dev/sqwat/vela/mixin/entity/StorageVisibilityMixin")){
             var node=read(name);
             assertTrue(node.methods.stream().noneMatch(m->m.desc.contains("CallbackInfo")));
             for(var method:node.methods)assertEquals(0,calls(method,

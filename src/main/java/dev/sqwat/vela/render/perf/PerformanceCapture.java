@@ -47,13 +47,10 @@ public final class PerformanceCapture {
     }
     private static void logContext(String phase){
         var client=Minecraft.getInstance();var runtime=Runtime.getRuntime();
-        var module=dev.sqwat.vela.module.ZakoOptimization.active();
         org.slf4j.LoggerFactory.getLogger("Vela/Performance").info(
-            "Context {}: resolution={}x{}, processors={}, heapUsedMiB={}, heapCommittedMiB={}, heapMaxMiB={}, zako={}, parallelModels={}, parallelParticles={}, hudCacheActive={}, modelNativeMiB={}",
+            "Context {}: resolution={}x{}, processors={}, heapUsedMiB={}, heapCommittedMiB={}, heapMaxMiB={}",
             phase,client.getWindow().getWidth(),client.getWindow().getHeight(),runtime.availableProcessors(),
-            (runtime.totalMemory()-runtime.freeMemory())/(1024*1024),runtime.totalMemory()/(1024*1024),runtime.maxMemory()/(1024*1024),module!=null,
-            dev.sqwat.vela.zako.ZakoOptConfig.parallelModels(),dev.sqwat.vela.zako.ZakoOptConfig.parallelParticles(),dev.sqwat.vela.zako.hud.HudCache.active(),
-            module==null?0:dev.sqwat.vela.zako.entity.ParallelModels.retainedBytes()/(1024*1024));
+            (runtime.totalMemory()-runtime.freeMemory())/(1024*1024),runtime.totalMemory()/(1024*1024),runtime.maxMemory()/(1024*1024));
     }
     private static String format(String name,FrameSamples.Summary s){return String.format(java.util.Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%s: n=%d, среднее %.2f мс, p95 %.2f мс, p99 %.2f мс, max %.2f мс, >16.67 мс: %d"),name,s.frames(),s.averageMs(),s.p95Ms(),s.p99Ms(),s.maxMs(),s.over16Ms());}
     public static void attacked(){if(all!=null)attackUntil=System.nanoTime()+1_000_000_000L;}

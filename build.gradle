@@ -101,12 +101,6 @@ tasks.register('verifyClient') {
 
 
 jar {
-    // LGPL: ship the adapted ZakoOpt sources with the binary.
-    from('src/main/java') { include 'dev/sqwat/vela/zako/**'; into 'META-INF/zakoopt-source' }
-    from('src/main/java') {
-        include 'dev/sqwat/vela/module/ZakoOptimization.java'
-        into 'META-INF/zakoopt-source'
-    }
     from('libs/bobby-5.2.15+mc26.2.jar') { into 'META-INF/jars' }
     from('LICENSE') {
         rename { "${it}_${project.base.archivesName.get()}" }

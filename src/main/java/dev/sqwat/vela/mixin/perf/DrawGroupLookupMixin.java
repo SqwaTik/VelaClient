@@ -1,7 +1,6 @@
 package dev.sqwat.vela.mixin.perf;
 
 import dev.sqwat.vela.render.perf.AppendOnlyRenderIndex;
-import dev.sqwat.vela.zako.ZakoOptConfig;
 import net.minecraft.client.renderer.rendertype.PreparedRenderType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,7 +15,7 @@ public abstract class DrawGroupLookupMixin {
     // Vanilla reaches this call only when reordering and consolidation are both permitted.
     @Redirect(method="getOrAddDraw",at=@At(value="INVOKE",target="Ljava/util/List;indexOf(Ljava/lang/Object;)I"))
     private int vela$indexedDrawLookup(List<PreparedRenderType> draws,Object value){
-        if(!ZakoOptConfig.lookupCaches())return draws.indexOf(value);
+        if(!dev.sqwat.vela.module.Optimization.lookupCachesOn())return draws.indexOf(value);
         if(vela$drawIndex==null)vela$drawIndex=new AppendOnlyRenderIndex<>();
         return vela$drawIndex.indexOf(draws,(PreparedRenderType)value);
     }

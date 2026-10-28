@@ -65,7 +65,7 @@ public final class EntityOcclusion {
         if(hidden==Decision.HIDE_MODEL)HIDDEN_MODELS.add(entity.getId());
         return hidden;
     }
-    private static Decision category(Entity entity,dev.sqwat.vela.module.ZakoOptimization options){
+    private static Decision category(Entity entity,dev.sqwat.vela.module.Optimization options){
         // Players keep their (vanilla see-through) name tag; only model, armour, items, cape and shadow are skipped.
         if(entity instanceof AbstractClientPlayer)return options.occludePlayers()?Decision.HIDE_MODEL:Decision.VISIBLE;
         if(entity instanceof HangingEntity)return options.occludeHanging()?Decision.HIDE:Decision.VISIBLE;
@@ -92,8 +92,8 @@ public final class EntityOcclusion {
         entry.time=now;entry.visible=result;entry.x=eyeX;entry.y=eyeY;entry.z=eyeZ;
         return result;
     }
-    private static dev.sqwat.vela.module.ZakoOptimization options(){
-        var services=dev.sqwat.vela.VelaClient.services();return services==null?null:services.zakoOptimization();
+    private static dev.sqwat.vela.module.Optimization options(){
+        var services=dev.sqwat.vela.VelaClient.services();return services==null?null:services.optimization();
     }
     private static int floor(double value){int i=(int)value;return value<i?i-1:i;}
 

@@ -112,6 +112,9 @@ abstract class DashboardPanels extends DashboardModules {
         int listTop=blockY+55,y=listTop-Math.round(scroll);
         var profiles=services.configs().profiles().stream().filter(p->search.isBlank()||p.contains(search.toLowerCase(java.util.Locale.ROOT))).toList();
         dev.sqwat.vela.ui.render.UiClip.enable(g,content.x()-1,listTop,content.x()+content.width()+1,content.y()+content.height()-20);
+        // The hint of a hovered action is drawn after every row, on top and above the icon: drawn inside the loop the
+        // next row covered it, and below the icon it landed on the next row's buttons.
+        String pendingHint=null;int hintX=0,hintY=0;
         for(String name:profiles){
             boolean active=name.equalsIgnoreCase(services.configs().current().activeProfile);
             Rect card=new Rect(content.x(),y,content.width(),43);
@@ -128,13 +131,14 @@ abstract class DashboardPanels extends DashboardModules {
             for(int i=0;i<5;i++){
                 Rect hit=new Rect(card.x()+card.width()-111+i*21,y+11,18,22);
                 dev.sqwat.vela.ui.render.UiKit.iconAction(g,hit,icons[i],12,controls.animate("profile-action-"+i,hit.contains(pointerX,pointerY)?1:0),VelaTheme.PRIMARY);
-                if(hit.contains(pointerX,pointerY))showHint(g,new String[]{"Копировать ключ","Открыть папку","Удалить","Загрузить","Сохранить"}[i],hit.x(),hit.y()+23);
+                if(hit.contains(pointerX,pointerY)){pendingHint=new String[]{"Копировать ключ","Открыть папку","Удалить","Загрузить","Сохранить"}[i];hintX=hit.x();hintY=hit.y()-20;}
                 final int action=i;
                 if(rowIntersects(card,listTop,content.y()+content.height()-20))profileHits.add(new ProfileHit(name,hit,action));
             }
             y+=49;
         }
         g.disableScissor();
+        if(pendingHint!=null){g.nextStratum();showHint(g,pendingHint,hintX,Math.max(listTop-18,hintY));}
         scrollLimit=Math.max(0,profiles.size()*49-(content.y()+content.height()-20-listTop));targetScroll=Math.max(0,Math.min(targetScroll,scrollLimit));
     }
     protected void drawSidePanel(GuiGraphicsExtractor g,Layout l){
@@ -201,7 +205,7 @@ abstract class DashboardPanels extends DashboardModules {
             for(String option:select.options()){
                 Rect row=new Rect(popupRect.x()+4,y,popupRect.width()-8,18);
                 popupRow(g,row,option,mx,my,()->{
-                    if(select instanceof BooleanGroup group)group.toggle(option);else if(groups.isMetrics(select))groups.metric(option).toggle();else select.set(option);
+                    if(select instanceof BooleanGroup group)group.toggle(option);else select.set(option);
                     if(select==friendEffects){var cfg=services.configs().current();cfg.friendChinaHat=friendEffects.flags().get(0).value();cfg.friendDashTrail=friendEffects.flags().get(1).value();cfg.friendJumpCircle=friendEffects.flags().get(2).value();}
                     services.configs().requestSave();
                 });y+=20;
@@ -252,7 +256,7 @@ abstract class DashboardPanels extends DashboardModules {
     protected void popupRow(GuiGraphicsExtractor g,Rect r,String label,int mx,int my,Runnable action){
         if(label.equals("Назначить клавишу")){controls.button(g,"assign-key",r,label,r.contains(mx,my));popupHits.add(new PopupHit(r,action));return;}
         float h=animate("choice-"+label,r.contains(mx,my),frameDt);
-        boolean selected=choice instanceof BooleanGroup group?group.selected(label):groups.isMetrics(choice)?groups.metric(label).value():choice!=null&&label.equals(choice.value());
+        boolean selected=choice instanceof BooleanGroup group?group.selected(label):choice!=null&&label.equals(choice.value());
         float selectedAmount=controls.animate("option-selected-"+(choice==null?"context":choice.id())+"-"+label,selected?1:0);
         VelaDraw.roundedRect(g,r.x(),r.y(),r.width(),r.height(),3,VelaTheme.mix(VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h),VelaTheme.PRIMARY,selectedAmount*.16f));
         if(selectedAmount>.005f){VelaDraw.roundedRect(g,r.x()+2,r.y()+4,2,r.height()-8,1,(Math.round(255*selectedAmount)<<24)|(VelaTheme.PRIMARY&0xFFFFFF));dev.sqwat.vela.ui.render.VelaIcons.draw(g,"check",r.x()+r.width()-15,r.y()+(r.height()-10)/2,10,(Math.round(255*selectedAmount)<<24)|(VelaTheme.PRIMARY&0xFFFFFF));}

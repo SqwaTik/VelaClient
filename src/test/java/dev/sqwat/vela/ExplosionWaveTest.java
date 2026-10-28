@@ -7,7 +7,7 @@ class ExplosionWaveTest {
     @Test void cappedExpiredAndDisabled(){
         var module=new ExplosionWave();module.spawn(Vec3.ZERO,0);assertEquals(0,module.count());
         module.setEnabled(true);for(int i=0;i<100;i++)module.spawn(Vec3.ZERO,i);
-        assertEquals(4,module.count());module.expire(4_000_000_000L);assertEquals(0,module.count());
+        assertEquals(ExplosionWave.LIMIT,module.count());module.expire(4_000_000_000L);assertEquals(0,module.count());
         module.spawn(Vec3.ZERO,5_000_000_000L);module.setEnabled(false);assertEquals(0,module.count());
     }
     @Test void nativeEventExists()throws Exception{

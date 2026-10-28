@@ -15,7 +15,6 @@ import net.minecraft.network.chat.HoverEvent;
  * server) and pressing the normal respawn action after an optional delay, exactly as the death screen button does.
  */
 public final class Death extends ClientModule {
-    private final BooleanSetting coords=setting(new BooleanSetting("coords","Координаты в чат","Место смерти локальным сообщением",true));
     private final BooleanSetting respawn=setting(new BooleanSetting("respawn","Авто-возрождение","Возрождаться без нажатия кнопки",false));
     private final NumberSetting delay=setting(new NumberSetting("delay","Задержка","Пауза перед возрождением, мс",0,0,3000,100));
     private Object player;
@@ -28,7 +27,7 @@ public final class Death extends ClientModule {
         if(mc.player==null||mc.level==null){onDisable();return;}
         boolean now=mc.player.isDeadOrDying();
         if(player!=mc.player){player=mc.player;dead=now;}
-        else{if(now&&!dead&&coords.value())announce(mc);dead=now;}
+        else{if(now&&!dead)announce(mc);dead=now;}
         if(!respawn.value()||!now||!(mc.gui.screen() instanceof DeathScreen)){deathAt=-1;return;}
         long time=System.nanoTime();
         if(deathAt<0)deathAt=time;

@@ -59,10 +59,18 @@ public final class LootMemory extends ClientModule {
 
     public LootMemory(){
         super("loot_memory","Loot Memory","Помнит обысканные сундуки, сломанные спавнеры и открытые хранилища",ModuleCategory.UTILITIES);
-        setting(new ActionSetting("forget_world","Забыть этот мир",()->{load();records.clear();dirty=true;save();}));
+        setting(new ActionSetting("forget_world","Забыть этот мир",this::forgetWorld));
     }
     /** For diagnostics: how many places are remembered in this world. */
     public String describe(){return records.size()+" records "+records.values();}
+    /** Always answers, also when nothing was remembered here: the click must visibly do something. */
+    private void forgetWorld(){
+        load();
+        int count=records.size();
+        records.clear();dirty=true;save();
+        dev.sqwat.vela.ui.Notifications.show(Lang.tr("Loot Memory"),count==0?Lang.tr("В этом мире ещё ничего не отмечено")
+            :Lang.pick("Forgot "+count+" places in this world","Забыто мест в этом мире: "+count),"trash");
+    }
     public static LootMemory current(){return dev.sqwat.vela.module.Modules.active(LootMemory.class);}
     private static String key(String dimension,int x,int y,int z){return dimension+"|"+x+"|"+y+"|"+z;}
 

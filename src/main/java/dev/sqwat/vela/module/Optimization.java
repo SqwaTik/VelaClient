@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Vela's own optimizations, shown in Settings → Interface → Optimization and saved with the config ("optimization").
+ * Vela's own optimizations, always on (no UI), saved with the config ("optimization") so earlier choices still apply.
  * Each one only skips work whose result cannot be seen (entities behind walls, terrain inside fog) or avoids repeated
  * work (text layout, allocations, lookups); all are on by default and can be switched off to compare.
  * Setting ids are the ones earlier versions used, so saved choices carry over.

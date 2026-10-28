@@ -38,7 +38,6 @@ public final class VelaClient implements ClientModInitializer {
         });
         dev.sqwat.vela.friend.LocalAppearanceService.initialize();
         dev.sqwat.vela.ui.screen.ContainerSearchBox.initialize();
-        dev.sqwat.vela.module.utility.FoodInfo.initialize();
         dev.sqwat.vela.module.visual.DeathRecap.initialize();
         services = new VelaServices(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
         dev.sqwat.vela.ui.Lang.set("ru".equals(services.configs().current().language)?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);

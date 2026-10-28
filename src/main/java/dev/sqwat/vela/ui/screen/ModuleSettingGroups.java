@@ -4,48 +4,53 @@ import dev.sqwat.vela.core.VelaServices;
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.setting.BooleanGroup;
 import dev.sqwat.vela.module.setting.BooleanSetting;
-import dev.sqwat.vela.module.setting.ChoiceSetting;
 import dev.sqwat.vela.module.setting.Setting;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * How the dashboard lists a module's settings: related flags (particle events, trajectory items, render tweaks) fold
- * into one multi-select, the watermark's metric switches into one picker, and the internal "transparent" switch stays
- * in the HUD editor.
+ * How the dashboard lists a module's settings. On/off switches that only say what is shown or for whom (watermark
+ * metrics, chat features, particle events, shader effects…) fold into one multi-select at the place of the first of
+ * them, so the remaining rows are real settings. The internal "transparent" switch stays in the HUD editor.
  */
 final class ModuleSettingGroups {
-    private final VelaServices services;
-    ModuleSettingGroups(VelaServices services){this.services=services;}
-    ChoiceSetting metrics(){return metricsChoice;}
-    boolean isMetrics(Object setting){return setting==metricsChoice;}
+    private record Group(String id,String label,Set<String> ids){}
+    private static final Map<String,List<Group>> GROUPS=Map.of(
+        "particles",List.of(new Group("events","События",Set.of("hits","jumps","landings","deaths","totems"))),
+        "trajectories",List.of(new Group("items","Предметы",Set.of("pearl","snowball","egg","potion","experience"))),
+        "watermark",List.of(new Group("metrics","Показатели",Set.of("fps","bps","tps","ping","time","online"))),
+        "chat",List.of(new Group("features","Функции",Set.of("timestamps","stack","coordinate_links","mentions","threads","keep"))),
+        "shaders",List.of(new Group("effects","Эффекты",Set.of("sky","hands","wet","fog"))),
+        "hitboxes",List.of(new Group("who","Для кого",Set.of("players","friends","self","others"))),
+        "pickups",List.of(new Group("show","Показывать",Set.of("losses","containers","totals"))),
+        "keystrokes",List.of(new Group("parts","Элементы",Set.of("mouse","cps","space"))));
     private final java.util.Map<String,BooleanGroup> flagGroups=new java.util.HashMap<>();
-    private final ChoiceSetting metricsChoice=new ChoiceSetting("metrics","Показатели","Отображаемые показатели","FPS",List.of("FPS","TPS","Пинг"));
-    BooleanSetting metric(String name){String id=name.equals("Пинг")?"ping":name.toLowerCase(java.util.Locale.ROOT);return (BooleanSetting)services.modules().byId("watermark").settings().stream().filter(s->s.id().equals(id)).findFirst().orElseThrow();}
+    ModuleSettingGroups(VelaServices services){}
+
     List<Setting<?>> visible(ClientModule module){
-        if(module.id().equals("particles")){
-            var eventIds=java.util.Set.of("hits","jumps","landings","deaths","totems");
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-events","События",module.settings().stream().filter(s->eventIds.contains(s.id())).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!eventIds.contains(setting.id()))result.add(setting);
-            return result;
-        }
-        if(module.id().equals("trajectories")){
-            var itemIds=java.util.Set.of("pearl","snowball","egg","potion","experience");
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-items","Предметы",module.settings().stream().filter(s->itemIds.contains(s.id())).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!itemIds.contains(setting.id()))result.add(setting);
-            return result;
-        }
+        List<Group> groups=GROUPS.get(module.id());
         if(module.id().equals("render_tweaks")){
-            BooleanGroup group=flagGroups.computeIfAbsent(module.id(),id->new BooleanGroup(id+"-flags","Скрывать",module.settings().stream().filter(s->s instanceof BooleanSetting).map(s->(BooleanSetting)s).toList(),false));
-            List<Setting<?>> result=new ArrayList<>();result.add(group);
-            for(var setting:module.settings())if(!(setting instanceof BooleanSetting))result.add(setting);
+            var flags=module.settings().stream().filter(s->s instanceof BooleanSetting).map(s->(BooleanSetting)s).toList();
+            groups=List.of(new Group("flags","Скрывать",Set.copyOf(flags.stream().map(Setting::id).toList())));
+        }
+        List<Setting<?>> result=new ArrayList<>();
+        if(groups==null){
+            for(var setting:module.settings())if(!setting.id().equals("transparent"))result.add(setting);
             return result;
         }
-        if(!module.id().equals("watermark"))return module.settings().stream().filter(s->!s.id().equals("transparent")).toList();
-        List<Setting<?>> result=new ArrayList<>();result.add(metricsChoice);
-        for(var setting:module.settings())if(!List.of("fps","tps","ping","transparent").contains(setting.id()))result.add(setting);
+        var placed=new java.util.HashSet<String>();
+        for(var setting:module.settings()){
+            if(setting.id().equals("transparent"))continue;
+            Group owner=null;
+            for(var group:groups)if(setting instanceof BooleanSetting&&group.ids().contains(setting.id())){owner=group;break;}
+            if(owner==null){result.add(setting);continue;}
+            if(!placed.add(owner.id()))continue;
+            final Group group=owner;
+            result.add(flagGroups.computeIfAbsent(module.id()+"-"+group.id(),key->new BooleanGroup(key,group.label(),
+                module.settings().stream().filter(s->s instanceof BooleanSetting&&group.ids().contains(s.id())).map(s->(BooleanSetting)s).toList(),false)));
+        }
         return result;
     }
 }

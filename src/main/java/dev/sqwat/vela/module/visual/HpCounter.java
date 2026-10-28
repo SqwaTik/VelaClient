@@ -20,37 +20,42 @@ public final class HpCounter extends ClientModule {
     private int offset;
     private final BooleanSetting damage=setting(new BooleanSetting("damage","Урон","Показывать потерянное здоровье",true));
     private final BooleanSetting healing=setting(new BooleanSetting("healing","Лечение","Показывать восстановленное здоровье",true));
-    private final dev.sqwat.vela.module.setting.NumberSetting scale=setting(new dev.sqwat.vela.module.setting.NumberSetting("scale","Размер","Размер чисел, %",160,60,300,10));
-    public HpCounter(){super("hp_counter","HP Counter","Всплывающие числа урона и лечения игроков",ModuleCategory.VISUALS);}
-    private static HpCounter current(net.minecraft.world.entity.player.Player player){
+    private final BooleanSetting mobs=setting(new BooleanSetting("mobs","Мобы","Числа и над мобами, не только над игроками",true));
+    private final dev.sqwat.vela.module.setting.NumberSetting scale=setting(new dev.sqwat.vela.module.setting.NumberSetting("scale","Размер","Размер чисел, %",220,80,400,10));
+    public HpCounter(){super("hp_counter","HP Counter","Всплывающие числа урона и лечения игроков и мобов",ModuleCategory.VISUALS);}
+    private static HpCounter current(net.minecraft.world.entity.LivingEntity player){
         var services=dev.sqwat.vela.VelaClient.services();
         if(services==null)return null;
         if(!(services.modules().byId("hp_counter") instanceof HpCounter module)||!module.enabled())return null;
         var mc=Minecraft.getInstance();
         if(mc==null||!mc.isSameThread()||mc.level==null||mc.player==null||player.level()!=mc.level||player.isRemoved())return null;
-        // Login initializes health before assigning an entity ID. Only observe registered players.
-        boolean registered=false;
-        var players=mc.level.players();
-        for(int i=0;i<players.size();i++)if(players.get(i)==player){registered=true;break;}
-        if(!registered)return null;
+        if(!(player instanceof net.minecraft.world.entity.player.Player)&&!module.mobs.value())return null;
+        // Health is set while an entity is created, before it has an ID or is in the level: players must be in the
+        // level's player list, other entities must have ticked at least once.
+        if(player instanceof net.minecraft.world.entity.player.Player){
+            boolean registered=false;
+            var players=mc.level.players();
+            for(int i=0;i<players.size();i++)if(players.get(i)==player){registered=true;break;}
+            if(!registered)return null;
+        }else if(player.tickCount<=0)return null;
         if(module.world!=mc.level){module.onDisable();module.world=mc.level;}return module;
     }
-    public static void baseline(net.minecraft.world.entity.player.Player player){
+    public static void baseline(net.minecraft.world.entity.LivingEntity player){
         var module=current(player);if(module==null)return;
-        if(module.health.size()>=128&&!module.health.containsKey(player.getUUID()))return;
+        if(module.health.size()>=256&&!module.health.containsKey(player.getUUID()))return;
         module.health.putIfAbsent(player.getUUID(),totalHealth(player));
     }
-    public static void changed(net.minecraft.world.entity.player.Player player){
+    public static void changed(net.minecraft.world.entity.LivingEntity player){
         var module=current(player);if(module!=null)module.observePlayer(player,System.nanoTime());
     }
     public void observe(UUID id,float value,Vec3 position,long now,boolean visible){
         if(!enabled()||!Float.isFinite(value))return;
-        if(health.size()>=128&&!health.containsKey(id))return;
+        if(health.size()>=256&&!health.containsKey(id))return;
         Float previous=health.put(id,value);
         if(previous!=null&&visible)spawn(position,value-previous,now);
     }
-    private static float totalHealth(net.minecraft.world.entity.player.Player player){return player.getHealth()+player.getAbsorptionAmount();}
-    private void observePlayer(net.minecraft.world.entity.player.Player player,long now){
+    private static float totalHealth(net.minecraft.world.entity.LivingEntity player){return player.getHealth()+player.getAbsorptionAmount();}
+    private void observePlayer(net.minecraft.world.entity.LivingEntity player,long now){
         var previous=health.get(player.getUUID());
         float value=totalHealth(player);
         if(previous==null){observe(player.getUUID(),value,Vec3.ZERO,now,false);return;}
@@ -80,6 +85,11 @@ public final class HpCounter extends ClientModule {
             if(checked++>=128)break;
             if(player.isRemoved()||player.distanceToSqr(mc.player)>64*64)continue;
             seen.add(player.getUUID());observePlayer(player,now);
+        }
+        if(mobs.value())for(var mob:mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,mc.player.getBoundingBox().inflate(32),
+                e->!(e instanceof net.minecraft.world.entity.player.Player)&&!e.isRemoved()&&!(e instanceof net.minecraft.world.entity.decoration.ArmorStand))){
+            if(checked++>=192)break;
+            seen.add(mob.getUUID());observePlayer(mob,now);
         }
         health.keySet().retainAll(seen);
     }

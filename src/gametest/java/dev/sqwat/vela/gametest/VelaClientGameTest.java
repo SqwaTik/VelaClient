@@ -116,22 +116,25 @@ public final class VelaClientGameTest implements FabricClientGameTest {
             // Upscaler (MineSR inside Vela): screenshots per mode, its own status line, and FPS off/quality/performance.
             if(Boolean.getBoolean("vela.visualChecks")){
                 var upscaler=VelaClient.services().modules().byId("upscaler");
+                var frameGen=VelaClient.services().modules().byId("frame_generation");
                 var fps=new java.util.LinkedHashMap<String,ArrayList<Integer>>();
-                for(String mode:List.of("off","Качество","Производительность"))fps.put(mode,new ArrayList<>());
+                for(String mode:List.of("off","Качество","Производительность","framegen","Производительность+framegen"))fps.put(mode,new ArrayList<>());
                 for(int round=0;round<3;round++)for(String mode:fps.keySet()){
                     context.runOnClient(mc->{
-                        if(mode.equals("off")){upscaler.setEnabled(false);return;}
-                        for(var setting:upscaler.settings())if(setting.id().equals("mode"))setString(setting,mode);
+                        frameGen.setEnabled(mode.contains("framegen"));
+                        String upscale=mode.replace("+framegen","");
+                        if(upscale.equals("off")||upscale.equals("framegen")){upscaler.setEnabled(false);return;}
+                        for(var setting:upscaler.settings())if(setting.id().equals("mode"))setString(setting,upscale);
                         upscaler.setEnabled(true);
                     });
                     context.waitTicks(40);
                     for(int i=0;i<3;i++){context.waitTicks(20);fps.get(mode).add(context.computeOnClient(Minecraft::getFps));}
                     if(round==0&&!mode.equals("off")){
-                        context.takeScreenshot("vela-upscaler-"+(mode.equals("Качество")?"quality":"performance"));
+                        context.takeScreenshot("vela-upscaler-"+(mode.equals("Качество")?"quality":mode.equals("Производительность")?"performance":mode.equals("framegen")?"framegen":"performance-framegen"));
                         System.out.println("[Vela gametest] Upscaler "+mode+": "+context.computeOnClient(mc->dev.sqwat.vela.upscale.UpscalerRuntime.describe()));
                     }
                 }
-                context.runOnClient(mc->upscaler.setEnabled(false));
+                context.runOnClient(mc->{upscaler.setEnabled(false);frameGen.setEnabled(false);});
                 var line=new StringBuilder("[Vela gametest] Upscaler FPS:");
                 for(var e:fps.entrySet()){Collections.sort(e.getValue());line.append(' ').append(e.getKey()).append(' ').append(e.getValue().get(e.getValue().size()/2));}
                 System.out.println(line);
@@ -179,7 +182,7 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                     VelaClient.services().modules().byId("mace_smash").setEnabled(true);
                 });
                 context.waitTicks(5);
-                for(String mode:List.of("Гроза","Трещины","Жидкое стекло","Цунами")){
+                for(String mode:List.of("Трещины","Ударная волна")){
                     context.runOnClient(mc->{
                         for(var setting:VelaClient.services().modules().byId("mace_smash").settings())if(setting.id().equals("mode"))setString(setting,mode);
                         mc.player.setXRot(35);mc.player.fallDistance=6;
@@ -188,10 +191,50 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                         dev.sqwat.vela.module.visual.MaceSmash.attacked(mc.player,target);
                         mc.player.fallDistance=0;
                     });
-                    context.waitTicks(mode.equals("Гроза")?8:mode.equals("Цунами")?7:10);
-                    context.takeScreenshot("vela-mace-"+(mode.equals("Гроза")?"storm":mode.equals("Трещины")?"cracks":mode.equals("Жидкое стекло")?"glass":"tsunami"));
+                    context.waitTicks(10);
+                    context.takeScreenshot("vela-mace-"+(mode.equals("Трещины")?"cracks":"shockwave"));
                     context.waitTicks(40);
                 }
+                // Wet floor with a pickaxe in hand and trajectories on (reported to make the wet floor vanish).
+                world.getServer().runCommand("give @a minecraft:diamond_pickaxe");
+                context.runOnClient(mc->{
+                    mc.player.getInventory().setSelectedSlot(2);mc.player.setXRot(30);
+                    var shaders=VelaClient.services().modules().byId("shaders");shaders.setEnabled(true);
+                    for(var setting:shaders.settings()){if(setting.id().equals("wet"))setBoolean(setting,true);if(setting.id().equals("hands"))setBoolean(setting,false);}
+                    VelaClient.services().modules().byId("trajectories").setEnabled(false);
+                });
+                context.waitTicks(20);context.takeScreenshot("vela-wet-pickaxe");
+                context.runOnClient(mc->VelaClient.services().modules().byId("trajectories").setEnabled(true));
+                context.waitTicks(20);context.takeScreenshot("vela-wet-pickaxe-trajectories");
+                context.runOnClient(mc->{VelaClient.services().modules().byId("trajectories").setEnabled(false);VelaClient.services().modules().byId("shaders").setEnabled(false);});
+                // Explosion wave: two blasts close to each other, the front merges and flows around a wall.
+                world.getServer().runCommand("execute at @p run fill ~3 ~ ~2 ~3 ~2 ~4 minecraft:stone");
+                context.runOnClient(mc->{
+                    VelaClient.services().modules().byId("explosion_wave").setEnabled(true);
+                    mc.player.setXRot(25);
+                    var at=mc.player.position();
+                    dev.sqwat.vela.module.visual.ExplosionWave.exploded(at.add(4,0,11));
+                    dev.sqwat.vela.module.visual.ExplosionWave.exploded(at.add(-3,0,13));
+                });
+                context.waitTicks(6);context.takeScreenshot("vela-explosion-wave");
+                context.waitTicks(4);context.takeScreenshot("vela-explosion-wave-late");
+                context.waitTicks(60);
+                context.runOnClient(mc->VelaClient.services().modules().byId("explosion_wave").setEnabled(false));
+                // Crosshair without the client colour, Vela hitboxes on F3+B.
+                context.runOnClient(mc->{
+                    var crosshair=VelaClient.services().modules().byId("crosshair");crosshair.setEnabled(true);
+                    for(var setting:crosshair.settings())if(setting.id().equals("client_color"))setBoolean(setting,false);
+                    VelaClient.services().modules().byId("hitboxes").setEnabled(true);
+                    mc.debugEntries.setStatus(net.minecraft.client.gui.components.debug.DebugScreenEntries.ENTITY_HITBOXES,net.minecraft.client.gui.components.debug.DebugScreenEntryStatus.ALWAYS_ON);
+                    mc.player.setXRot(10);
+                });
+                context.waitTicks(10);context.takeScreenshot("vela-crosshair-hitboxes");
+                context.runOnClient(mc->{
+                    mc.debugEntries.setStatus(net.minecraft.client.gui.components.debug.DebugScreenEntries.ENTITY_HITBOXES,net.minecraft.client.gui.components.debug.DebugScreenEntryStatus.NEVER);
+                    VelaClient.services().modules().byId("hitboxes").setEnabled(false);
+                    var crosshair=VelaClient.services().modules().byId("crosshair");
+                    for(var setting:crosshair.settings())if(setting.id().equals("client_color"))setBoolean(setting,true);
+                });
                 // Loot memory: open a real chest with something in it, close it, see the tag.
                 world.getServer().runCommand("setblock 44 -60 39 minecraft:chest");
                 world.getServer().runCommand("item replace block 44 -60 39 container.0 with minecraft:diamond 3");

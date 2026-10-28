@@ -16,13 +16,18 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Chat privacy: a button above the chat hides what you type after /login and /register.
 - What's new: this list of changes in the main menu.
 - English interface, with Russian available in the settings.
-- Mace Smash: a mace smash attack sets off a thunderstorm, ground cracks, a liquid glass wave or a tsunami of wind.
+- Mace Smash: a mace smash attack cracks the ground or sends out a shockwave.
 - Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.
 - Vela players are marked with the Vela logo in the tab list.
 - Fog culling: terrain fully hidden by fog, as in the Nether, is not drawn.
-- Upscaler (MineSR): the world is drawn at a lower resolution and a neural network rebuilds it to full; the interface stays sharp.
-- Optimization settings: fog culling, hiding entities behind walls and other optimizations can be switched in Settings.
+- Upscaler (MineSR): the world is drawn at a lower resolution and rebuilt to full; the interface stays sharp.
 - Hit Sound: recorded impact sounds.
+- Frame Generation (MineSR): an extra frame between every two for smoother motion; works on its own or together with Upscaler.
+- Explosion Wave: the blast runs along the ground, flows around walls and merges with nearby blasts; a gust of wind as it passes and a short stun up close.
+- Item Highlight: add any item with your own color.
+- Hand Swap: swap the main hand with your own key.
+- Render Tweaks: hands no longer bob while walking.
+- Interface sounds: the new Rhythm set.
 
 ## 0.1.12 — 2026-10-26
 

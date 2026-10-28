@@ -19,8 +19,7 @@ abstract class ItemHighlightMixin {
         var services=dev.sqwat.vela.VelaClient.services();
         if(services==null||!(services.modules().byId("item_highlight") instanceof ItemHighlight module)||!module.enabled())return;
         var id=BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if(!id.getNamespace().equals("minecraft"))return;
-        int color=module.background(id.getPath());
+        int color=module.background(id.toString());
         if(color!=0)((GuiGraphicsExtractor)(Object)this).fill(x,y,x+16,y+16,color);
     }
 }

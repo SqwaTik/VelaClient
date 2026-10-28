@@ -16,13 +16,13 @@ import java.util.List;
  */
 public final class UpscalerModule extends ClientModule {
     private static final String QUALITY="Качество",BALANCED="Баланс",PERFORMANCE="Производительность",NATIVE="Только сглаживание";
-    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Во сколько раз меньше рисуется мир",QUALITY,List.of(QUALITY,BALANCED,PERFORMANCE,NATIVE)));
+    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Во сколько раз меньше рисуется мир",PERFORMANCE,List.of(QUALITY,BALANCED,PERFORMANCE,NATIVE)));
     private final NumberSetting sharpness=setting(new NumberSetting("sharpness","Резкость","Сила повышения резкости после апскейла, %",50,0,100,5));
-    private final BooleanSetting neural=setting(new BooleanSetting("neural","Нейросеть","Решения апскейла принимает обученная сеть; выключите для ручных правил",true));
+    private final BooleanSetting neural=setting(new BooleanSetting("neural","Нейросеть","Чуть лучше картинка, но заметно медленнее ручных правил",false));
     private final BooleanSetting sharpTextures=setting(new BooleanSetting("sharp_textures","Чёткие текстуры","Текстуры детальнее при низком разрешении, чтобы апскейлер их восстановил",true));
 
     public UpscalerModule(){
-        super("upscaler","Upscaler","Мир в меньшем разрешении, нейросеть достраивает до полного (MineSR)",ModuleCategory.VISUALS);
+        super("upscaler","Upscaler","Мир в меньшем разрешении, достраивается до полного (MineSR)",ModuleCategory.VISUALS);
         require(UpscalerRuntime::available);
     }
     private Quality quality(){

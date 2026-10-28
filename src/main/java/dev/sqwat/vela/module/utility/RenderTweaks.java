@@ -11,6 +11,7 @@ public final class RenderTweaks extends ClientModule {
         add("hurt_camera","Hurt Camera");add("fluid_fog","Лава и вода");
         option("pictures","Картины","Скрывать рисунки карт и картин, сохраняя рамки и основу");
         option("holograms","Голограммы","Скрывать текстовые дисплеи и надписи невидимых стоек");
+        option("hand_bob","Покачивание рук","Руки не качаются при ходьбе; покачивание камеры остаётся");
     }
     private void add(String id,String name){option(id,name,dev.sqwat.vela.ui.Lang.tr("Скрывать: ")+name);}
     private void option(String id,String name,String description){var value=new BooleanSetting(id,name,description,false);options.put(id,value);setting(value);}

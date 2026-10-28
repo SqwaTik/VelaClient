@@ -2,25 +2,30 @@ package dev.sqwat.vela.module.utility;
 
 import dev.sqwat.vela.module.ClientModule;
 import dev.sqwat.vela.module.ModuleCategory;
+import dev.sqwat.vela.module.setting.KeySetting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.HumanoidArm;
 
 /**
- * Swaps the main hand while enabled (bind it as Toggle for one-key switching, or Hold for a temporary swap).
- * Uses the normal option and sends it to the server like the Options screen does; disabling restores the
- * hand that was set before.
+ * Switches the main hand with its own key. Turning the module on changes nothing by itself; while it is on, the key
+ * swaps left and right (the normal option, sent to the server like the Options screen does). Turning it off brings
+ * back the hand that was set before.
  */
 public final class HandSwap extends ClientModule {
+    private final KeySetting key=setting(new KeySetting("swap_key","Клавиша смены руки",org.lwjgl.glfw.GLFW.GLFW_KEY_H));
     private HumanoidArm original;
-    public HandSwap(){super("hand_swap","Hand Swap","Смена ведущей руки одним нажатием",ModuleCategory.UTILITIES);}
-    @Override protected void onEnable(){
-        var options=Minecraft.getInstance().options;
-        original=options.mainHand().get();
-        apply(original.getOpposite());
-    }
+    private boolean held;
+    public HandSwap(){super("hand_swap","Hand Swap","Смена ведущей руки по своей клавише",ModuleCategory.UTILITIES);}
+    @Override protected void onEnable(){original=Minecraft.getInstance().options.mainHand().get();held=true;}
     @Override protected void onDisable(){
-        if(original==null)return;
-        apply(original);original=null;
+        if(original!=null&&Minecraft.getInstance().options.mainHand().get()!=original)apply(original);
+        original=null;
+    }
+    @Override public void onClientTick(){
+        var mc=Minecraft.getInstance();
+        boolean down=mc.gui.screen()==null&&dev.sqwat.vela.ui.input.BindInput.down(mc.getWindow().handle(),key.value());
+        if(down&&!held)apply(mc.options.mainHand().get().getOpposite());
+        held=down;
     }
     private static void apply(HumanoidArm arm){
         var mc=Minecraft.getInstance();

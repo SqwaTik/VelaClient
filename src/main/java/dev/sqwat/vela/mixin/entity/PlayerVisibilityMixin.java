@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class PlayerVisibilityMixin {
     @Inject(method="shouldRender",at=@At("HEAD"),cancellable=true)
     private void vela$playersOutsideView(Entity entity,Frustum frustum,double x,double y,double z,CallbackInfoReturnable<Boolean> ci){
-        if(entity instanceof AbstractClientPlayer player&&player.isDeadOrDying()){
+        if(entity instanceof net.minecraft.world.entity.LivingEntity player&&player.isDeadOrDying()){
             var services=dev.sqwat.vela.VelaClient.services();
             if(services!=null&&dev.sqwat.vela.ui.hud.HudVisibility.allowed(Minecraft.getInstance())
                 &&services.modules().byId("kill_effect") instanceof dev.sqwat.vela.module.visual.KillEffect effect&&effect.replacesCorpse(player)){

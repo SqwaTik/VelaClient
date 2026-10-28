@@ -18,10 +18,10 @@ class ItemHighlightTest {
         assertNull(ItemHighlight.category("stone"));
     }
     @Test void disabledAndDeselectedItemsAreInert(){
-        var m=new ItemHighlight();assertEquals(0,m.background("totem_of_undying"));
-        m.setEnabled(true);assertNotEquals(0,m.background("totem_of_undying"));
+        var m=new ItemHighlight();assertEquals(0,m.background("minecraft:totem_of_undying"));
+        m.setEnabled(true);assertNotEquals(0,m.background("minecraft:totem_of_undying"));
         ((dev.sqwat.vela.module.setting.BooleanSetting)m.settings().stream().filter(s->s.id().equals("totems")).findFirst().orElseThrow()).set(false);
-        assertEquals(0,m.background("totem_of_undying"));assertEquals(0,m.background("stone"));
+        assertEquals(0,m.background("minecraft:totem_of_undying"));assertEquals(0,m.background("minecraft:stone"));
         m.setEnabled(false);assertEquals(0,m.background("ender_pearl"));
     }
 }

@@ -48,8 +48,8 @@
               "ru": "Английский интерфейс, русский — в настройках."
             },
             {
-              "en": "Mace Smash: a mace smash attack sets off a thunderstorm, ground cracks, a liquid glass wave or a tsunami of wind.",
-              "ru": "Mace Smash: сокрушительный удар булавой вызывает грозу, трещины в земле, волну жидкого стекла или цунами из ветра."
+              "en": "Mace Smash: a mace smash attack cracks the ground or sends out a shockwave.",
+              "ru": "Mace Smash: удар булавой с высоты раскалывает землю или пускает ударную волну."
             },
             {
               "en": "Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.",
@@ -64,16 +64,36 @@
               "ru": "Отсечение тумана: рельеф, полностью скрытый туманом (как в Незере), не рисуется."
             },
             {
-              "en": "Upscaler (MineSR): the world is drawn at a lower resolution and a neural network rebuilds it to full; the interface stays sharp.",
-              "ru": "Upscaler (MineSR): мир рисуется в меньшем разрешении, нейросеть достраивает его до полного; интерфейс остаётся чётким."
-            },
-            {
-              "en": "Optimization settings: fog culling, hiding entities behind walls and other optimizations can be switched in Settings.",
-              "ru": "Настройки оптимизации: отсечение тумана, скрытие сущностей за стенами и другие оптимизации включаются в настройках."
+              "en": "Upscaler (MineSR): the world is drawn at a lower resolution and rebuilt to full; the interface stays sharp.",
+              "ru": "Upscaler (MineSR): мир рисуется в меньшем разрешении и достраивается до полного; интерфейс остаётся чётким."
             },
             {
               "en": "Hit Sound: recorded impact sounds.",
               "ru": "Hit Sound: записанные звуки ударов."
+            },
+            {
+              "en": "Frame Generation (MineSR): an extra frame between every two for smoother motion; works on its own or together with Upscaler.",
+              "ru": "Frame Generation (MineSR): дополнительный кадр между каждыми двумя для плавного движения; работает отдельно или вместе с Upscaler."
+            },
+            {
+              "en": "Explosion Wave: the blast runs along the ground, flows around walls and merges with nearby blasts; a gust of wind as it passes and a short stun up close.",
+              "ru": "Explosion Wave: волна идёт по земле, огибает стены и сливается с соседними взрывами; порыв ветра, когда она проходит мимо, и короткое оглушение вблизи."
+            },
+            {
+              "en": "Item Highlight: add any item with your own color.",
+              "ru": "Item Highlight: любой предмет со своим цветом."
+            },
+            {
+              "en": "Hand Swap: swap the main hand with your own key.",
+              "ru": "Hand Swap: смена ведущей руки своей клавишей."
+            },
+            {
+              "en": "Render Tweaks: hands no longer bob while walking.",
+              "ru": "Render Tweaks: руки не качаются при ходьбе."
+            },
+            {
+              "en": "Interface sounds: the new Rhythm set.",
+              "ru": "Звуки интерфейса: новый набор «Ритм»."
             }
           ]
         }

@@ -20,6 +20,13 @@ void main() {
 
     vec4 hand = texture(SceneSampler, uv);
     float mask = clamp(hand.a, 0.0, 1.0);
+    // Most of the screen is far from the hand: a 4-tap probe skips the full halo ring there (full-screen pass).
+    if (mask <= 0.001) {
+        vec2 o = screen.zw * 5.0;
+        float probe = coverageAt(uv + vec2(o.x, 0.0)) + coverageAt(uv - vec2(o.x, 0.0))
+                    + coverageAt(uv + vec2(0.0, o.y)) + coverageAt(uv - vec2(0.0, o.y));
+        if (probe <= 0.001) discard;
+    }
     // Glow halo: the silhouette sampled in a ring, wider than the item.
     float near = 0.0, far = 0.0;
     for (int i = 0; i < 8; i++) {

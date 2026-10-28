@@ -33,6 +33,13 @@ public final class UpscalerConfig {
 	public transient boolean lodBias = true;
 	/** Use the trained network for the upscale decisions; /minesr neural off for hand-tuned rules. */
 	public transient boolean neural = true;
+	/**
+	 * Frame generation: an extra frame between every two rendered frames. Smoother motion, not faster controls
+	 * (about half a frame of extra input delay). Driven by the Upscaler module.
+	 */
+	public transient boolean frameGeneration = false;
+	/** Debug: where the real frame is presented. 0 = mid-world (default), 1 = end of frame, 2 = never (cost test). */
+	public int frameGenPresent = 0;
 	/** Jitter on the same fixed sub-pixel grid the network was trained on (instead of free positions). */
 	public boolean gridJitter = true;
 	/** 2 = current upscale pass, 1 = the first version (kept for benchmarking). */

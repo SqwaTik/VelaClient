@@ -30,6 +30,8 @@ abstract class SwingAnimationsMixin {
         if(haste!=null)ticks=Math.max(1,6-(1+haste.getAmplifier()));
         else if(fatigue!=null)ticks=6+(1+fatigue.getAmplifier())*2;
         float partial=mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        module.apply(pose,arm==HumanoidArm.RIGHT,module.progress(progress,player.tickCount+partial,ticks,preview));ci.cancel();
+        // Vanilla's critical-hit condition at the moment of the swing.
+        boolean critical=!player.onGround()&&player.fallDistance>0&&!player.isInWater()&&!player.onClimbable()&&!player.isPassenger();
+        module.apply(pose,arm==HumanoidArm.RIGHT,module.progress(progress,player.tickCount+partial,ticks,preview,critical));ci.cancel();
     }
 }

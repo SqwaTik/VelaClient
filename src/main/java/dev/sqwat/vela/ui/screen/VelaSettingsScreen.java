@@ -86,17 +86,12 @@ public final class VelaSettingsScreen extends VelaScreen {
             cy=toggle(g,"animations","Анимации",c.animations,cy);
             cy=toggle(g,"motion","Уменьшение движения",c.reducedMotion,cy);
             cy=toggle(g,"mainmenu","Кастомное главное меню",c.replaceMainMenu,cy);
-            cy+=8;
-            VelaDraw.text(g,"ОПТИМИЗАЦИЯ",content.x(),cy,VelaTheme.TEXT_MUTED,VelaDraw.Weight.MEDIUM,7);
-            cy+=16;
-            // Vela's own optimizations: each skips invisible or repeated work and can be switched off to compare.
-            for(var setting:services.optimization().settings())
-                if(setting instanceof dev.sqwat.vela.module.setting.BooleanSetting flag)cy=toggle(g,"opt:"+flag.id(),flag.name(),flag.value(),cy);
+
         } else if(tab==2){
             cy=toggle(g,"sounds","Звуки интерфейса",c.uiSounds,cy);
             cy=slider(g,"volume","Громкость",c.uiSoundVolume,0,1,cy);
             Rect sound=new Rect(content.x(),cy,content.width(),27);
-            button(g,sound,dev.sqwat.vela.ui.Lang.tr("Звуковой профиль: ")+c.uiSoundPreset,false);controls.add(new Control("preset",sound));cy+=37;
+            button(g,sound,dev.sqwat.vela.ui.Lang.tr("Звуковой профиль: ")+dev.sqwat.vela.ui.Lang.tr(UiSounds.preset(c.uiSoundPreset)),false);controls.add(new Control("preset",sound));cy+=37;
             Rect preview=new Rect(content.x(),cy,content.width(),27);button(g,preview,"Прослушать",false);controls.add(new Control("preview",preview));cy+=37;
         } else {
             cy=toggle(g,"show-binds","Всегда показывать бинды",c.alwaysShowBinds,cy);
@@ -156,8 +151,6 @@ public final class VelaSettingsScreen extends VelaScreen {
         for(Control hit:controls)if(hit.rect.contains(event.x(),event.y())){
             var c=services.configs().current();
             if(hit.id.startsWith("#")){c.accentColor=hit.id;hex=hit.id;VelaTheme.setPrimary(VelaTheme.parseHex(hex));}
-            if(hit.id.startsWith("opt:"))for(var setting:services.optimization().settings())
-                if(setting instanceof dev.sqwat.vela.module.setting.BooleanSetting flag&&hit.id.equals("opt:"+flag.id()))flag.set(!flag.value());
             switch(hit.id){
                 case "scale","volume","brightness"->{dragging=hit.id;dragRect=hit.rect;dragScale=renderScale();drag(event.x(),event.y());}
                 case "bind-open"->capturingKey="open";
@@ -174,7 +167,7 @@ public final class VelaSettingsScreen extends VelaScreen {
                 }
                 case "resetbinds"->{for(var module:services.modules().all())module.bind(-1,"None",dev.sqwat.vela.module.ClientModule.BindMode.TOGGLE);}
                 case "preview"->UiSounds.play(services,true);
-                case "preset"->c.uiSoundPreset=c.uiSoundPreset.equals("Soft")?"Classic":"Soft";
+                case "preset"->c.uiSoundPreset=UiSounds.next(c.uiSoundPreset);
             }
             services.configs().requestSave();UiSounds.play(services,true);return true;
         }

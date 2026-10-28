@@ -17,12 +17,13 @@ public final class Crosshair extends ClientModule {
     private final NumberSetting spread=setting(new NumberSetting("spread","Отступ атаки","Расширение при перезарядке удара",10,0,20,.5));
     private final BooleanSetting dot=setting(new BooleanSetting("dot","Точка","Точка в центре прицела",false));
     private final BooleanSetting theme=setting(new BooleanSetting("client_color","Цвет клиента","Использовать основной цвет интерфейса",true));
+    private final dev.sqwat.vela.module.setting.ColorSetting color=setting(new dev.sqwat.vela.module.setting.ColorSetting("color","Цвет",0xF3F5FA));
     private final BooleanSetting target=setting(new BooleanSetting("target","Реакция на цель","Изменение цвета при наведении на сущность в пределах обычной дальности взаимодействия",true));
     private final BooleanSetting dynamic=setting(new BooleanSetting("dynamic","Динамика","Инерция круга и анимация при ударе; выключите для неподвижного прицела",true));
     private final dev.sqwat.vela.ui.animation.CrosshairMotion motion=new dev.sqwat.vela.ui.animation.CrosshairMotion();
     private final dev.sqwat.vela.ui.animation.FrameClock clock=new dev.sqwat.vela.ui.animation.FrameClock();
     private Object world,screen;
-    public Crosshair(){super("crosshair","Crosshair","Настраиваемый прицел с индикацией перезарядки",ModuleCategory.VISUALS);gap.visibleWhen(()->mode.value().equals("Крестик"));spread.visibleWhen(()->dynamic.value()&&mode.value().equals("Крестик"));}
+    public Crosshair(){super("crosshair","Crosshair","Настраиваемый прицел с индикацией перезарядки",ModuleCategory.VISUALS);gap.visibleWhen(()->mode.value().equals("Крестик"));color.visibleWhen(()->!theme.value());spread.visibleWhen(()->dynamic.value()&&mode.value().equals("Крестик"));}
     @Override protected void onDisable(){motion.reset();clock.reset();world=screen=null;}
     @Override public void onClientTick(){
         var mc=Minecraft.getInstance();
@@ -42,7 +43,7 @@ public final class Crosshair extends ClientModule {
         boolean circle=mode.value().equals("Круг");
         boolean targeted=mc.gui.screen()==null&&target.value()&&mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit&&hit.getEntity().isAlive();
         motion.update(mc.player.getViewYRot(partial),mc.player.getViewXRot(partial),targeted,dynamic.value()&&circle&&mc.gui.screen()==null,clock.step());
-        int base=theme.value()?VelaTheme.PRIMARY:VelaTheme.TEXT;
+        int base=theme.value()?VelaTheme.PRIMARY:0xFF000000|color.value();
         int color=VelaTheme.mix(base,reactionColor(base),motion.reaction());
         float x=g.guiWidth()/2f,y=g.guiHeight()/2f;
         if(circle){

@@ -53,7 +53,7 @@ public final class Shaders extends ClientModule {
     public boolean wetActive(){return wet.value()&&(reflection.value()>.5||wetness.value()>.5);}
     public float reflection(){return reflection.value().floatValue()/100;}
     public float wetness(){return wetness.value().floatValue()/100;}
-    public int reflectionSteps(){return switch(quality.value()){case "Низкое"->14;case "Высокое"->40;default->24;};}
+    public int reflectionSteps(){return switch(quality.value()){case "Низкое"->12;case "Высокое"->32;default->20;};}
     public int reflectionResolutionDivisor(){return switch(quality.value()){case "Низкое"->3;case "Высокое"->1;default->2;};}
     public boolean fogActive(){return fog.value()&&density.value()>.5;}
     public float fogDensity(){float d=density.value().floatValue()/100;return d*d*.05f+d*.002f;}

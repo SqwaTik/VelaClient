@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class HealthCounterMixin {
     @Inject(method={"setHealth","setAbsorptionAmount"},at=@At("HEAD"))
     private void vela$beforeHealth(float value,CallbackInfo ci){
-        if((Object)this instanceof Player player)HpCounter.baseline(player);
+        HpCounter.baseline((LivingEntity)(Object)this);
     }
     @Inject(method="onSyncedDataUpdated",at=@At("TAIL"))
     private void vela$health(EntityDataAccessor<?> key,CallbackInfo ci){
-        if((Object)this instanceof Player player)HpCounter.changed(player);
+        HpCounter.changed((LivingEntity)(Object)this);
     }
 }

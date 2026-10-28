@@ -16,8 +16,8 @@ layout(std140) uniform ReflectParams {
 in vec2 texCoord;
 out vec4 fragColor;
 
-const int MAX_STEPS = 48;
-const int REFINE_STEPS = 4;
+const int MAX_STEPS = 32;
+const int REFINE_STEPS = 3;
 const float STEP_GROWTH = 0.12;
 const float SURFACE_BIAS = 0.035;
 const float EDGE_FADE = 0.12;
@@ -57,7 +57,11 @@ vec3 faceNormal(vec2 uv, float depth, vec3 view, out float discontinuity) {
     if (len < 1e-8) return normalize(-view);
 
     n /= len;
-    return dot(n, -view) < 0.0 ? -n : n;
+    n = dot(n, -view) < 0.0 ? -n : n;
+    // Block faces are axis-aligned: snapping removes the striped normals that depth precision causes far away.
+    vec3 a = abs(n);
+    if (a.y >= a.x && a.y >= a.z) return vec3(0.0, sign(n.y), 0.0);
+    return a.x >= a.z ? vec3(sign(n.x), 0.0, 0.0) : vec3(0.0, 0.0, sign(n.z));
 }
 
 float interleavedGradient(vec2 pixel) {
@@ -71,7 +75,8 @@ float edgeFade(vec2 uv) {
 }
 
 void main() {
-    vec3 SkyTint = skyTintReflectivity.xyz;
+    // Neutral sky: wetness must not tint the ground (sunset or biome colours turned puddles red).
+    vec3 SkyTint = vec3(dot(skyTintReflectivity.xyz, vec3(0.2126, 0.7152, 0.0722)));
     float Reflectivity = skyTintReflectivity.w;
     vec3 SunDir = sunDirWetness.xyz;
     float Wetness = sunDirWetness.w;
@@ -96,9 +101,8 @@ void main() {
 
     vec3 incident = normalize(view);
 
-    float lum = dot(src.rgb, vec3(0.2126, 0.7152, 0.0722));
-    vec3 soaked = mix(vec3(lum), src.rgb, 1.0 + 0.4 * Wetness) * (1.0 - 0.32 * Wetness);
-    soaked = mix(src.rgb, soaked, mask);
+    // Wet material is only darker; no saturation boost, so it never shifts colour.
+    vec3 soaked = src.rgb * (1.0 - 0.32 * Wetness * mask);
 
     vec3 reflected = reflect(incident, normal);
     vec3 origin = view + normal * SURFACE_BIAS;
@@ -150,10 +154,12 @@ void main() {
         travelled += stepLength * (1.0 + float(i) * STEP_GROWTH);
     }
 
-    vec3 reflection = mix(SkyTint, texture(Scene, hitUv).rgb, hit);
+    vec3 hitColor = texture(Scene, hitUv).rgb;
+    vec3 reflection = mix(SkyTint, mix(vec3(dot(hitColor, vec3(0.2126, 0.7152, 0.0722))), hitColor, 0.55), hit);
 
     float fresnel = 0.02 + 0.98 * pow(1.0 - clamp(dot(normal, -incident), 0.0, 1.0), 5.0);
-    float amount = clamp(Reflectivity * (0.12 + 0.88 * fresnel), 0.0, 1.0) * mask;
+    float distanceFade = 1.0 - smoothstep(48.0, 96.0, length(view));
+    float amount = clamp(Reflectivity * (0.12 + 0.88 * fresnel), 0.0, 1.0) * mask * distanceFade;
 
     vec3 halfway = normalize(SunDir - incident);
     float specular = pow(max(dot(normal, halfway), 0.0), SPEC_POWER) * Gloss * mask * max(SunDir.y, 0.0);

@@ -28,9 +28,9 @@ public final class HitSound extends ClientModule {
     /** Display name → sound id under assets/velaclient/sounds.json. */
     private static final Map<String,String> BUILT_IN=new LinkedHashMap<>();
     static{
-        // Recorded sounds from Kenney's Impact Sounds (CC0, sounds/Kenney-Impact-License.txt).
-        BUILT_IN.put("Удар","hit.punch");BUILT_IN.put("Шлепок","hit.slap");BUILT_IN.put("Металл","hit.metal");BUILT_IN.put("Колокол","hit.bell");
-        BUILT_IN.put("Стекло","hit.glass");BUILT_IN.put("Тарелка","hit.plate");BUILT_IN.put("Дерево","hit.wood");BUILT_IN.put("Мягкий","hit.soft");
+        // Recorded sounds: Mixkit punches (Mixkit Sound Effects Free License) and Kimiko's hit sounds (CC0).
+        BUILT_IN.put("Сильный удар","hit.heavy");BUILT_IN.put("Удар в корпус","hit.body");BUILT_IN.put("Металл","hit.metal");
+        BUILT_IN.put("Стук","hit.knock");BUILT_IN.put("Эхо","hit.echo");BUILT_IN.put("Crime","hit.crime");
     }
     private static final String FILE_PREFIX="Файл: ";
     private final SoundClips clips=new SoundClips(folder());
@@ -40,7 +40,7 @@ public final class HitSound extends ClientModule {
         try{config=net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir();}catch(RuntimeException ignored){}
         return (config==null?java.nio.file.Path.of("config"):config).resolve("velaclient").resolve("hitsounds");
     }
-    private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("sound","Звук","Встроенный звук Vela или файл из папки hitsounds","Удар","Удар",this::choices));
+    private final DynamicChoiceSetting sound=setting(new DynamicChoiceSetting("sound","Звук","Встроенный звук Vela или файл из папки hitsounds","Сильный удар","Сильный удар",this::choices));
     private final NumberSetting volume=setting(new NumberSetting("volume","Громкость","Громкость звука",70,5,100,5));
     private final NumberSetting pitch=setting(new NumberSetting("pitch","Тон","Высота встроенного звука, %",100,50,200,5));
     private final BooleanSetting muteVanilla=setting(new BooleanSetting("mute_vanilla","Заглушить стандартный звук","Не проигрывать обычные звуки удара и ранения цели от ваших атак",true));

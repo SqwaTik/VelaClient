@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 public final class UpscalerRuntime {
 	private static UpscalerConfig config;
 	private static Upscaler upscaler;
+	private static FrameGen frameGen;
 	private static Object lastLevel;
 
 	private UpscalerRuntime() {
@@ -26,6 +27,29 @@ public final class UpscalerRuntime {
 	/** The upscaler, or null when the standalone MineSR mod is installed (or before startup). */
 	public static Upscaler upscaler() {
 		return upscaler;
+	}
+
+	/** Frame generation, or null when the standalone MineSR mod is installed (or before startup). */
+	public static FrameGen frameGen() {
+		return frameGen;
+	}
+
+	/** Frame generation pacing: called at a few points in each frame to show the waiting real frame on time. */
+	public static void presentPendingFrameIfDue() {
+		presentPendingFrameIfDue(false);
+	}
+
+	/** The pacing point: in the middle of the world's GPU work. */
+	public static void presentPendingFrameMidWorld() {
+		if (frameGen != null) {
+			frameGen.presentPendingNow(((dev.sqwat.vela.mixin.upscale.MinecraftAccessor) net.minecraft.client.Minecraft.getInstance()).minesr$windowSurface());
+		}
+	}
+
+	public static void presentPendingFrameIfDue(boolean lastChance) {
+		if (frameGen != null) {
+			frameGen.maybePresentPending(((dev.sqwat.vela.mixin.upscale.MinecraftAccessor) net.minecraft.client.Minecraft.getInstance()).minesr$windowSurface(), lastChance);
+		}
 	}
 
 	public static boolean available() {
@@ -44,6 +68,7 @@ public final class UpscalerRuntime {
 		}
 		config = UpscalerConfig.load();
 		upscaler = new Upscaler(config);
+		frameGen = new FrameGen(config, upscaler);
 		loadNetwork();
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			// New world or dimension: the old history shows a different place.
@@ -78,6 +103,15 @@ public final class UpscalerRuntime {
 	}
 
 	/** The module's choices, applied every tick; history restarts only when something that changes the image changed. */
+	/** The Frame Generation module: an extra frame between every two rendered ones, independent of upscaling. */
+	public static void applyFrameGen(boolean on) {
+		if (upscaler == null || config.frameGeneration == on) return;
+		if (!on) frameGen.release();
+		config.frameGeneration = on;
+		upscaler.resetHistory();
+	}
+
+	/** The Upscaler module's choices. */
 	public static void apply(boolean enabled, Quality quality, float sharpness, boolean neural, boolean lodBias) {
 		if (upscaler == null) return;
 		boolean reset = config.enabled != enabled || !config.quality.equals(quality.id()) || config.neural != neural;
@@ -123,13 +157,13 @@ public final class UpscalerRuntime {
 	}
 
 	private static int status(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("MineSR " + upscaler.describe()));
+		ctx.getSource().sendFeedback(Component.literal("MineSR " + upscaler.describe() + "; " + frameGen.describe()));
 		return 1;
 	}
 
 	/** Diagnostics for the game test: the status line /minesr prints. */
 	public static String describe() {
-		return upscaler == null ? "unavailable" : upscaler.describe();
+		return upscaler == null ? "unavailable" : upscaler.describe() + "; " + frameGen.describe();
 	}
 
 }

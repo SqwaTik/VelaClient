@@ -24,7 +24,6 @@ abstract class ParticleEventsMixin {
         if(level!=null&&packet.getEventId()==35){
             var entity=packet.getEntity(level);
             Particles.emit(entity,Particles.Event.TOTEM);
-            dev.sqwat.vela.module.utility.TalTracker.popped(entity);
         }
     }
 }

@@ -213,7 +213,7 @@ abstract class DashboardModules extends DashboardBase {
                 }
                 Rect control=new Rect(x,cursor+14,width,21);
                 VelaDraw.roundedRect(g,control.x(),control.y(),control.width(),21,5,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,.35f));
-                String label=select instanceof BooleanGroup group?group.label():groups.isMetrics(select)?String.join(", ",groups.metrics().options().stream().filter(o->groups.metric(o).value()).toList()):select.value();
+                String label=select instanceof BooleanGroup group?group.label():select.value();
                 if(label.isBlank())label="Не выбраны";
                 dev.sqwat.vela.ui.render.VelaIcons.draw(g,"contact_options",x+6,cursor+19,11,VelaTheme.TEXT_MUTED);
                 VelaDraw.text(g,VelaDraw.ellipsize(label,width-48,VelaDraw.Weight.REGULAR,8),x+23,cursor+20,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);

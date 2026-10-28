@@ -28,20 +28,28 @@ public final class DissolveBody {
     private final net.minecraft.client.renderer.rendertype.PreparedRenderType.Texture texture;
     private final int tint;
     private java.util.List<DissolveBody> layers=java.util.List.of();
-    public record PoseSnapshot(net.minecraft.client.renderer.entity.state.AvatarRenderState state){}
+    /** The render state of the last living frame: players, mobs and anything else with a living-entity renderer. */
+    public record PoseSnapshot(net.minecraft.client.renderer.entity.state.EntityRenderState state){}
     public static void initialize(){}
     private DissolveBody(float[] vertices,Vec3 origin,net.minecraft.client.renderer.rendertype.PreparedRenderType.Texture texture,int tint){
         this.vertices=vertices;this.origin=origin;this.texture=texture;this.tint=tint;
         projected=new float[vertices.length];depth=new float[vertices.length/20];order=new int[depth.length];
     }
-    public static PoseSnapshot remember(AbstractClientPlayer player){
-        var mc=Minecraft.getInstance();var renderer=mc.getEntityRenderDispatcher().getPlayerRenderer(player);
-        var state=renderer.createRenderState();renderer.extractRenderState(player,state,mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private static net.minecraft.client.renderer.entity.EntityRenderer renderer(net.minecraft.world.entity.LivingEntity entity){
+        var dispatcher=Minecraft.getInstance().getEntityRenderDispatcher();
+        return entity instanceof AbstractClientPlayer player?dispatcher.getPlayerRenderer(player):(net.minecraft.client.renderer.entity.EntityRenderer)dispatcher.getRenderer(entity);
+    }
+    @SuppressWarnings({"rawtypes","unchecked"})
+    public static PoseSnapshot remember(net.minecraft.world.entity.LivingEntity entity){
+        var mc=Minecraft.getInstance();var renderer=renderer(entity);
+        var state=(net.minecraft.client.renderer.entity.state.EntityRenderState)renderer.createRenderState();
+        renderer.extractRenderState(entity,state,mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
         return new PoseSnapshot(state);
     }
     @SuppressWarnings({"rawtypes","unchecked"})
-    public static DissolveBody capture(AbstractClientPlayer player,PoseSnapshot snapshot){
-        var mc=Minecraft.getInstance();var renderer=mc.getEntityRenderDispatcher().getPlayerRenderer(player);
+    public static DissolveBody capture(net.minecraft.world.entity.LivingEntity entity,PoseSnapshot snapshot){
+        var mc=Minecraft.getInstance();var renderer=renderer(entity);
         var state=snapshot.state();var origin=new Vec3(state.x,state.y,state.z);
         var parts=new java.util.ArrayList<DissolveBody>();
         var collector=(net.minecraft.client.renderer.SubmitNodeCollector)java.lang.reflect.Proxy.newProxyInstance(DissolveBody.class.getClassLoader(),new Class[]{net.minecraft.client.renderer.SubmitNodeCollector.class},(proxy,method,args)->{
@@ -64,7 +72,7 @@ public final class DissolveBody {
         });
         var pose=new PoseStack();var offset=renderer.getRenderOffset(state);pose.translate(offset.x,offset.y,offset.z);
         var camera=new net.minecraft.client.renderer.state.level.CameraRenderState();camera.pos=mc.gameRenderer.mainCamera().position();camera.orientation=new org.joml.Quaternionf(mc.gameRenderer.mainCamera().rotation());
-        var saved=save(renderer.getModel());
+        var saved=renderer instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer living?save(living.getModel()):java.util.List.<SavedPart>of();
         try{renderer.submit(state,pose,collector,camera);}finally{restore(saved);}
         if(parts.isEmpty())throw new IllegalStateException("No native model surfaces captured");
         var body=new DissolveBody(new float[0],origin,null,-1);body.layers=java.util.List.copyOf(parts);return body;

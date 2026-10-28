@@ -45,19 +45,39 @@ public abstract class GameRendererMixin {
 
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = WORLD_RENDER))
 	private void minesr$beginWorld(DeltaTracker deltaTracker, CallbackInfo ci) {
-		if (UpscalerRuntime.upscaler() != null) UpscalerRuntime.upscaler().beginLevel();
+		if (UpscalerRuntime.upscaler() == null) return;
+		UpscalerRuntime.presentPendingFrameIfDue();
+		UpscalerRuntime.upscaler().beginLevel();
 	}
 
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = WORLD_RENDER, shift = At.Shift.AFTER))
 	private void minesr$endWorld(DeltaTracker deltaTracker, CallbackInfo ci) {
-		if (UpscalerRuntime.upscaler() != null) UpscalerRuntime.upscaler().endLevel(mainRenderTarget);
+		if (UpscalerRuntime.upscaler() == null) return;
+		UpscalerRuntime.upscaler().endLevel(mainRenderTarget);
+		UpscalerRuntime.frameGen().beginOverlay(mainRenderTarget); // hand, effects and GUI go onto their own layer
+		UpscalerRuntime.presentPendingFrameIfDue();
+	}
+
+	@Inject(method = "render", at = @At("HEAD"))
+	private void minesr$frameStart(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
+		UpscalerRuntime.presentPendingFrameIfDue();
+	}
+
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;render()V"))
+	private void minesr$beforeGui(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
+		if (UpscalerRuntime.frameGen() == null) return;
+		UpscalerRuntime.frameGen().beforeGui();
+		UpscalerRuntime.presentPendingFrameIfDue(true);
 	}
 
 	/** Everything that draws the world asks for the main target through this method. */
 	@Inject(method = "mainRenderTarget", at = @At("HEAD"), cancellable = true)
 	private void minesr$lowResDuringWorld(CallbackInfoReturnable<RenderTarget> cir) {
-		if (UpscalerRuntime.upscaler() != null && UpscalerRuntime.upscaler().isLevelActive()) {
+		if (UpscalerRuntime.upscaler() == null) return;
+		if (UpscalerRuntime.upscaler().isLevelActive()) {
 			cir.setReturnValue(UpscalerRuntime.upscaler().lowTarget());
+		} else if (UpscalerRuntime.frameGen().isOverlayActive()) {
+			cir.setReturnValue(UpscalerRuntime.frameGen().overlayTarget());
 		}
 	}
 

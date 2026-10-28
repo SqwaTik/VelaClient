@@ -1,18 +1,119 @@
 {
-  "ui.open": {"sounds": ["velaclient:ui/switch_001"]},
-  "ui.close": {"sounds": ["velaclient:ui/switch_001"]},
-  "ui.tab": {"sounds": ["velaclient:ui/switch_001"]},
-  "ui.expand": {"sounds": ["velaclient:ui/open_002"]},
-  "ui.toggle": {"sounds": ["velaclient:ui/click_001"]},
-  "ui.favorite": {"sounds": ["velaclient:ui/confirmation_001"]},
-  "ui.slider": {"sounds": ["velaclient:ui/tick_001"]},
-  "hit.punch": {"sounds": ["velaclient:hit/punch"]},
-  "hit.slap": {"sounds": ["velaclient:hit/slap"]},
-  "hit.metal": {"sounds": ["velaclient:hit/metal"]},
-  "hit.bell": {"sounds": ["velaclient:hit/bell"]},
-  "hit.glass": {"sounds": ["velaclient:hit/glass"]},
-  "hit.plate": {"sounds": ["velaclient:hit/plate"]},
-  "hit.wood": {"sounds": ["velaclient:hit/wood"]},
-  "hit.soft": {"sounds": ["velaclient:hit/soft"]},
-  "death.wasted": {"sounds": ["velaclient:death/wasted"]}
+  "ui.open": {
+    "sounds": [
+      "velaclient:ui/switch_001"
+    ]
+  },
+  "ui.close": {
+    "sounds": [
+      "velaclient:ui/switch_001"
+    ]
+  },
+  "ui.tab": {
+    "sounds": [
+      "velaclient:ui/switch_001"
+    ]
+  },
+  "ui.expand": {
+    "sounds": [
+      "velaclient:ui/open_002"
+    ]
+  },
+  "ui.toggle": {
+    "sounds": [
+      "velaclient:ui/click_001"
+    ]
+  },
+  "ui.favorite": {
+    "sounds": [
+      "velaclient:ui/confirmation_001"
+    ]
+  },
+  "ui.rhythm.open": {
+    "sounds": [
+      "velaclient:ui/rhythm/open"
+    ]
+  },
+  "ui.rhythm.close": {
+    "sounds": [
+      "velaclient:ui/rhythm/close"
+    ]
+  },
+  "ui.rhythm.tab": {
+    "sounds": [
+      "velaclient:ui/rhythm/tab"
+    ]
+  },
+  "ui.rhythm.toggle": {
+    "sounds": [
+      "velaclient:ui/rhythm/toggle"
+    ]
+  },
+  "ui.rhythm.expand": {
+    "sounds": [
+      "velaclient:ui/rhythm/expand"
+    ]
+  },
+  "ui.rhythm.slider": {
+    "sounds": [
+      "velaclient:ui/rhythm/slider"
+    ]
+  },
+  "ui.slider": {
+    "sounds": [
+      "velaclient:ui/tick_001"
+    ]
+  },
+  "hit.heavy": {
+    "sounds": [
+      "velaclient:hit/heavy"
+    ]
+  },
+  "hit.body": {
+    "sounds": [
+      "velaclient:hit/body1",
+      "velaclient:hit/body2",
+      "velaclient:hit/body3"
+    ]
+  },
+  "hit.metal": {
+    "sounds": [
+      "velaclient:hit/metal"
+    ]
+  },
+  "hit.knock": {
+    "sounds": [
+      "velaclient:hit/knock"
+    ]
+  },
+  "hit.echo": {
+    "sounds": [
+      "velaclient:hit/echo"
+    ]
+  },
+  "hit.crime": {
+    "sounds": [
+      "velaclient:hit/crime"
+    ]
+  },
+  "death.wasted": {
+    "sounds": [
+      "velaclient:death/wasted"
+    ]
+  },
+  "explosion.wind": {
+    "sounds": [
+      "velaclient:explosion/wind"
+    ]
+  },
+  "explosion.ring": {
+    "sounds": [
+      "velaclient:explosion/ring"
+    ]
+  },
+  "explosion.rumble": {
+    "sounds": [
+      "velaclient:explosion/rumble"
+    ]
+  }
 }

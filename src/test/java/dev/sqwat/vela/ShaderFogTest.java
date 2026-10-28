@@ -19,12 +19,12 @@ class ShaderFogTest {
     @Test void wetDefaultsAndQualityAreBounded(){
         var shader=new Shaders();assertFalse(shader.wetActive());
         assertEquals(.7f,shader.reflection(),.00001f);assertEquals(.6f,shader.wetness(),.00001f);
-        assertEquals(24,shader.reflectionSteps());assertEquals(2,shader.reflectionResolutionDivisor());
+        assertEquals(20,shader.reflectionSteps());assertEquals(2,shader.reflectionResolutionDivisor());
         var wet=(BooleanSetting)shader.settings().stream().filter(s->s.id().equals("wet")).findFirst().orElseThrow();
         var quality=(ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("wet_quality")).findFirst().orElseThrow();
         wet.set(true);assertTrue(shader.wetActive());
-        quality.set("Низкое");assertEquals(14,shader.reflectionSteps());assertEquals(3,shader.reflectionResolutionDivisor());
-        quality.set("Высокое");assertEquals(40,shader.reflectionSteps());assertEquals(1,shader.reflectionResolutionDivisor());
+        quality.set("Низкое");assertEquals(12,shader.reflectionSteps());assertEquals(3,shader.reflectionResolutionDivisor());
+        quality.set("Высокое");assertEquals(32,shader.reflectionSteps());assertEquals(1,shader.reflectionResolutionDivisor());
         ((NumberSetting)shader.settings().stream().filter(s->s.id().equals("wet_reflection")).findFirst().orElseThrow()).set(0d);
         assertTrue(shader.wetActive());
         ((NumberSetting)shader.settings().stream().filter(s->s.id().equals("wet_amount")).findFirst().orElseThrow()).set(0d);

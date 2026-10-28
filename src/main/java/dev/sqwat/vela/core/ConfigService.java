@@ -53,7 +53,7 @@ public final class ConfigService implements AutoCloseable {
         String name = sanitize(rawName);
         if (pending != null) pending.cancel(false);
         if (store != null && config != null) flushQuietly();
-        store = new JsonFileStore<>(profilePath(name), ClientConfig.class, ClientConfig::new);
+        store = JsonFileStore.encoded(profilePath(name), ClientConfig.class, ClientConfig::new);
         config = store.load();
         if(config.favorites==null)config.favorites=new java.util.LinkedHashSet<>();
         if(config.expandedModules==null)config.expandedModules=new java.util.LinkedHashSet<>();
@@ -105,7 +105,7 @@ public final class ConfigService implements AutoCloseable {
     public synchronized void saveToProfile(String target)throws IOException {
         captureModules();ClientConfig snapshot=GSON.fromJson(GSON.toJson(config),ClientConfig.class);
         snapshot.activeProfile=sanitize(target);
-        new JsonFileStore<>(profilePath(snapshot.activeProfile),ClientConfig.class,ClientConfig::new).save(snapshot);
+        JsonFileStore.encoded(profilePath(snapshot.activeProfile),ClientConfig.class,ClientConfig::new).save(snapshot);
         profileRefreshAt=0;
     }
 
@@ -136,15 +136,25 @@ public final class ConfigService implements AutoCloseable {
 
     public synchronized String shareProfile(String source)throws IOException {
         flush();
-        var saved=new JsonFileStore<>(profilePath(source),ClientConfig.class,ClientConfig::new).load();
-        return ConfigShare.encode(saved);
+        var saved=JsonFileStore.encoded(profilePath(source),ClientConfig.class,ClientConfig::new).load();
+        return ConfigShare.encode(saved,settingDefaults());
+    }
+    /** Every module setting's default, so a share key only carries what the user actually changed. */
+    private java.util.Map<String,java.util.Map<String,com.google.gson.JsonElement>> settingDefaults(){
+        var all=new java.util.HashMap<String,java.util.Map<String,com.google.gson.JsonElement>>();
+        for(ClientModule module:modules.all()){
+            var values=new java.util.HashMap<String,com.google.gson.JsonElement>();
+            for(Setting<?> setting:module.settings())values.put(setting.id(),GSON.toJsonTree(setting.defaultValue()));
+            all.put(module.id(),values);
+        }
+        return all;
     }
     public synchronized String importProfile(String key)throws IOException {
         ClientConfig imported=ConfigShare.decode(key.strip());
         String name="imported";int index=2;
         while(java.nio.file.Files.exists(profilePath(name)))name="imported-"+index++;
         imported.activeProfile=name;
-        new JsonFileStore<>(profilePath(name),ClientConfig.class,ClientConfig::new).save(imported);
+        JsonFileStore.encoded(profilePath(name),ClientConfig.class,ClientConfig::new).save(imported);
         selectProfile(name);return name;
     }
     public synchronized String duplicateProfile(String source)throws IOException {
@@ -165,7 +175,7 @@ public final class ConfigService implements AutoCloseable {
             try{activeProfileStore.save(target);}
             catch(IOException failure){try{java.nio.file.Files.move(to,from);}catch(IOException rollback){failure.addSuppressed(rollback);}throw failure;}
             config.activeProfile=target;
-            store=new JsonFileStore<>(to,ClientConfig.class,ClientConfig::new);
+            store=JsonFileStore.encoded(to,ClientConfig.class,ClientConfig::new);
             requestSave();
         }
         profileRefreshAt=0;

@@ -18,7 +18,7 @@ class SwingAnimationsTest {
     }
     @Test void allReferenceModesHaveFiniteDeterministicPoses(){
         var m=new SwingAnimations();var mode=(ChoiceSetting)setting(m,"mode");
-        assertEquals(13,SwingAnimations.MODES.size());
+        assertEquals(10,SwingAnimations.MODES.size());
         for(String name:SwingAnimations.MODES){
             mode.set(name);
             for(boolean right:new boolean[]{true,false})for(float p:new float[]{0,.01f,.25f,.5f,.9f,1}){
@@ -28,6 +28,17 @@ class SwingAnimationsTest {
         }
         var pose=new PoseStack();m.apply(pose,true,Float.NaN);assertEquals(new Matrix4f(),pose.last().pose());
         mode.set("Стандарт");m.setEnabled(true);assertFalse(m.applies(true,false,false));
+    }
+    /** Every mode starts and ends at rest, like vanilla: the item never stays turned between swings. */
+    @Test void everyModeRestsBeforeAndAfterTheSwing(){
+        var m=new SwingAnimations();var mode=(ChoiceSetting)setting(m,"mode");
+        for(String name:SwingAnimations.MODES){
+            mode.set(name);
+            for(float p:new float[]{0,1}){
+                var pose=new PoseStack();m.apply(pose,true,p);
+                assertTrue(pose.last().pose().equals(new Matrix4f(),1e-4f),name+" at "+p);
+            }
+        }
     }
     @Test void durationUsesIndependentVisualTimelineAndResets(){
         var m=new SwingAnimations();((NumberSetting)setting(m,"duration")).set(2d);

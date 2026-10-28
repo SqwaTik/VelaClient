@@ -15,7 +15,7 @@ public final class ClientConfig {
     public boolean friendVisualsExpanded = false;
     public boolean uiSounds = true;
     public float uiSoundVolume = 0.55f;
-    public String uiSoundPreset = "Soft";
+    public String uiSoundPreset = "Ритм";
     public String accentColor = "#756CFF";
     /** Interface language: "en" (default) or "ru". */
     public String language = "en";

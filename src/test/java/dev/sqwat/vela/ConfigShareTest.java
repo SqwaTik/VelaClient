@@ -42,7 +42,7 @@ class ConfigShareTest {
   var config=new ClientConfig();config.accentColor="#123456";
   var state=new ClientConfig.ModuleState();state.enabled=true;state.settings.put("amount",new com.google.gson.JsonPrimitive(42));config.modules.put("example",state);
   String key=ConfigShare.encode(config);var restored=ConfigShare.decode(key);
-  assertTrue(key.startsWith("VELA3:"));assertEquals(config.accentColor,restored.accentColor);
+  assertTrue(key.startsWith("VELA4:"));assertEquals(config.accentColor,restored.accentColor);
   assertTrue(restored.animations);assertEquals(-1,restored.modules.get("example").boundKey);
   assertEquals(42,restored.modules.get("example").settings.get("amount").getAsInt());
   assertTrue(ConfigShare.encode(new ClientConfig()).length()<40);

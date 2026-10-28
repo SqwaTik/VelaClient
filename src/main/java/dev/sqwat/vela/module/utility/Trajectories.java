@@ -127,19 +127,30 @@ public final class Trajectories extends ClientModule {
             }
         }else preview=null;
         int tint=0xFF000000|((theme.value()?VelaTheme.PRIMARY:color.value())&0xFFFFFF);
-        if(preview!=null)submitPath(preview,preview.points.getFirst(),tint);
+        if(preview!=null)submitPath(preview,preview.points.getFirst(),tint,2.5,4.5);
         if(flight.value())for(var path:paths){
             var entity=mc.level.getEntity(path.entityId);
             if(entity!=null&&!entity.isRemoved())submitPath(path,entity.getPosition(partial),tint);
         }
     }
-    private static void submitPath(Path path,Vec3 start,int tint){
-        // Only the moving end is interpolated; the predicted impact stays in world space.
-        Vec3 previous=start;
+    private static void submitPath(Path path,Vec3 start,int tint){submitPath(path,start,tint,0,0);}
+    /**
+     * {@code hidden} blocks from the start are not drawn and the next {@code fade} fade in. For the throw preview the
+     * path starts at the eyes: drawn from there it would cover the crosshair and swing with the walking bob (the
+     * camera moves, the line right in front of it moves the most). The throw itself is unchanged.
+     */
+    private static void submitPath(Path path,Vec3 start,int tint,double hidden,double fade){
+        Vec3 previous=start;double travelled=0;
         for(int i=1;i<path.points.size();i++){
             Vec3 point=path.points.get(i);
-            if(previous.distanceToSqr(point)>1e-8)
-                net.minecraft.gizmos.Gizmos.line(previous,point,tint,3.5f).setAlwaysOnTop();
+            double step=previous.distanceTo(point),from=travelled;travelled+=step;
+            if(step>1e-4&&travelled>hidden){
+                // Clip the first visible segment to where the line begins.
+                Vec3 a=from<hidden?previous.add(point.subtract(previous).scale((hidden-from)/step)):previous;
+                double alpha=fade<=0?1:Math.clamp((Math.max(from,hidden)-hidden)/fade,.15,1);
+                int color=((int)Math.round(((tint>>>24)&255)*alpha)<<24)|(tint&0xFFFFFF);
+                net.minecraft.gizmos.Gizmos.line(a,point,color,3.5f).setAlwaysOnTop();
+            }
             previous=point;
         }
     }

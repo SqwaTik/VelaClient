@@ -11,7 +11,7 @@ import java.util.List;
 
 /** Shares Target HUD selection; performs no entity search or gameplay action. */
 public final class TargetESP extends ClientModule {
-    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Анимированная подсветка текущей цели","Призраки",List.of("Ромб","Кружок","Crystal","Призраки","Призраки 2")));
+    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Анимированная подсветка текущей цели","Призраки",List.of("Ромб","Кружок","Crystal","Призраки")));
     private LivingEntity target;
     private long acquired,expires;
     public TargetESP(){super("target_esp","TargetESP","Анимированные эффекты вокруг текущей цели",ModuleCategory.VISUALS);}
@@ -89,8 +89,8 @@ public final class TargetESP extends ClientModule {
                 var pos=center.add(Math.cos(phase)*radius,Math.sin(phase*2)*target.getBbHeight()*.35,Math.sin(phase)*radius);
                 sprites.draw(g,GLOW,180,180,pos,.34f,0,NeonGeometry.tint(VelaTheme.PRIMARY,alpha*.18));
             }
-        }else if(mode.value().startsWith("Призраки")){
-            boolean helix=mode.value().equals("Призраки 2");double radius=Math.max(.48,target.getBbWidth()*.95);
+        }else if(mode.value().equals("Призраки")){
+            boolean helix=false;double radius=Math.max(.48,target.getBbWidth()*.95);
             for(int orbit=0;orbit<3;orbit++)for(int tail=9;tail>=0;tail--){
                 double phase=time*2.8+orbit*Math.PI*2/3-tail*.10;
                 double lift=helix?Math.sin(phase*1.4)*target.getBbHeight()*.40:Math.sin(phase+orbit)*.28;

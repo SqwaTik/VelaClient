@@ -12,6 +12,10 @@ public final class ItemHighlight extends ClientModule {
     private final Map<String,BooleanSetting> groups=new LinkedHashMap<>();
     private final NumberSetting opacity=setting(new NumberSetting("opacity","Непрозрачность","Яркость фона предмета в процентах",25,5,70,5));
     private final BooleanSetting theme=setting(new BooleanSetting("client_color","Цвет клиента","Единый цвет темы вместо цветов категорий",false));
+    private final ItemColorsSetting custom=setting(new ItemColorsSetting("custom_items","Свои предметы","Любые предметы со своим цветом"));
+    {custom.visibleWhen(()->false);setting(new ActionSetting("edit_items","Свои предметы и цвета",()->net.minecraft.client.Minecraft.getInstance().gui.setScreen(
+        new dev.sqwat.vela.ui.screen.ItemHighlightScreen(net.minecraft.client.Minecraft.getInstance().gui.screen(),this))));}
+    public ItemColorsSetting custom(){return custom;}
     public ItemHighlight(){
         super("item_highlight","Item Highlight","Цветные подложки важных предметов в интерфейсе",ModuleCategory.VISUALS);
         group("totems","Тотемы");group("pearls","Жемчуг и хорус");group("apples","Золотые яблоки");
@@ -29,8 +33,13 @@ public final class ItemHighlight extends ClientModule {
             default->null;
         };
     }
+    /** {@code item}: the full id ("minecraft:diamond"). Items added in the editor win over the categories. */
     public int background(String item){
         if(!enabled())return 0;
+        Integer own=custom.colors().get(item);
+        if(own!=null)return ((int)Math.round(opacity.value()*2.55)<<24)|own;
+        if(!item.startsWith("minecraft:"))return 0;
+        item=item.substring("minecraft:".length());
         String group=category(item);if(group==null||!groups.get(group).value())return 0;
         int rgb=theme.value()?VelaTheme.PRIMARY:switch(group){
             case "totems","apples"->0xF3BE52;case "pearls"->0x62CEC0;case "potions"->0xB78AF3;

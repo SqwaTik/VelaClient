@@ -16,9 +16,10 @@ import java.util.OptionalLong;
  */
 final class GpuTimer implements AutoCloseable {
 	/** Stamp points, in frame order. A stage's time is from the previous stamp to its own. */
-	static final int WORLD_START = 0, WORLD_END = 1, MOTION_END = 2, DECIDE_END = 3, TEMPORAL_END = 4, UPSCALE_END = 5;
-	static final String[] STAGES = {"", "world", "motion", "decide", "temporal", "sharpen"};
-	private static final int STAMPS = 6;
+	static final int WORLD_START = 0, WORLD_END = 1, MOTION_END = 2, DECIDE_END = 3, TEMPORAL_END = 4, UPSCALE_END = 5,
+			FG_START = 6, FG_END = 7;
+	static final String[] STAGES = {"", "world", "motion", "decide", "temporal", "sharpen", "", "framegen"};
+	private static final int STAMPS = 8;
 	private static final int SLOTS = 4; // frames in flight before a slot is reused
 	private static final double SMOOTHING = 0.05;
 
@@ -57,7 +58,11 @@ final class GpuTimer implements AutoCloseable {
 			return;
 		}
 		pending[s] = false;
-		OptionalLong[] t = pool.getValues(s * STAMPS, STAMPS);
+		// Only stamps written this frame: reading a query that was never issued is a GL error on every frame.
+		OptionalLong[] t = new OptionalLong[STAMPS];
+		for (int i = 0; i < STAMPS; i++) {
+			t[i] = written[s][i] ? pool.getValue(s * STAMPS + i) : OptionalLong.empty();
+		}
 		if (t[WORLD_START].isEmpty() || t[WORLD_END].isEmpty()) {
 			return; // not ready yet; drop this sample rather than stall
 		}
@@ -75,6 +80,9 @@ final class GpuTimer implements AutoCloseable {
 					previous = t[i].getAsLong();
 				}
 			}
+		}
+		if (written[s][FG_START] && written[s][FG_END] && t[FG_START].isPresent() && t[FG_END].isPresent()) {
+			stageMs[FG_END] = smooth(stageMs[FG_END], (t[FG_END].getAsLong() - t[FG_START].getAsLong()) * period);
 		}
 		if (recording != null) {
 			recording.add(new double[] {world, upscale});
@@ -116,8 +124,8 @@ final class GpuTimer implements AutoCloseable {
 	/** Per-pass breakdown, e.g. "motion 0.05, decide 0.10, temporal 0.20, sharpen 0.06". */
 	String stages() {
 		StringBuilder b = new StringBuilder();
-		for (int i = MOTION_END; i <= UPSCALE_END; i++) {
-			if (!Double.isNaN(stageMs[i])) {
+		for (int i = MOTION_END; i <= FG_END; i++) {
+			if (!STAGES[i].isEmpty() && !Double.isNaN(stageMs[i])) {
 				b.append(b.isEmpty() ? "" : ", ").append(STAGES[i]).append(String.format(" %.2f", stageMs[i]));
 			}
 		}

@@ -27,7 +27,10 @@ public final class Wasted extends ClientModule {
     private static final SoundEvent SOUND=SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("velaclient","death.wasted"));
     private static final long BUTTON_FADE=600_000_000L;
     private final ChoiceSetting caption=setting(new ChoiceSetting("caption","Надпись","Текст после смерти","ПОТРАЧЕНО",java.util.List.of("ПОТРАЧЕНО","WASTED","ВЫ ПОГИБЛИ")));
+    private final BooleanSetting clientColor=setting(new BooleanSetting("client_color","Цвет клиента","Надпись в цвете темы Vela",true));
     private final ColorSetting color=setting(new ColorSetting("color","Цвет надписи",0xC8102E));
+    {color.visibleWhen(()->!clientColor.value());}
+    private int textColor(){return (clientColor.value()?dev.sqwat.vela.ui.render.VelaTheme.PRIMARY:color.value())&0xFFFFFF;}
     private final NumberSetting duration=setting(new NumberSetting("duration","Длительность","Время эффекта до появления кнопок, мс",3000,1000,6000,250));
     private final BooleanSetting orbit=setting(new BooleanSetting("orbit","Облёт камеры","Камера медленно облетает место смерти",true));
     private final NumberSetting orbitSpeed=setting(new NumberSetting("orbit_speed","Скорость облёта","Градусов в секунду",25,5,90,5));
@@ -129,7 +132,7 @@ public final class Wasted extends ClientModule {
         try{
             g.pose().translate(width/2f,y);
             VelaDraw.centeredText(g,text,1.5f,1.5f,Math.round(alpha*.7f)<<24,VelaDraw.Weight.SEMIBOLD,size);
-            VelaDraw.centeredText(g,text,0,0,(alpha<<24)|(color.value()&0xFFFFFF),VelaDraw.Weight.SEMIBOLD,size);
+            VelaDraw.centeredText(g,text,0,0,(alpha<<24)|textColor(),VelaDraw.Weight.SEMIBOLD,size);
             if(cause!=null){
                 String reason=VelaDraw.ellipsize(cause.getString(),width-40,VelaDraw.Weight.REGULAR,9);
                 if(!reason.isEmpty())VelaDraw.centeredText(g,reason,0,size+8,(Math.round(alpha*.85f)<<24)|(VelaTheme.TEXT_SECONDARY&0xFFFFFF),VelaDraw.Weight.REGULAR,9);

@@ -33,13 +33,15 @@ public final class ViewModelEditorScreen extends VelaScreen {
     }
     @Override protected float interfaceScale(){return services.configs().current().uiScale;}
     @Override protected void renderVela(GuiGraphicsExtractor g,int mx,int my,float delta){
-        float reveal=controls.animate("panel-collapse",collapsed?1:0,12);
+        float raw=controls.animate("panel-collapse",collapsed?1:0,12),reveal=raw*raw*(3-2*raw);
         keepVisible();
-        int x=Math.round(12-12*reveal),h=Math.round(352-304*reveal),y=Math.round(Math.max(12,(height-352)/2f)*(1-reveal)+Math.max(12,height*.25f)*reveal),w=Math.round(236-208*reveal);
+        // The panel folds into its own top-left corner: the corner stays put and the toggle rides the right edge,
+        // so nothing jumps across the screen while it animates.
+        int x=12,y=Math.round(Math.max(12,(height-352)/2f)),w=Math.round(236-200*reveal),h=Math.round(352-316*reveal);
         panel=new Rect(x,y,w,h);fields.clear();tracks.clear();hands.clear();
         g.fillGradient(0,height/3,width,height,VelaTheme.PRIMARY&0xFFFFFF,0x66000000|(VelaTheme.PRIMARY&0xFFFFFF));
         VelaDraw.roundedOutline(g,x,y,w,h,9,VelaTheme.BORDER,VelaTheme.WINDOW);
-        collapse=new Rect(x+Math.round(180-177*reveal),y+Math.round(8+5*reveal),22,22);
+        collapse=new Rect(x+w-Math.round(56-27*reveal),y+Math.round(8-1*reveal),22,22);
         UiClip.enable(g,x,y,x+w,y+h);
         if(reveal<.99f){
         VelaIcons.draw(g,"move",x+12,y+12,14,VelaTheme.PRIMARY);

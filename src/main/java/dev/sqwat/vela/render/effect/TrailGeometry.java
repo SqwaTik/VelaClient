@@ -13,9 +13,12 @@ public final class TrailGeometry {
             return new Segment(a.position().add(0,.12,0),end.add(0,.12,0),a.position().add(0,top,0),end.add(0,top,0));
         }
         double phase=a.born()/1e9*8,finish=phase+(b.born()-a.born())/1e9*8*head;
-        double radius=.08*width,mid=height*.5;
-        Vec3 startOffset=new Vec3(Math.cos(phase)*radius,Math.sin(phase)*mid*.8,Math.sin(phase)*radius);
-        Vec3 endOffset=new Vec3(Math.cos(finish)*radius,Math.sin(finish)*mid*.8,Math.sin(finish)*radius);
+        // A helix around the direction of travel: sideways and vertical, never along the path (that tangled it).
+        double radius=.12*width,mid=height*.5,lift=Math.min(mid*.8,radius*1.4);
+        double dx=b.position().x-a.position().x,dz=b.position().z-a.position().z,len=Math.hypot(dx,dz);
+        double sx=len>1e-4?-dz/len:1,sz=len>1e-4?dx/len:0;
+        Vec3 startOffset=new Vec3(sx*Math.cos(phase)*radius,Math.sin(phase)*lift,sz*Math.cos(phase)*radius);
+        Vec3 endOffset=new Vec3(sx*Math.cos(finish)*radius,Math.sin(finish)*lift,sz*Math.cos(finish)*radius);
         Vec3 startCenter=a.position().add(0,mid,0),endCenter=end.add(0,mid,0);
         return new Segment(startCenter.add(startOffset),endCenter.add(endOffset),startCenter.subtract(startOffset),endCenter.subtract(endOffset));
     }

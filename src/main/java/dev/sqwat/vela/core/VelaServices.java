@@ -46,6 +46,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.HitBubbles());
         modules.register(new dev.sqwat.vela.module.visual.MaceSmash());
         modules.register(new dev.sqwat.vela.module.visual.UpscalerModule());
+        modules.register(new dev.sqwat.vela.module.visual.FrameGeneration());
         modules.register(new dev.sqwat.vela.module.utility.LootMemory());
         modules.register(new dev.sqwat.vela.module.visual.Animations());
         modules.register(new dev.sqwat.vela.module.visual.SwingAnimations());
@@ -77,13 +78,11 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.Wasted());
         modules.register(new dev.sqwat.vela.module.visual.CustomHotbar());
         modules.register(new dev.sqwat.vela.module.utility.HandSwap());
-        modules.register(new dev.sqwat.vela.module.utility.TalTracker());
         modules.register(new dev.sqwat.vela.module.visual.BrewViewer());
         modules.register(new dev.sqwat.vela.module.utility.AutoReconnect());
         modules.register(new dev.sqwat.vela.module.utility.ChatTweaks());
         modules.register(new dev.sqwat.vela.module.utility.ContainerTools());
         modules.register(new dev.sqwat.vela.module.utility.Death());
-        modules.register(new dev.sqwat.vela.module.utility.FoodInfo());
         modules.register(new dev.sqwat.vela.module.utility.StorageIndex());
         modules.register(new dev.sqwat.vela.module.visual.DeathRecap());
         modules.register(new dev.sqwat.vela.module.visual.TabPing());

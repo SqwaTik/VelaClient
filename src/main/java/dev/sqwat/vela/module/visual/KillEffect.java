@@ -17,7 +17,7 @@ import java.util.*;
 
 /** Death presentation for the observed target; bounded to three short-lived effects. */
 public final class KillEffect extends ClientModule {
-    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Луч с неба или растворение модели погибшего игрока","Луч",List.of("Луч","Растворение")));
+    private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Режим","Луч с неба или растворение модели погибшего игрока или моба","Луч",List.of("Луч","Растворение")));
     private final NumberSetting duration=setting(new NumberSetting("duration","Длительность, с","Время луча и растворения",1.1,.3,5,.1));
     private record Effect(Vec3 center,long born,long lifetime,UUID player,DissolveBody body){}
     public long lifetimeNanos(){return Math.round(duration.value()*1_000_000_000L);}
@@ -37,18 +37,22 @@ public final class KillEffect extends ClientModule {
             if(tracked.level()==mc.level&&tracked.isDeadOrDying()&&now-seen<3_000_000_000L){
                 if(effects.size()>=3)effects.removeFirst();
                 DissolveBody body=null;
-                if(mode.value().equals("Растворение")&&remembered!=null&&tracked instanceof AbstractClientPlayer player){
-                    try{body=DissolveBody.capture(player,remembered);}
-                    catch(RuntimeException error){org.slf4j.LoggerFactory.getLogger("Vela").warn("Unable to capture death model; using beam effect",error);}
+                boolean dissolve=mode.value().equals("Растворение");
+                if(dissolve&&remembered!=null){
+                    try{body=DissolveBody.capture(tracked,remembered);}
+                    catch(RuntimeException error){org.slf4j.LoggerFactory.getLogger("Vela").warn("Unable to capture death model",error);}
                 }
-                effects.addLast(new Effect(tracked.position(),now,lifetimeNanos(),tracked.getUUID(),body));
-                mc.level.playLocalSound(tracked.getX(),tracked.getY(),tracked.getZ(),body==null?net.minecraft.sounds.SoundEvents.BEACON_ACTIVATE:net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH,net.minecraft.sounds.SoundSource.PLAYERS,.55f,body==null?1.35f:.85f,false);
+                // The chosen mode only: a dissolve that could not capture the model shows nothing, never the beam.
+                if(!dissolve||body!=null)effects.addLast(new Effect(tracked.position(),now,lifetimeNanos(),tracked.getUUID(),body));
+                if(!dissolve||body!=null)mc.level.playLocalSound(tracked.getX(),tracked.getY(),tracked.getZ(),body==null?net.minecraft.sounds.SoundEvents.BEACON_ACTIVATE:net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH,net.minecraft.sounds.SoundSource.PLAYERS,.55f,body==null?1.35f:.85f,false);
                 tracked=null;remembered=null;
             }else if(tracked.isRemoved()||now-seen>=3_000_000_000L){tracked=null;remembered=null;}
         }
         var selected=services.hudLayout().visualTarget(mc);
         if(selected!=null&&selected.isAlive()){if(selected!=tracked)remembered=null;tracked=selected;seen=now;}
-        if(mode.value().equals("Растворение")&&tracked instanceof AbstractClientPlayer player&&player.isAlive())remembered=DissolveBody.remember(player);
+        if(mode.value().equals("Растворение")&&tracked!=null&&tracked.isAlive()){
+            try{remembered=DissolveBody.remember(tracked);}catch(RuntimeException error){remembered=null;}
+        }
     }
     public boolean replacesCorpse(LivingEntity entity){
         if(!enabled()||world!=entity.level()||!entity.isDeadOrDying())return false;

@@ -73,14 +73,18 @@ public final class DashTrail extends ClientModule {
     public void submit(){
         var mc=Minecraft.getInstance();if(!enabled()||world!=mc.level||!dev.sqwat.vela.ui.hud.HudVisibility.allowed(mc))return;
         long now=System.nanoTime();double life=duration.value()*1e9;int rgb=theme.value()?VelaTheme.PRIMARY:color.value();
+        boolean firstPersonView=mc.options.getCameraType().isFirstPerson();var camera=mc.gameRenderer.mainCamera().position();
         for(var path:paths){
-            if(path.local&&!firstPerson.value()&&mc.options.getCameraType().isFirstPerson())continue;
+            if(path.local&&firstPersonView&&!firstPerson.value())continue;
             var points=path.points;
             for(int i=1;i<points.size();i++){
                 var a=points.get(i-1);var b=points.get(i);
                 double head=i==points.size()-1?Math.clamp((now-b.born())/50_000_000d,0,1):1;
                 double age=Math.clamp((now-a.born())/life,0,1);
-                double fade=1-Math.pow(age,4);if(fade<.01)continue;
+                double fade=1-Math.pow(age,4);
+                // Own trail in first person: the part around the camera would wrap the view, so it starts behind you.
+                if(path.local&&firstPersonView)fade*=clearance(camera,a.position(),b.position());
+                if(fade<.01)continue;
                 var segment=head>=1?path.segments.get(i-1):TrailGeometry.segment(a,b,path.height,path.width,path.spiral,head);
                 if(!path.spiral){
                     net.minecraft.gizmos.Gizmos.rect(segment.firstStart(),segment.secondStart(),segment.secondEnd(),segment.firstEnd(),net.minecraft.gizmos.GizmoStyle.fill(NeonGeometry.tint(rgb,fade*.88)));
@@ -93,6 +97,12 @@ public final class DashTrail extends ClientModule {
             }
         }
     }
+    /** 0 within 1.6 blocks of the camera (horizontally), fading in to 1 by 3.2 blocks. */
+    private static double clearance(Vec3 camera,Vec3 a,Vec3 b){
+        double near=Math.min(Math.hypot(a.x-camera.x,a.z-camera.z),Math.hypot(b.x-camera.x,b.z-camera.z));
+        double t=Math.clamp((near-1.6)/1.6,0,1);
+        return t*t*(3-2*t);
+    }
     private static void trailLine(Vec3 a,Vec3 b,int rgb,double alpha){
         net.minecraft.gizmos.Gizmos.line(a,b,NeonGeometry.tint(rgb,alpha*.3),8);
         net.minecraft.gizmos.Gizmos.line(a,b,NeonGeometry.tint(rgb,alpha),4);
@@ -102,8 +112,10 @@ public final class DashTrail extends ClientModule {
         var sprites=new dev.sqwat.vela.render.effect.WorldSprite(true);long now=System.nanoTime();double life=duration.value()*1e9;
         int rgb=theme.value()?VelaTheme.PRIMARY:color.value();
         for(var p:particles){
-            if(p.local&&!firstPerson.value()&&mc.options.getCameraType().isFirstPerson())continue;
+            boolean own=p.local&&mc.options.getCameraType().isFirstPerson();
+            if(own&&!firstPerson.value())continue;
             double age=Math.clamp((now-p.born)/life,0,1),fade=Math.sin(Math.PI*age)*(1-age);
+            if(own)fade*=clearance(mc.gameRenderer.mainCamera().position(),p.position,p.position);
             if(fade<.01)continue;
             int frame=p.frame+1,tw=frame<=3?48:frame<=16?96:144,th=frame>=13&&frame<=16?96:48;
             sprites.draw(g,FRAMES[p.frame],tw,th,p.position.add(p.velocity.scale(age)),(float)(width.value()*.24*(1-age*.4)),(float)(p.frame*.7+age),NeonGeometry.tint(rgb,fade));

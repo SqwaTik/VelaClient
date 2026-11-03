@@ -1,6 +1,38 @@
 {
   "versions": [
     {
+      "version": "0.2.1",
+      "date": "2026-11-03",
+      "title": {
+        "en": "Render optimization and skin fix",
+        "ru": "Оптимизация рендера и исправление скинов"
+      },
+      "sections": [
+        {
+          "kind": "new",
+          "items": [
+            {
+              "en": "Render optimization: a new set of render optimizations (fewer GPU waits and framebuffer switches, a vertex ring buffer, HUD at the monitor rate, LOD for distant items, mobs, players and particles, caches for text, signs and block entities, multithreaded particles and models) with its own settings screen, an in-game FPS panel (F6) and automatic tuning for your device. Open it from Settings > Interface > Render optimization. With VulkanMod the OpenGL-only parts stay off.",
+              "ru": "Оптимизация рендера: новый набор оптимизаций (меньше ожиданий видеокарты и переключений буферов кадра, кольцевой буфер вершин, HUD с частотой монитора, LOD для дальних предметов, мобов, игроков и частиц, кэши текста, табличек и блок-сущностей, многопоточные частицы и модели) со своим окном настроек, игровой панелью FPS (F6) и автоподбором под устройство. Открывается в Настройки > Интерфейс > Оптимизация рендера. С VulkanMod части только для OpenGL остаются выключены."
+            },
+            {
+              "en": "Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.",
+              "ru": "Быстрая сборка моделей: модели мобов и игроков записываются в буфер вершин сразу целым кубом, а не по одной вершине. На Vulkan это заметно разгружает поток рендера. Выключается в настройках оптимизации."
+            }
+          ]
+        },
+        {
+          "kind": "fixed",
+          "items": [
+            {
+              "en": "Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.",
+              "ru": "Оффлайн-аккаунты и игроки на пиратских серверах больше не становятся Стивом или Алекс: Vela подгружает скин Mojang по нику. Скин, выбранный в Vela Launcher, по-прежнему важнее."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-10-27",
       "title": {

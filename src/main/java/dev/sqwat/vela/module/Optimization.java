@@ -33,6 +33,8 @@ public final class Optimization {
         "Повторно использовать списки при сортировке интерфейса и сборке рельефа",true));
     private final BooleanSetting lookupCaches=setting(new BooleanSetting("lookup_caches","Быстрый поиск групп отрисовки",
         "Индекс вместо перебора списка при сборке кадра",true));
+    private final BooleanSetting fastModels=setting(new BooleanSetting("fast_models","Быстрая сборка моделей",
+        "Записывать кубы моделей мобов и игроков в буфер целиком, а не по вершине",true));
 
     // Off by default: it held "Unlimited" near 250 FPS. A new id, so configs saved while it defaulted to on start off.
     private final BooleanSetting displayCap=setting(new BooleanSetting("display_cap_opt_in","Лимит под монитор",
@@ -50,9 +52,11 @@ public final class Optimization {
     public boolean textCache(){return textCache.value();}
     public boolean fewerAllocations(){return fewerAllocations.value();}
     public boolean lookupCaches(){return lookupCaches.value();}
+    public boolean fastModels(){return fastModels.value();}
 
     /** The current options, or null before the client has started (unit tests, early mixins): then everything is on. */
     public static Optimization current(){var services=dev.sqwat.vela.VelaClient.services();return services==null?null:services.optimization();}
     public static boolean fewerAllocationsOn(){var o=current();return o==null||o.fewerAllocations();}
     public static boolean lookupCachesOn(){var o=current();return o==null||o.lookupCaches();}
+    public static boolean fastModelsOn(){var o=current();return o==null||o.fastModels();}
 }

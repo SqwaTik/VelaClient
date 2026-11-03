@@ -2,6 +2,17 @@
 
 Generated from `src/main/resources/assets/velaclient/changelog.json`, which is also shown in game under "What's new".
 
+## 0.2.1 — 2026-11-03
+
+**Render optimization and skin fix**
+
+### New
+- Render optimization: a new set of render optimizations (fewer GPU waits and framebuffer switches, a vertex ring buffer, HUD at the monitor rate, LOD for distant items, mobs, players and particles, caches for text, signs and block entities, multithreaded particles and models) with its own settings screen, an in-game FPS panel (F6) and automatic tuning for your device. Open it from Settings > Interface > Render optimization. With VulkanMod the OpenGL-only parts stay off.
+- Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.
+
+### Fixed
+- Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.
+
 ## 0.2.0 — 2026-10-27
 
 **Death Recap, Storage Index and smart chat**

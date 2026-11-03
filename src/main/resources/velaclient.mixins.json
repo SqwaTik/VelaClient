@@ -46,6 +46,8 @@
     "perf.GuiLayerIndexMixin",
     "perf.GuiLayerIndexNodeMixin",
     "perf.DrawGroupLookupMixin",
+    "perf.BufferBuilderQuadMixin",
+    "perf.ModelCubeCompileMixin",
     "perf.HudCacheGuiMixin",
     "perf.HudCacheRenderMixin",
     "perf.HudCacheTargetMixin",

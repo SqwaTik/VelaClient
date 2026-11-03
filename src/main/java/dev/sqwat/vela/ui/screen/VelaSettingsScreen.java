@@ -87,6 +87,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             cy=toggle(g,"motion","Уменьшение движения",c.reducedMotion,cy);
             cy=toggle(g,"mainmenu","Кастомное главное меню",c.replaceMainMenu,cy);
             cy=toggle(g,"panel-menu","Панельное меню модулей",c.panelModuleMenu,cy);
+            Rect opt=new Rect(content.x(),cy+6,content.width(),27);button(g,opt,"Оптимизация рендера",false);controls.add(new Control("render-opt",opt));cy+=43;
 
         } else if(tab==2){
             cy=toggle(g,"sounds","Звуки интерфейса",c.uiSounds,cy);
@@ -176,6 +177,7 @@ public final class VelaSettingsScreen extends VelaScreen {
                     c.searchBind=-1;c.searchKey=75;dev.sqwat.vela.VelaClient.resetOpenKey();
                     dev.sqwat.vela.ui.Notifications.show("Бинды сброшены","Модули и клавиши меню вернулись к стандартным","settings");
                 }
+                case "render-opt"->{UiSounds.play(services,true);minecraft.gui.setScreen(new dev.sqwat.vela.opt.OptScreen(this));return true;}
                 case "preview"->UiSounds.play(services,true);
                 case "preset"->c.uiSoundPreset=UiSounds.next(c.uiSoundPreset);
             }

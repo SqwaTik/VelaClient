@@ -166,7 +166,7 @@ public final class LocalAppearanceService {
             this.skin=skin;this.cape=cape;this.model=model;this.capeHidden=capeHidden;
         }
         synchronized PlayerSkin apply(PlayerSkin original){
-            if(original==source)return result;
+            if(original==source||original==result)return result;
             source=original;
             return result=new PlayerSkin(skin!=null?skin:original.body(),capeHidden?null:cape!=null?cape:original.cape(),original.elytra(),skin!=null?model:original.model(),original.secure());
         }

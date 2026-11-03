@@ -20,6 +20,13 @@ Bobby 5.2.15+mc26.2 (tag `v5.2.15+mc26.2`), by johni0702, is included as modifie
 
 Far shows multiplayer terrain the player has already received, with a 4–32 chunk slider. It does not obtain unseen terrain or extend entity simulation. Bobby stores received terrain in `.bobby`; the cache can show outdated terrain until fresh server chunks arrive.
 
+## Render optimization
+
+ZakoOpt 2.0.4, by Zako (https://t.me/StarikZako), is included as modified source code under LGPL-3.0 in `src/main/java/dev/sqwat/vela/opt`. It provides the render optimizations behind Settings > Interface > Render optimization. Changes: the 26.2 Fabric sources are merged from the version layers and renamed into `dev.sqwat.vela.opt`; the update checker, NeoForge and Create integrations, the Mod Menu entry and the Sodium options page are removed.
+
+- Source: https://github.com/3ako/ZakoOpt
+- License texts: `META-INF/licenses/LGPL-3.0.md`, `META-INF/licenses/GPL-3.0.md`, notice `META-INF/licenses/VelaOpt-NOTICE.txt`
+
 ## Mod Menu
 
 Mod Menu 20.0.3 (tag `v20.0.3`), by TerraformersMC, is included as modified source code under the MIT License in `src/main/java/com/terraformersmc/modmenu`. It provides the Mods screen opened from Vela's title screen. Changes: update checking, Quilt support, Text Placeholder API support and Mod Menu's own config entry are removed; it runs inside the `velaclient` mod container.

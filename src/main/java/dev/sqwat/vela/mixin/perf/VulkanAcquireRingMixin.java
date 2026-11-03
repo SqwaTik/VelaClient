@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 /**
- * One acquire semaphore per submit that can be in flight (see {@link VulkanFramesInFlightMixin}): a semaphore is
+ * One acquire semaphore per submit that can be in flight (VulkanCommandEncoder waits two submits back): a semaphore is
  * only reused once the submit that waited on it has finished.
  */
 @Mixin(VulkanGpuSurface.class)

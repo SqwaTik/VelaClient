@@ -13,6 +13,6 @@ public abstract class ClientPlayerSkinMixin {
     @Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
     private void vela$localAppearance(CallbackInfoReturnable<PlayerSkin> cir) {
         AbstractClientPlayer player = (AbstractClientPlayer) (Object) this;
-        cir.setReturnValue(LocalAppearanceService.apply(player.getUUID(), cir.getReturnValue()));
+        cir.setReturnValue(LocalAppearanceService.apply(player.getUUID(), dev.sqwat.vela.friend.NameSkins.forProfile(player.getGameProfile(), cir.getReturnValue())));
     }
 }

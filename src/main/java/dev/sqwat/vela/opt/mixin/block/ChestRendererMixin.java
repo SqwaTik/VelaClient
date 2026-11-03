@@ -1,0 +1,142 @@
+package dev.sqwat.vela.opt.mixin.block;
+
+import dev.sqwat.vela.opt.feature.Features;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.ints.Int2IntFunction;
+import net.minecraft.client.renderer.blockentity.ChestRenderer;
+import net.minecraft.client.renderer.blockentity.state.ChestRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.DoubleBlockCombiner;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import com.mojang.math.Axis;
+import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import net.minecraft.client.renderer.blockentity.BrightnessCombiner;
+import net.minecraft.world.level.block.entity.LidBlockEntity;
+import dev.sqwat.vela.opt.block.CachedLight;
+import dev.sqwat.vela.opt.block.ChestFunctions;
+import dev.sqwat.vela.opt.block.TickCached;
+
+@Mixin(ChestRenderer.class)
+public class ChestRendererMixin {
+	@Unique
+	private static final String EXTRACT = "extractRenderState(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/ChestRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V";
+
+	@WrapOperation(method = "extractRenderState(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/ChestRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/ChestBlock;combine(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;"))
+	private DoubleBlockCombiner.NeighborCombineResult<?> velaopt$cachedCombine(ChestBlock block, BlockState state, Level level, BlockPos pos, boolean ignoreBlocked,
+																			Operation<DoubleBlockCombiner.NeighborCombineResult<?>> original,
+																			BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+																			ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		if (!Features.BLOCK_ENTITY_CACHE.on) {
+			return original.call(block, state, level, pos, ignoreBlocked);
+		}
+		// neighbour lookup for double chests; the result only changes when blocks change, so once per tick is enough
+		TickCached cache = (TickCached) blockEntity;
+		long tick = level.getGameTime();
+		if (cache.velaopt$cachedTick() != tick || cache.velaopt$cached() == null) {
+			cache.velaopt$setCached(original.call(block, state, level, pos, ignoreBlocked), tick);
+		}
+		return (DoubleBlockCombiner.NeighborCombineResult<?>) cache.velaopt$cached();
+	}
+
+	// double chest light: two light lookups per chest per frame, but light only changes on ticks
+	@WrapOperation(method = "extractRenderState(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/client/renderer/blockentity/state/ChestRenderState;FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V",
+			at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/ints/Int2IntFunction;applyAsInt(I)I"))
+	private int velaopt$cachedPairLight(Int2IntFunction combiner, int light, Operation<Integer> original,
+										BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+										ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		Level level = blockEntity.getLevel();
+		if (!Features.MICRO_OPTS.stableResults || level == null) {
+			return original.call(combiner, light);
+		}
+		CachedLight cache = (CachedLight) blockEntity;
+		long tick = level.getGameTime();
+		if (cache.velaopt$pairLightTick() != tick) {
+			cache.velaopt$setPairLight(original.call(combiner, light), tick);
+		}
+		return cache.velaopt$pairLight();
+	}
+
+	// the lid angle goes to the model boxed, per chest per frame; nearly every chest is shut
+	@Unique
+	private static final Float VELAOPT$SHUT = 0.0F;
+
+	@WrapOperation(method = "submit", at = @At(value = "INVOKE", target = "Ljava/lang/Float;valueOf(F)Ljava/lang/Float;"))
+	private Float velaopt$lid(float value, Operation<Float> original) {
+		return value == 0.0F && Features.FEWER_ALLOCATIONS.on ? VELAOPT$SHUT : original.call(value);
+	}
+
+	// render thread only; mulPose multiplies it into the pose at once and keeps nothing
+	@Unique
+	private static final Quaternionf VELAOPT$TURN = new Quaternionf();
+
+	// 26.1 turns the chest with a cached transformation and has no such call
+	@WrapOperation(method = "submit", require = 0, at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;"))
+	private Quaternionf velaopt$turn(Axis axis, float degrees, Operation<Quaternionf> original) {
+		return Features.FEWER_ALLOCATIONS.on && axis == Axis.YP ? VELAOPT$TURN.rotationY(degrees * Mth.DEG_TO_RAD) : original.call(axis, degrees);
+	}
+
+	// the lid and pair-light combiners and the functions they return are made anew per chest per frame, though they only tie the
+	// two halves together: kept for the tick. A null combiner below means "this tick's function is kept, skip making one"
+	@WrapOperation(method = EXTRACT, at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/world/level/block/ChestBlock;opennessCombiner(Lnet/minecraft/world/level/block/entity/LidBlockEntity;)Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;"))
+	private DoubleBlockCombiner.Combiner<?, ?> velaopt$openCombiner(LidBlockEntity lid, Operation<DoubleBlockCombiner.Combiner<?, ?>> original,
+																  BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+																  ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		Level level = blockEntity.getLevel();
+		return Features.FEWER_ALLOCATIONS.on && level != null && ((ChestFunctions) blockEntity).velaopt$openFn(level.getGameTime()) != null ? null : original.call(lid);
+	}
+
+	@WrapOperation(method = EXTRACT, at = @At(value = "NEW", target = "()Lnet/minecraft/client/renderer/blockentity/BrightnessCombiner;"))
+	private BrightnessCombiner<?> velaopt$lightCombiner(Operation<BrightnessCombiner<?>> original,
+														BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+														ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		Level level = blockEntity.getLevel();
+		return Features.FEWER_ALLOCATIONS.on && level != null && ((ChestFunctions) blockEntity).velaopt$lightFn(level.getGameTime()) != null ? null : original.call();
+	}
+
+	@WrapOperation(method = EXTRACT, at = @At(value = "INVOKE", ordinal = 0,
+			target = "Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;apply(Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;)Ljava/lang/Object;"))
+	private Object velaopt$openFn(DoubleBlockCombiner.NeighborCombineResult<?> result, DoubleBlockCombiner.Combiner<?, ?> combiner, Operation<Object> original,
+								  BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+								  ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		ChestFunctions cache = (ChestFunctions) blockEntity;
+		Level level = blockEntity.getLevel();
+		if (combiner == null) {
+			return cache.velaopt$openFn(level.getGameTime());
+		}
+		Object fn = original.call(result, combiner);
+		if (Features.FEWER_ALLOCATIONS.on && level != null) {
+			cache.velaopt$setOpenFn(fn, level.getGameTime());
+		}
+		return fn;
+	}
+
+	@WrapOperation(method = EXTRACT, at = @At(value = "INVOKE", ordinal = 1,
+			target = "Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;apply(Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;)Ljava/lang/Object;"))
+	private Object velaopt$lightFn(DoubleBlockCombiner.NeighborCombineResult<?> result, DoubleBlockCombiner.Combiner<?, ?> combiner, Operation<Object> original,
+								   BlockEntity blockEntity, ChestRenderState renderState, float partialTick, Vec3 camera,
+								   ModelFeatureRenderer.CrumblingOverlay crumbling) {
+		ChestFunctions cache = (ChestFunctions) blockEntity;
+		Level level = blockEntity.getLevel();
+		if (combiner == null) {
+			return cache.velaopt$lightFn(level.getGameTime());
+		}
+		Object fn = original.call(result, combiner);
+		if (Features.FEWER_ALLOCATIONS.on && level != null) {
+			cache.velaopt$setLightFn(fn, level.getGameTime());
+		}
+		return fn;
+	}
+}

@@ -1,0 +1,16 @@
+ZakoOpt
+Copyright (C) 2026 Zako
+Telegram: https://t.me/StarikZako
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, version 3 of the License (see COPYING.LESSER and COPYING).
+
+Any redistribution or derived work must keep this notice, credit the author
+(Zako, https://t.me/StarikZako) and state what was changed.
+
+Changes made for Vela Client (based on release v2.0.4):
+- Sources for Minecraft 26.2 (Fabric) merged from the version layers and moved to the package dev.sqwat.vela.opt;
+  classes and keys renamed (OptConfig, OptScreen, OptOptions, OptKey, velaopt.*), config file velaopt.json.
+- Update checker, NeoForge and Create integrations, the Mod Menu entry and the Sodium options page are removed.
+- The settings screen opens from Vela Settings > Interface > Render optimization.

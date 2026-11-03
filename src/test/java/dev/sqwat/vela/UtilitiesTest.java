@@ -16,7 +16,7 @@ class UtilitiesTest {
             assertNull(services.modules().byId("hold_my_items"));
             for(String id:List.of("render_tweaks","auto_tpaccept","aspect_ratio","block_overlay","click_pearl","crystal_optimizer","item_physics")){
                 var module=services.modules().byId(id);assertNotNull(module);
-                var expected=id.equals("item_physics")?ModuleCategory.VISUALS:ModuleCategory.UTILITIES;
+                var expected=id.equals("item_physics")||id.equals("block_overlay")?ModuleCategory.VISUALS:ModuleCategory.UTILITIES;
                 assertEquals(expected,module.category());assertFalse(module.enabled());
             }
             for(var setting:services.modules().byId("render_tweaks").settings())assertEquals(false,setting.value());
@@ -40,7 +40,7 @@ class UtilitiesTest {
     @Test void mixinsAreRegistered()throws Exception{
         String json=java.nio.file.Files.readString(Path.of("src/main/resources/velaclient.mixins.json"));
         assertFalse(json.contains("HoldMyItemsMixin"));
-        for(String id:List.of("camera.AspectRatioMixin","input.TeleportCombatMixin","world.BlockOverlayMixin","entity.NameTagTextCacheMixin","perf.FontCacheInvalidationMixin","input.MinecraftActions","world.RenderFireMixin","world.RenderParticlesMixin","world.DistanceFogMixin","entity.ItemPhysicsMixin","entity.ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
+        for(String id:List.of("camera.AspectRatioMixin","input.TeleportCombatMixin","world.BlockOverlayMixin","entity.NameTagTextCacheMixin","entity.NameTagTickCacheMixin","perf.TelemetryOffMixin","perf.RealmsNotificationsOffMixin","perf.FontCacheInvalidationMixin","input.MinecraftActions","world.RenderFireMixin","world.RenderParticlesMixin","world.DistanceFogMixin","entity.ItemPhysicsMixin","entity.ItemEntityRenderStateMixin"))assertTrue(json.contains("\""+id+"\""));
     }
     @Test void aspectPresetsAndColorValidation(){
         assertEquals(16f/9,AspectRatio.value("16:9"));assertEquals(4f/3,AspectRatio.value("4:3"));

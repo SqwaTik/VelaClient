@@ -45,11 +45,9 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.HitColor());
         modules.register(new dev.sqwat.vela.module.visual.HitBubbles());
         modules.register(new dev.sqwat.vela.module.visual.MaceSmash());
-        modules.register(new dev.sqwat.vela.module.visual.UpscalerModule());
-        modules.register(new dev.sqwat.vela.module.visual.FrameGeneration());
         modules.register(new dev.sqwat.vela.module.utility.LootMemory());
         modules.register(new dev.sqwat.vela.module.visual.Animations());
-        modules.register(new dev.sqwat.vela.module.visual.SwingAnimations());
+        modules.register(new dev.sqwat.vela.module.visual.SwingAnimation());
         modules.register(new dev.sqwat.vela.module.visual.Ambience());
         modules.register(new dev.sqwat.vela.module.visual.Shaders());
         modules.register(new dev.sqwat.vela.module.utility.AutoSprint());
@@ -87,6 +85,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new dev.sqwat.vela.module.visual.DeathRecap());
         modules.register(new dev.sqwat.vela.module.visual.TabPing());
         modules.register(new dev.sqwat.vela.module.visual.ItemPickups());
+        modules.register(new dev.sqwat.vela.module.visual.MusicHud());
         modules.register(new dev.sqwat.vela.module.utility.HitSound());
         modules.register(new dev.sqwat.vela.module.utility.AutoTpAccept());
         modules.register(new dev.sqwat.vela.module.utility.BlockOverlay());
@@ -96,7 +95,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(renderTweaks);
         modules.register(far);
         modules.register(new dev.sqwat.vela.module.visual.ItemPhysics());
-        modules.register(new FoundationModule("coordinates", "Coordinates", "Ваше положение в мире", ModuleCategory.HUD)
+        modules.register(new FoundationModule("coordinates", "Coordinates", "Отображение положения в мире", ModuleCategory.HUD)
             .add(new BooleanSetting("other_dimension","Другое измерение","Координаты портала в Незере или обычном мире",false))
             .add(new ChoiceSetting("format", "Формат", "Вид записи координат", "XYZ", List.of("XYZ", "Compact"))));
         modules.register(new FoundationModule("armor", "Armor HUD", "Отображение прочности брони", ModuleCategory.HUD));
@@ -133,7 +132,7 @@ public final class VelaServices implements AutoCloseable {
         modules.register(new FoundationModule("module_list","Array List","Список включённых функций",ModuleCategory.HUD));
         modules.register(new FoundationModule("keystrokes","Key Strokes","Нажатия клавиш движения и кликов",ModuleCategory.HUD)
             .add(strokesMouse).add(strokesCps).add(new BooleanSetting("space","Пробел","Клавиша прыжка",true)));
-        for(ClientModule module:modules.all())if(module.category()==ModuleCategory.HUD&&module instanceof FoundationModule foundation)
+        for(ClientModule module:modules.all())if(module.category()==ModuleCategory.HUD&&module instanceof FoundationModule foundation&&!module.id().equals("keystrokes"))
             foundation.add(new BooleanSetting("transparent","Прозрачный","Заменяет обычный фон прозрачным стеклом",false));
     }
 

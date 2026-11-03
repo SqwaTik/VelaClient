@@ -86,11 +86,6 @@
       "velaclient:hit/knock"
     ]
   },
-  "hit.echo": {
-    "sounds": [
-      "velaclient:hit/echo"
-    ]
-  },
   "hit.crime": {
     "sounds": [
       "velaclient:hit/crime"

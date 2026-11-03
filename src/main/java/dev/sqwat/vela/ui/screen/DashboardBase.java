@@ -117,7 +117,11 @@ abstract class DashboardBase extends VelaScreen {
         float rise=Math.clamp((1-left)*FLASH_NANOS/1.8e8f,0,1);
         return rise*rise*(3-2*rise)*Math.min(1,left*2.5f);
     }
-    protected void persistView(){services.configs().current().lastSection=section.name();services.configs().current().expandedModules=new java.util.LinkedHashSet<>(expandedModules);services.configs().current().friendOptionsOpen=friendSettings;services.configs().requestSave();}
+    /** Scroll position of each tab for this game session: reopening the dashboard or a tab continues where it was left. */
+    private static final java.util.EnumMap<VelaSection,Float> SCROLLS=new java.util.EnumMap<>(VelaSection.class);
+    protected void rememberScroll(){SCROLLS.put(section,targetScroll);}
+    protected static float rememberedScroll(VelaSection section){return SCROLLS.getOrDefault(section,0f);}
+    protected void persistView(){rememberScroll();services.configs().current().lastSection=section.name();services.configs().current().expandedModules=new java.util.LinkedHashSet<>(expandedModules);services.configs().current().friendOptionsOpen=friendSettings;services.configs().requestSave();}
     protected void saveBind(){if(binding!=null){binding.bind(draftKey,draftLabel,draftMode);services.configs().requestSave();}}
 
     protected Rect dragModeHit=new Rect(0,0,0,0),versionHit=new Rect(0,0,0,0);
@@ -304,6 +308,7 @@ abstract class DashboardBase extends VelaScreen {
         this.markerPanel=new MarkerPanel(services);
         this.groups=new ModuleSettingGroups(services);
         this.section = initialSection;
+        this.scroll=this.targetScroll=rememberedScroll(initialSection);
         this.expandedModules.addAll(services.configs().current().expandedModules);this.friendSettings=services.configs().current().friendOptionsOpen;
     
     }

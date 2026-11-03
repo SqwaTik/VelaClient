@@ -5,7 +5,7 @@ import dev.sqwat.vela.module.ModuleCategory;
 
 /** Exact ping in milliseconds in the player list instead of the signal bars (mixin.hud.TabPingMixin). */
 public final class TabPing extends ClientModule {
-    public TabPing(){super("tab_ping","Tab Ping","Точный пинг игроков в списке Tab вместо делений",ModuleCategory.VISUALS);}
+    public TabPing(){super("tab_ping","Tab Ping","Точный пинг игроков в списке Tab вместо делений",ModuleCategory.UTILITIES);}
     public static boolean active(){
         return dev.sqwat.vela.module.Modules.active(TabPing.class)!=null;
     }

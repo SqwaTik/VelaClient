@@ -6,3 +6,5 @@ run/
 logs/
 # Local tool state
 .impeccable/
+# Local Claude Code state
+.claude/

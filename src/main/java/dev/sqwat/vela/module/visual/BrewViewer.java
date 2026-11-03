@@ -36,7 +36,7 @@ public final class BrewViewer extends ClientModule {
     private Object level;
     private BrewingStandMenu menu;
     private BlockPos menuPos;
-    public BrewViewer(){super("brew_viewer","Brew Viewer","Ход варки при наводке на зельеварку, с закреплением",ModuleCategory.VISUALS);}
+    public BrewViewer(){super("brew_viewer","Brew Viewer","Ход варки при наводке на зельеварку, с закреплением",ModuleCategory.UTILITIES);}
     @Override protected void onDisable(){stands.clear();level=null;menu=null;menuPos=null;}
 
     @Override public void onClientTick(){
@@ -125,7 +125,7 @@ public final class BrewViewer extends ClientModule {
         else if(shot.brewTicks<=0){time="—";progress=0;}
         else if(remaining<=0){time="готово";progress=1;}
         else{time=(remaining+19)/20+dev.sqwat.vela.ui.Lang.tr("с");progress=1-remaining/(float)BREW_TICKS;}
-        VelaDraw.roundedOutline(g,0,0,W,H,7,(0x55<<24)|(VelaTheme.BORDER&0xFFFFFF),(0xE0<<24)|(VelaTheme.SURFACE&0xFFFFFF));
+        dev.sqwat.vela.ui.hud.HudBlock.draw(g,0,0,W,H,6,1);
         ItemStack hovered=ItemStack.EMPTY;
         int cx=6;
         hovered=slot(g,shot.ingredient,cx,5,mx,my,hovered);cx+=18;

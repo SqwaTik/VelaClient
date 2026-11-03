@@ -21,6 +21,8 @@ public final class Shaders extends ClientModule {
     private final NumberSetting skyBrightness=setting(new NumberSetting("sky_brightness","Яркость неба","Интенсивность свечения",100,10,200,5));
     private final BooleanSetting skyTheme=setting(new BooleanSetting("sky_theme","Цвет клиента","Использовать цвет клиента для неба",true));
     private final ColorSetting skyColor=setting(new ColorSetting("sky_color","Цвет неба",0x756CFF));
+    private final ChoiceSetting skyQuality=setting(new ChoiceSetting("sky_quality","Качество неба","Разрешение процедурного неба: выше чётче, ниже быстрее","Среднее",java.util.List.of("Низкое","Среднее","Высокое")));
+    public String skyQuality(){return skyQuality.value();}
     public boolean skyActive(){return sky.value();}
     public String skyMode(){return skyMode.value();}
     public float skyBrightness(){return skyBrightness.value().floatValue()/100;}
@@ -46,6 +48,7 @@ public final class Shaders extends ClientModule {
         skyCode.visibleWhen(()->false);setting(new ActionSetting("shader_editor","Редактор GLSL"));
         handMode.visibleWhen(hands::value);
         skyMode.visibleWhen(sky::value);skyBrightness.visibleWhen(sky::value);skyTheme.visibleWhen(sky::value);skyColor.visibleWhen(()->sky.value()&&!skyTheme.value());
+        skyQuality.visibleWhen(()->sky.value()&&!skyMode.value().equals("GLSL"));
         for(var setting:new Setting<?>[]{density,height,falloff,haze,theme})setting.visibleWhen(fog::value);
         color.visibleWhen(()->fog.value()&&!theme.value());
         reflection.visibleWhen(wet::value);wetness.visibleWhen(wet::value);quality.visibleWhen(wet::value);
@@ -53,8 +56,10 @@ public final class Shaders extends ClientModule {
     public boolean wetActive(){return wet.value()&&(reflection.value()>.5||wetness.value()>.5);}
     public float reflection(){return reflection.value().floatValue()/100;}
     public float wetness(){return wetness.value().floatValue()/100;}
-    public int reflectionSteps(){return switch(quality.value()){case "Низкое"->12;case "Высокое"->32;default->20;};}
-    public int reflectionResolutionDivisor(){return switch(quality.value()){case "Низкое"->3;case "Высокое"->1;default->2;};}
+    public int reflectionSteps(){return switch(quality.value()){case "Низкое"->10;case "Высокое"->40;default->20;};}
+    public int reflectionResolutionDivisor(){return switch(quality.value()){case "Низкое"->4;case "Высокое"->1;default->2;};}
+    /** How far a reflection ray looks, in blocks: high quality also reflects distant hills and trees. */
+    public float reflectionDistance(){return switch(quality.value()){case "Низкое"->14f;case "Высокое"->40f;default->24f;};}
     public boolean fogActive(){return fog.value()&&density.value()>.5;}
     public float fogDensity(){float d=density.value().floatValue()/100;return d*d*.05f+d*.002f;}
     public float fogHeight(){return height.value().floatValue();}

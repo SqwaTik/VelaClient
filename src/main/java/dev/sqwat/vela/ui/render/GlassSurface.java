@@ -29,7 +29,7 @@ public final class GlassSurface {
     public static void wave(GuiGraphicsExtractor g,float[] mesh,int tint){
         if(failed||mesh.length==0)return;
         var client=Minecraft.getInstance();if(client.level==null)return;
-        var source=client.gameRenderer.mainRenderTarget().getColorTexture();if(source==null)return;
+        var source=Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTexture();if(source==null)return;
         try{
             prepare(source);
             requested=true;
@@ -46,7 +46,7 @@ public final class GlassSurface {
     public static void draw(GuiGraphicsExtractor g,float x,float y,float width,float height,float opacity){
         if(opacity<.005f||width<=0||height<=0||failed)return;
         var client=Minecraft.getInstance();if(client.level==null)return;
-        var source=client.gameRenderer.mainRenderTarget().getColorTexture();if(source==null)return;
+        var source=Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTexture();if(source==null)return;
         try{
             prepare(source);
             requested=true;

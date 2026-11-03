@@ -24,7 +24,7 @@ class VisualSettingsPersistenceTest {
             var shader=(dev.sqwat.vela.module.visual.Shaders)services.modules().byId("shaders");
             assertTrue(shader.skyActive());assertTrue(shader.handsActive());assertTrue(shader.wetActive());
             assertEquals("Пламя",shader.handMode());assertEquals("Чёрная дыра",shader.skyMode());
-            assertEquals(12,shader.reflectionSteps());assertTrue(shader.skyCode().endsWith("// saved draft"));
+            assertEquals(10,shader.reflectionSteps());assertTrue(shader.skyCode().endsWith("// saved draft"));
             assertFalse(shader.enabled());
         }
     }

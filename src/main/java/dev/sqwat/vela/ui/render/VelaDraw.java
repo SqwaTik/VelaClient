@@ -46,8 +46,14 @@ public final class VelaDraw {
 
     public static int textWidth(String value,Weight weight){return (int)Math.ceil(PngTextRenderer.width(value,weight,BODY));}
     public static float textWidth(String value,Weight weight,float size){return PngTextRenderer.width(value,weight,size);}
+    /** Bakes the glyph atlases missing from the disk cache on a background thread. */
+    public static void prewarmFonts(){PngTextRenderer.prewarm();}
     public static void floatingText(GuiGraphicsExtractor g,String value,float center,float y,int color,float size){PngTextRenderer.floating(g,value,center,y,color,size);}
     public static void text(GuiGraphicsExtractor g,String value,float x,float y,int color,Weight weight,float size){PngTextRenderer.draw(g,value,x,y,color,weight,size);}
+    /** One line of source code: drawn and measured exactly as written, never translated. */
+    public static void literalText(GuiGraphicsExtractor g,String line,float x,float y,int color,Weight weight,float size){PngTextRenderer.drawLiteral(g,line,x,y,color,weight,size);}
+    public static float literalWidth(String line,Weight weight,float size){return PngTextRenderer.literalWidth(line,weight,size);}
+    public static float[] literalOffsets(String line,Weight weight,float size){return PngTextRenderer.literalOffsets(line,weight,size);}
     public static void centeredText(GuiGraphicsExtractor g,String value,float x,float y,int color,Weight weight,float size){PngTextRenderer.draw(g,value,x-PngTextRenderer.width(value,weight,size)/2,y,color,weight,size);}
     public static void label(GuiGraphicsExtractor g,String value,Rect rect,int color,Weight weight){
         centeredText(g,value,rect.x()+rect.width()/2f,PngTextRenderer.centeredY(value,weight,BODY,rect.y(),rect.height()),color,weight,BODY);

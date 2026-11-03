@@ -32,7 +32,7 @@ public final class TemporalBlur {
         var c=Minecraft.getInstance();float alpha=dev.sqwat.vela.module.visual.MotionBlur.strength();
         if(failed)return;
         if(alpha<=0||c.level==null||c.gui.screen()!=null||c.gui.overlay()!=null){close();return;}
-        var source=c.gameRenderer.mainRenderTarget().getColorTexture();
+        var source=Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTexture();
         if(source==null||source.isClosed())return;
         try{
             if(world!=c.level||history[0]==null||history[0].getTexture().getWidth(0)!=source.getWidth(0)||history[0].getTexture().getHeight(0)!=source.getHeight(0)){
@@ -64,7 +64,7 @@ public final class TemporalBlur {
     }
     public static void capture(){
         if(pending<0||failed)return;
-        var c=Minecraft.getInstance();var source=c.gameRenderer.mainRenderTarget().getColorTexture();
+        var c=Minecraft.getInstance();var source=Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTexture();
         int slot=pending;pending=-1;
         if(c.level!=world||history[slot]==null||source==null||source.isClosed())return;
         try{

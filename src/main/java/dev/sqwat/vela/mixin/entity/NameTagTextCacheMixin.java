@@ -13,7 +13,7 @@ abstract class NameTagTextCacheMixin {
     @Inject(method = "prepareText", at = @At("HEAD"), cancellable = true)
     private static void vela$reuseLayout(Font font, NameTagFeatureRenderer.Submit tag,
                                          CallbackInfoReturnable<Font.PreparedText> ci) {
-        ci.setReturnValue(NameTagTextCache.prepare(font, tag.text().getVisualOrderText(),
+        ci.setReturnValue(NameTagTextCache.prepare(font, tag.text(),
             tag.x(), tag.y(), tag.color(), dev.sqwat.vela.render.entity.FriendNameTags.background(tag.text(),tag.backgroundColor())));
     }
 }

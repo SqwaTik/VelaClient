@@ -56,8 +56,15 @@ public final class KeyStrokesHud {
         VelaDraw.centeredText(g,label,x+w/2f,y+3,text,VelaDraw.Weight.MEDIUM,7);
         VelaDraw.centeredText(g,caption,x+w/2f,y+12,VelaTheme.mix(VelaTheme.TEXT_MUTED,0xFFFFFFFF,pressed*.6f),VelaDraw.Weight.REGULAR,6);
     }
-    /** The bound key's short name, so non-WASD layouts show what is actually pressed. */
+    /**
+     * The bound key's short name, so rebound keys show what is actually pressed. Letter keys are named by their place on
+     * the keyboard (W A S D), not by the active layout's letter there (Ц Ф Ы В).
+     */
     private static String label(KeyMapping key){
+        var bound=((dev.sqwat.vela.mixin.input.KeyMappingAccessor)key).vela$getKey();
+        int code=bound.getValue();
+        if(bound.getType()==com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM&&code>=org.lwjgl.glfw.GLFW.GLFW_KEY_A&&code<=org.lwjgl.glfw.GLFW.GLFW_KEY_Z)
+            return String.valueOf((char)('A'+code-org.lwjgl.glfw.GLFW.GLFW_KEY_A));
         String name=key.getTranslatedKeyMessage().getString();
         return name.length()<=3?name.toUpperCase(java.util.Locale.ROOT):name.substring(0,1).toUpperCase(java.util.Locale.ROOT);
     }

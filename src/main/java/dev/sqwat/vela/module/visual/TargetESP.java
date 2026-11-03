@@ -80,7 +80,7 @@ public final class TargetESP extends ClientModule {
         var feet=target.getPosition(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
         var center=feet.add(0,target.getBbHeight()*.55,0);
         var sprites=new dev.sqwat.vela.render.effect.WorldSprite(true);
-        if(mode.value().equals("Ромб"))sprites.draw(g,TARGET,1766,1766,feet.add(0,target.getBbHeight()/2,0),
+        if(mode.value().equals("Ромб"))sprites.draw(g,TARGET,1024,1024,feet.add(0,target.getBbHeight()/2,0),
             (float)(1.25+.12*Math.sin(time*2)),(float)(Math.sin(time*.8)*Math.PI),NeonGeometry.tint(VelaTheme.PRIMARY,alpha));
         else if(mode.value().equals("Crystal")){
             double radius=Math.max(.48,target.getBbWidth()*.95);

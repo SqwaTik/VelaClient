@@ -31,11 +31,11 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.render.shader.HandShaderRenderer.initialize();
         dev.sqwat.vela.render.shader.SkyShaderRenderer.initialize();
         dev.sqwat.vela.render.perf.PerformanceCapture.initialize();
-        dev.sqwat.vela.upscale.UpscalerRuntime.initialize();
         net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message,overlay)->{
             var accept=dev.sqwat.vela.module.utility.AutoTpAccept.instance();
             if(accept!=null)accept.message(message.getString(),overlay);
         });
+        dev.sqwat.vela.ui.render.VelaDraw.prewarmFonts();
         dev.sqwat.vela.friend.LocalAppearanceService.initialize();
         dev.sqwat.vela.ui.screen.ContainerSearchBox.initialize();
         dev.sqwat.vela.module.visual.DeathRecap.initialize();
@@ -46,14 +46,28 @@ public final class VelaClient implements ClientModInitializer {
         dev.sqwat.vela.module.utility.ChatThreads.initialize();
         dev.sqwat.vela.marker.MarkerRuntime.registerCommand(services.markers());
         dev.sqwat.vela.marker.MarkerNotices.initialize(services.markers());
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->client.execute(()->{
+            var server=client.getCurrentServer();
+            var off=dev.sqwat.vela.module.ServerRules.join(server==null?null:server.ip,services.modules());
+            var project=dev.sqwat.vela.module.ServerRules.active();
+            if(project!=null&&!off.isEmpty())dev.sqwat.vela.ui.Notifications.show(project.name()+": "+dev.sqwat.vela.ui.Lang.tr("правила сервера"),
+                dev.sqwat.vela.ui.Lang.tr("Отключено")+": "+String.join(", ",off),"settings",0xFFFFA24D,"",null,()->true,0);
+        }));
+        dev.sqwat.vela.core.ServerOptOut.register(services.modules());
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->client.execute(()->dev.sqwat.vela.module.ServerRules.leave(services.modules())));
         services.modules().byId("speakers").require(()->FabricLoader.getInstance().isModLoaded("voicechat"));
         KeyMapping.Category category = KeyMapping.Category.register(id("controls"));
         openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.velaclient.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, category
         ));
-        HudElementRegistry.addLast(id("hud"),(g,delta)->services.hudLayout().extractRenderState(g,delta));
-        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->dev.sqwat.vela.render.shader.TemporalBlur.draw(g));
-        HudElementRegistry.addLast(id("markers"),(g,delta)->dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers()));
+        // Under the HUD cache the panels go into the cached texture; world-anchored effects, motion blur and markers
+        // follow the camera, so HudCache draws them live every frame instead.
+        HudElementRegistry.addLast(id("hud"),(g,delta)->{
+            if(dev.sqwat.vela.render.perf.HudCache.cachedPass())services.hudLayout().extractPanels(g,delta);
+            else services.hudLayout().extractRenderState(g,delta);
+        });
+        HudElementRegistry.addFirst(id("motion_blur"),(g,delta)->{if(!dev.sqwat.vela.render.perf.HudCache.cachedPass())dev.sqwat.vela.render.shader.TemporalBlur.draw(g);});
+        HudElementRegistry.addLast(id("markers"),(g,delta)->{if(!dev.sqwat.vela.render.perf.HudCache.cachedPass())dev.sqwat.vela.marker.MarkerRuntime.draw(g,services.markers());});
         HudElementRegistry.addLast(id("marker_notices"),(g,delta)->{if(Minecraft.getInstance().gui.screen()==null)dev.sqwat.vela.marker.MarkerNotices.draw(g);});
         dev.sqwat.vela.module.utility.LootMemory.initialize();
         net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->{
@@ -75,6 +89,8 @@ public final class VelaClient implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            dev.sqwat.vela.render.entity.NameTagTextCache.tick();
+            dev.sqwat.vela.render.entity.ArmorMemory.tick(client);
             // Follows the active config profile, which can be switched at any time.
             dev.sqwat.vela.ui.Lang.set("ru".equals(services.configs().current().language)?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN);
             var watermark=services.modules().byId("watermark");
@@ -91,6 +107,8 @@ public final class VelaClient implements ClientModInitializer {
             dev.sqwat.vela.ui.input.ModuleBindings.tick(client, services);
             services.modules().tickEnabled();
             while (openKey.consumeClick()) {
+                // A combination (Ctrl+RShift) also needs its modifiers held.
+                if(!dev.sqwat.vela.ui.input.BindInput.modifiersHeld(client.getWindow().handle(),services.configs().current().openModifiers))continue;
                 if (client.gui.screen() instanceof VelaDashboardScreen dashboard) {if(!dashboard.hasModal())dashboard.onClose();}
                 else if(client.gui.screen() instanceof dev.sqwat.vela.ui.screen.VelaScreen)continue;
                 else { dev.sqwat.vela.ui.UiSounds.play(services, dev.sqwat.vela.ui.UiSounds.Event.OPEN); client.gui.setScreen(new VelaDashboardScreen(client.gui.screen(), services)); }
@@ -107,8 +125,19 @@ public final class VelaClient implements ClientModInitializer {
         services.accounts().registerLauncherAccount(client.getUser().getName(), client.getUser().getProfileId());
     }
 
-    public static String openKeyLabel(){return openKey==null?"RShift":openKey.getTranslatedKeyMessage().getString();}
-    public static void rebindOpenKey(int key){if(openKey!=null){openKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(key));KeyMapping.resetMapping();Minecraft.getInstance().options.save();}}
+    public static String openKeyLabel(){
+        if(openKey==null)return "RShift";
+        int mods=services.configs().current().openModifiers;
+        String prefix=((mods&dev.sqwat.vela.ui.input.BindInput.CTRL)!=0?"Ctrl+":"")+((mods&dev.sqwat.vela.ui.input.BindInput.SHIFT)!=0?"Shift+":"")+((mods&dev.sqwat.vela.ui.input.BindInput.ALT)!=0?"Alt+":"");
+        return prefix+openKey.getTranslatedKeyMessage().getString();
+    }
+    /** {@code code}: a key with optional Ctrl/Shift/Alt (BindInput); the key goes to the vanilla mapping, the modifiers to the config. */
+    public static void rebindOpenKey(int code){
+        if(openKey==null)return;
+        openKey.setKey(InputConstants.Type.KEYSYM.getOrCreate(dev.sqwat.vela.ui.input.BindInput.base(code)));KeyMapping.resetMapping();Minecraft.getInstance().options.save();
+        services.configs().current().openModifiers=dev.sqwat.vela.ui.input.BindInput.modifiers(code);services.configs().requestSave();
+    }
+    public static void resetOpenKey(){rebindOpenKey(GLFW.GLFW_KEY_RIGHT_SHIFT);}
     public static VelaServices services() { return services; }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(MOD_ID, path); }
 }

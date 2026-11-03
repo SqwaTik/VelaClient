@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ModuleDescriptionsTest {
     @TempDir Path root;
     @Test void descriptionsFitTwoLinesWithoutEllipsis()throws Exception{
-        var font=new PngFontMetrics(getClass().getResourceAsStream("/assets/velaclient/ui/font_regular_12.csv"),getClass().getResourceAsStream("/assets/velaclient/ui/kerning_regular.csv"));
+        var font=dev.sqwat.vela.ui.render.PngFontBaker.bake(dev.sqwat.vela.ui.render.PngFontBaker.font("regular"),12).metrics("regular");
         try(var services=new VelaServices(root)){
             for(var module:services.modules().all()){
                 String text=module.description();int split=text.length();

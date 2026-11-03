@@ -9,6 +9,7 @@ public abstract class Setting<T> {
     private final T defaultValue;
     private T value;
     private java.util.function.BooleanSupplier visibility=()->true;
+    private boolean experimental;
 
     protected Setting(String id, String name, String description, T defaultValue) {
         this.id = requireId(id);
@@ -24,6 +25,9 @@ public abstract class Setting<T> {
     public final T value() { return value; }
     public final T defaultValue() { return defaultValue; }
     public final boolean visible() { return visibility.getAsBoolean(); }
+    /** Marks the setting as still being worked on: the settings show a grey EXPERIMENTAL next to its name. */
+    public final Setting<T> experimental() { experimental=true; return this; }
+    public final boolean isExperimental() { return experimental; }
     public final Setting<T> visibleWhen(java.util.function.BooleanSupplier condition) { visibility=Objects.requireNonNull(condition); return this; }
 
     public final void set(T next) {

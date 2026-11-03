@@ -10,13 +10,18 @@ public final class HudTelemetry {
     private static long lastTime,lastTick;
     private static double tps=Double.NaN;
     private static net.minecraft.client.multiplayer.ClientPacketListener pingConnection;
+    private static Object pingLevel;
+    /** Anti-bot checks (the "Проверка" limbo on proxies) drop clients that send packets a vanilla client would not.
+     *  Vanilla only pings with the debug chart open, so wait until the player has been in a world for a while; a
+     *  proxy switching servers gives a new level, which starts the wait again. */
+    static final long PING_GRACE_NANOS=20_000_000_000L;
     private static long pingSent,pingNext,pingUpdated,pingNanos;
     private static int measuredPing=-1;
     public static synchronized void tickPing(net.minecraft.client.Minecraft client,boolean enabled){
         var connection=enabled&&client.level!=null?client.getConnection():null;
-        if(connection!=pingConnection){pingConnection=connection;pingSent=pingNext=pingUpdated=0;measuredPing=-1;}
-        if(connection==null)return;
         long now=System.nanoTime();
+        if(connection!=pingConnection||client.level!=pingLevel){pingConnection=connection;pingLevel=client.level;pingSent=pingUpdated=0;pingNext=now+PING_GRACE_NANOS;measuredPing=-1;}
+        if(connection==null)return;
         if(now<pingNext||pingSent!=0&&now-pingNanos<5_000_000_000L)return;
         pingSent=net.minecraft.util.Util.getMillis();pingNanos=now;pingNext=now+1_000_000_000L;
         connection.send(new net.minecraft.network.protocol.ping.ServerboundPingRequestPacket(pingSent));

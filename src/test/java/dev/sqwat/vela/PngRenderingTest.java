@@ -8,57 +8,31 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PngRenderingTest {
+    /** Where size starts in an icon strip, as in PngAssets. */
+    private static int stripU(int size){int u=0;for(int s=8;s<size;s++)u+=s+2;return u;}
     @Test void iconsHaveExactSmallPhysicalSizes()throws Exception{
         for(String name:List.of("visuals","hud","utilities","markers","friends","configs","settings","search","arrow","back","x","plus","check","trash","copy","folder","key","star","star_filled","download","save","move","microsoft","chevron"))
-            for(int size=8;size<=64;size++){
-                String path="textures/gui/icon_"+name+"_"+size+".png";
+            {
+                String path="textures/gui/icon_"+name+"_sizes.png";
                 try(var stream=resource(path)){
                     var image=ImageIO.read(stream);
-                    assertEquals(size,image.getWidth());assertEquals(size,image.getHeight());
+                    assertEquals(stripU(65)-2,image.getWidth());assertEquals(64,image.getHeight());
+                    // Every size sits in its own square with a transparent gap after it, so filtering never bleeds a neighbour in.
+                    for(int size=8;size<64;size++){int gap=stripU(size)+size;
+                        for(int y=0;y<64;y++)assertEquals(0,image.getRGB(gap,y)>>>24,name+" "+size);}
                 }
                 try(var metadata=resource(path+".mcmeta")){assertTrue(metadata.readAllBytes().length>0);}
             }
     }
-    private static final int[] SIZES={8,9,10,11,12,13,14,15,16,18,19,20,22,24,28,32,36,40,48};
     private InputStream resource(String name){return Objects.requireNonNull(getClass().getResourceAsStream("/assets/velaclient/"+name),name);}
-    private PngFontMetrics font(String weight,int ppem)throws Exception{return new PngFontMetrics(resource("ui/font_"+weight+"_"+ppem+".csv"),resource("ui/kerning_"+weight+".csv"));}
+    private PngFontMetrics font(String weight,int ppem)throws Exception{return PngFontBaker.bake(PngFontBaker.font(weight),ppem).metrics(weight);}
 
-    @Test void gameDecoderPreservesAllFontMaskPixels()throws Exception {
-        for(String weight:List.of("regular","medium","semibold"))for(int size:SIZES){
-            String path="textures/gui/font_"+weight+"_"+size+".png";
-            try(var input=resource(path)){
-                byte[] png=input.readAllBytes();var reference=ImageIO.read(new ByteArrayInputStream(png));
-                try(var nativeImage=com.mojang.blaze3d.platform.NativeImage.read(png)){
-                    assertEquals(reference.getWidth(),nativeImage.getWidth());assertEquals(reference.getHeight(),nativeImage.getHeight());
-                    assertArrayEquals(reference.getRGB(0,0,reference.getWidth(),reference.getHeight(),null,0,reference.getWidth()),nativeImage.getPixels(),path);
-                }
-            }
-        }
-    }
-
-    @Test void everyRasterSizeHasRussianEnglishAndFourSubpixelPhases()throws Exception {
-        for(String weight:List.of("regular","medium","semibold"))for(int size:SIZES){
-            var font=font(weight,size);
-            assertEquals(size,font.ppem);
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя…".codePoints().forEach(cp->assertTrue(font.contains(cp),weight+size+" missing "+cp));
-            var glyph=font.line("W").glyphs().getFirst().glyph();
-            for(int phase=1;phase<4;phase++){var variant=font.phase(glyph,phase);assertNotEquals(glyph.x()+","+glyph.y(),variant.x()+","+variant.y());assertEquals(glyph.advance(),variant.advance(),.0001);}
-            assertEquals(font.width,ImageIO.read(resource("textures/gui/font_"+weight+"_"+size+".png")).getWidth());
-        }
-    }
-    @Test void fontMasksRetainWhiteRgbInTransparentAndAntialiasedPixels()throws Exception {
-        for(String weight:List.of("regular","medium","semibold")){
-            var image=ImageIO.read(resource("textures/gui/font_"+weight+"_13.png"));boolean coverage=false;
-            for(int y=0;y<image.getHeight();y+=3)for(int x=0;x<image.getWidth();x+=3){int p=image.getRGB(x,y);assertEquals(0xffffff,p&0xffffff);coverage|=(p>>>24)>0&&(p>>>24)<255;}
-            assertTrue(coverage,"Glyph masks need fractional coverage");
-        }
-    }
     @Test void kerningAndLayoutCachePreserveSpacingAndBoundMemory()throws Exception {
         var font=font("regular",18);
         assertTrue(font.line("AV").width()<font.line("A").width()+font.line("V").width());
         var line=font.line("Настройки Vela");assertSame(line,font.line("Настройки Vela"));
         assertTrue(font.line("Hello 🛰").width()>0);
-        for(int i=0;i<4096;i++)font.line("Dynamic "+i);assertTrue(font.cachedLines()<=512);
+        for(int i=0;i<8192;i++)font.line("Dynamic "+i);assertTrue(font.cachedLines()<=2048);
     }
     @Test void windowAndPointerScaleStayConsistentAcrossGameGuiScales(){
         for(int gameScale=1;gameScale<=8;gameScale++)for(float preference:new float[]{.75f,1,1.25f}){

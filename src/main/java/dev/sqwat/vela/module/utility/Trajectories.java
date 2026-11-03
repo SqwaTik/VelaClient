@@ -14,7 +14,11 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.*;
 import java.util.*;
 
-/** Bounded world-space predictions with a separately rendered impact label. */
+/**
+ * Bounded world-space predictions with a separately rendered impact label. The throw preview is drawn from the hand
+ * (not from the eyes, where the whole arc would lie along the line of sight and show as one straight stroke), as a
+ * smooth glowing curve that ends in a ring on the surface it lands on.
+ */
 public final class Trajectories extends ClientModule {
     private final BooleanSetting pearl=setting(new BooleanSetting("pearl","Эндер-жемчуг","Предсказывать бросок жемчуга",true));
     private final BooleanSetting snowball=setting(new BooleanSetting("snowball","Снежок","Предсказывать бросок снежка",true));
@@ -25,7 +29,7 @@ public final class Trajectories extends ClientModule {
     private final BooleanSetting time=setting(new BooleanSetting("time","Время попадания","Приблизительное время до столкновения",true));
     private final BooleanSetting theme=setting(new BooleanSetting("client_color","Цвет клиента","Использовать цвет темы",true));
     private final ColorSetting color=setting(new ColorSetting("color","Цвет",0x8877FF));
-    private record Path(List<Vec3> points,Vec3 velocity,int entityId,String label,boolean hit,boolean airborne){}
+    private record Path(List<Vec3> points,Vec3 velocity,int entityId,String label,boolean hit,boolean airborne,Vec3 normal){}
     private volatile List<Path> paths=List.of();
     private Path preview;
     private long previewTime;
@@ -66,7 +70,7 @@ public final class Trajectories extends ClientModule {
         var terrain=new dev.sqwat.vela.render.effect.TrajectoryTerrain(mc.level);
         Vec3 initialVelocity=velocity;
         var candidates=collisionBoxes(mc,source,start);
-        Vec3 at=start;boolean hit=false,known=true;double ticks=0;
+        Vec3 at=start,normal=null;boolean hit=false,known=true;double ticks=0;
         for(int i=0;i<240;i++){
             var block=BlockPos.containing(at);
             known&=terrain.known(block);
@@ -77,8 +81,10 @@ public final class Trajectories extends ClientModule {
             var impact=terrain.clip(new ClipContext(at,end,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,source));
             Vec3 nearest=impact.getType()==HitResult.Type.MISS?end:impact.getLocation();
             hit=impact.getType()!=HitResult.Type.MISS;
+            if(hit)normal=impact.getDirection().getUnitVec3();
             Vec3 entityImpact=dev.sqwat.vela.render.effect.ProjectileCollisions.nearest(at,nearest,candidates);
-            if(entityImpact!=nearest){nearest=entityImpact;hit=true;}
+            // An entity is hit facing the throw.
+            if(entityImpact!=nearest){nearest=entityImpact;hit=true;normal=velocity.lengthSqr()<1e-10?new Vec3(0,1,0):velocity.normalize().scale(-1);}
             double fraction=velocity.lengthSqr()<1e-10?1:Math.min(1,at.distanceTo(nearest)/velocity.length());
             ticks=i+fraction;
             points.add(nearest);at=nearest;
@@ -86,7 +92,7 @@ public final class Trajectories extends ClientModule {
         }
         boolean airborne=source instanceof ThrowableItemProjectile;
         return new Path(List.copyOf(points),initialVelocity,source.getId(),
-            hit&&known?String.format(Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%.1f с"),ticks/20):"В полёте",hit,airborne);
+            hit&&known?String.format(Locale.ROOT,dev.sqwat.vela.ui.Lang.tr("%.1f с"),ticks/20):"В полёте",hit,airborne,normal);
     }
     private List<AABB> collisionBoxes(Minecraft mc,Entity source,Vec3 start){
         long tick=mc.level.getGameTime();
@@ -127,32 +133,109 @@ public final class Trajectories extends ClientModule {
             }
         }else preview=null;
         int tint=0xFF000000|((theme.value()?VelaTheme.PRIMARY:color.value())&0xFFFFFF);
-        if(preview!=null)submitPath(preview,preview.points.getFirst(),tint,2.5,4.5);
+        long ms=System.currentTimeMillis();
+        if(preview!=null)submitPath(preview,smooth(preview.points,handOffset(mc,held,partial)),tint,ms);
         if(flight.value())for(var path:paths){
             var entity=mc.level.getEntity(path.entityId);
-            if(entity!=null&&!entity.isRemoved())submitPath(path,entity.getPosition(partial),tint);
+            if(entity==null||entity.isRemoved())continue;
+            var points=new ArrayList<>(path.points);points.set(0,entity.getPosition(partial));
+            submitPath(path,smooth(points,Vec3.ZERO),tint,ms);
         }
     }
-    private static void submitPath(Path path,Vec3 start,int tint){submitPath(path,start,tint,0,0);}
     /**
-     * {@code hidden} blocks from the start are not drawn and the next {@code fade} fade in. For the throw preview the
-     * path starts at the eyes: drawn from there it would cover the crosshair and swing with the walking bob (the
-     * camera moves, the line right in front of it moves the most). The throw itself is unchanged.
+     * Where the item leaves the hand, relative to the eyes: down and to the side of the arm holding it. In first person
+     * the curve then rises from the hand at the bottom of the screen and bends into view; in third person the eyes
+     * are not the camera, so no offset is needed.
      */
-    private static void submitPath(Path path,Vec3 start,int tint,double hidden,double fade){
-        Vec3 previous=start;double travelled=0;
-        for(int i=1;i<path.points.size();i++){
-            Vec3 point=path.points.get(i);
-            double step=previous.distanceTo(point),from=travelled;travelled+=step;
-            if(step>1e-4&&travelled>hidden){
-                // Clip the first visible segment to where the line begins.
-                Vec3 a=from<hidden?previous.add(point.subtract(previous).scale((hidden-from)/step)):previous;
-                double alpha=fade<=0?1:Math.clamp((Math.max(from,hidden)-hidden)/fade,.15,1);
-                int color=((int)Math.round(((tint>>>24)&255)*alpha)<<24)|(tint&0xFFFFFF);
-                net.minecraft.gizmos.Gizmos.line(a,point,color,3.5f).setAlwaysOnTop();
+    private static Vec3 handOffset(Minecraft mc,ItemStack held,float partial){
+        if(!mc.options.getCameraType().isFirstPerson())return Vec3.ZERO;
+        var player=mc.player;
+        boolean main=player.getMainHandItem()==held;
+        boolean right=(player.getMainArm()==net.minecraft.world.entity.HumanoidArm.RIGHT)==main;
+        Vec3 look=player.getViewVector(partial),up=new Vec3(0,1,0);
+        Vec3 side=look.cross(up);
+        if(side.lengthSqr()<1e-6)side=Vec3.directionFromRotation(0,player.getYRot(partial)-90);
+        side=side.normalize();
+        Vec3 down=side.cross(look).normalize();
+        return side.scale(right?.32:-.32).add(down.scale(.22)).add(look.scale(.25));
+    }
+    /**
+     * The tick points as a smooth curve (Catmull-Rom, a few steps per tick), with {@code offset} added at the start and
+     * fading out over the first blocks, so the drawn line leaves the hand and joins the real path.
+     */
+    static List<Vec3> smooth(List<Vec3> points,Vec3 offset){
+        int n=points.size();
+        if(n<2)return points;
+        var out=new ArrayList<Vec3>(n*3);
+        double travelled=0,blend=5;
+        for(int i=0;i<n-1;i++){
+            Vec3 p0=points.get(Math.max(0,i-1)),p1=points.get(i),p2=points.get(i+1),p3=points.get(Math.min(n-1,i+2));
+            double length=p1.distanceTo(p2);
+            int steps=length<.25?1:length<1?2:4;
+            for(int k=0;k<steps;k++){
+                double t=k/(double)steps;
+                Vec3 p=catmull(p0,p1,p2,p3,t);
+                double f=Math.max(0,1-(travelled+length*t)/blend);
+                out.add(p.add(offset.scale(f*f*(3-2*f))));
+            }
+            travelled+=length;
+        }
+        out.add(points.getLast());
+        return out;
+    }
+    private static Vec3 catmull(Vec3 p0,Vec3 p1,Vec3 p2,Vec3 p3,double t){
+        double t2=t*t,t3=t2*t;
+        return p1.scale(2).add(p2.subtract(p0).scale(t)).add(p0.scale(2).subtract(p1.scale(5)).add(p2.scale(4)).subtract(p3).scale(t2))
+            .add(p1.scale(3).subtract(p0).subtract(p2.scale(3)).add(p3).scale(t3)).scale(.5);
+    }
+    /** A soft wide glow under a crisp core, fading in from the hand, and a pulsing ring where it lands. */
+    /**
+     * Drawn against the camera without its walking bob, whether view bobbing is on or not: a line that starts at the
+     * hand would otherwise swing across the screen with every step.
+     */
+    private static void submitPath(Path path,List<Vec3> curve,int tint,long ms){
+        int rgb=tint&0xFFFFFF;
+        var camera=Minecraft.getInstance().gameRenderer.mainCamera().position();
+        var steady=new ArrayList<Vec3>(curve.size());
+        for(var point:curve)steady.add(dev.sqwat.vela.render.view.ViewBob.steady(point,camera));
+        curve=steady;
+        double travelled=0;
+        for(int i=1;i<curve.size();i++){
+            Vec3 a=curve.get(i-1),b=curve.get(i);
+            double step=a.distanceTo(b);
+            if(step<1e-4)continue;
+            travelled+=step;
+            double alpha=Math.clamp(travelled/1.6,.1,1);
+            net.minecraft.gizmos.Gizmos.line(a,b,(int)Math.round(60*alpha)<<24|rgb,9f).setAlwaysOnTop();
+            net.minecraft.gizmos.Gizmos.line(a,b,(int)Math.round(255*alpha)<<24|lighter(rgb),3f).setAlwaysOnTop();
+        }
+        if(path.hit&&path.normal!=null)submitRing(path.points.getLast(),path.normal,rgb,ms,camera);
+    }
+    private static void submitRing(Vec3 center,Vec3 normal,int rgb,long ms,Vec3 camera){
+        // Two unit vectors across the surface the ring lies on.
+        Vec3 u=Math.abs(normal.y)>.9?new Vec3(1,0,0):new Vec3(0,1,0).cross(normal).normalize();
+        Vec3 v=normal.cross(u).normalize();
+        Vec3 base=center.add(normal.scale(.02)),at=dev.sqwat.vela.render.view.ViewBob.steady(base,camera);
+        float pulse=(float)(.5+.5*Math.sin(ms/1000.0*Math.PI*1.6));
+        double radius=.32+.06*pulse;
+        int segments=20;
+        Vec3 previous=null;
+        var fill=net.minecraft.gizmos.GizmoStyle.fill((int)(40+30*pulse)<<24|rgb);
+        for(int i=0;i<=segments;i++){
+            double angle=i*Math.PI*2/segments;
+            Vec3 point=dev.sqwat.vela.render.view.ViewBob.steady(base.add(u.scale(Math.cos(angle)*radius)).add(v.scale(Math.sin(angle)*radius)),camera);
+            if(previous!=null){
+                net.minecraft.gizmos.Gizmos.line(previous,point,0xFF000000|lighter(rgb),3f).setAlwaysOnTop();
+                net.minecraft.gizmos.Gizmos.rect(previous,at,at,point,fill).setAlwaysOnTop();
             }
             previous=point;
         }
+        net.minecraft.gizmos.Gizmos.point(at,0xFF000000|lighter(rgb),6f).setAlwaysOnTop();
+    }
+    /** The tint a quarter of the way to white, so the core reads on dark ground and in the night sky. */
+    private static int lighter(int rgb){
+        int r=rgb>>16&255,g=rgb>>8&255,b=rgb&255;
+        return (r+(255-r)/4)<<16|(g+(255-g)/4)<<8|(b+(255-b)/4);
     }
     public void draw(net.minecraft.client.gui.GuiGraphicsExtractor g){
         var mc=Minecraft.getInstance();

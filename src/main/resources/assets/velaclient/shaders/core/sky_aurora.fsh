@@ -119,13 +119,15 @@ void main() {
 
         float d = fbm(p * vec2(0.85, 0.30) + vec2(seed, 0.0));
         float center = 0.46 + fi * 0.075;
-        float band = exp(-pow((d - center) / 0.052, 2.0));
+        float x = (d - center) * 19.2307692; // 1 / 0.052
+        float band = exp(-x * x);
+        float fade = smoothstep(0.02 + fi * 0.02, 0.34 + fi * 0.12, rd.y);
+        band *= fade;
+        // Most of the sky sits outside every band: skip the rays noise and the tint there.
+        if (band < 0.002) continue;
 
         float rays = 0.5 + 0.5 * sin(p.x * 6.0 + fbm(p * 0.6) * 11.0 + time * (0.25 + fi * 0.1));
         band *= 0.30 + 0.70 * rays * rays;
-
-        float fade = smoothstep(0.02 + fi * 0.02, 0.34 + fi * 0.12, rd.y);
-        band *= fade;
 
         rawLum += band * (1.0 - fi * 0.3);
 

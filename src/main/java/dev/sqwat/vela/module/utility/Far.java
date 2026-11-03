@@ -14,6 +14,15 @@ public final class Far extends ClientModule {
         var services=dev.sqwat.vela.VelaClient.services();
         return services!=null&&services.far().enabled();
     }
+    private static Object graceLevel;private static long graceStart;
+    /** Saved chunks are only shown after ten seconds in a level. Anti-bot checks drop the player into an empty world
+     *  and watch them fall; saved terrain from an earlier visit under their feet would stop the fall and fail the check. */
+    public static boolean fakeChunksAllowed(){
+        if(!active())return false;
+        var level=Minecraft.getInstance().level;long now=System.nanoTime();
+        if(level!=graceLevel){graceLevel=level;graceStart=now;}
+        return now-graceStart>10_000_000_000L;
+    }
     @Override public void onClientTick(){
         var client=Minecraft.getInstance();
         if(client.level==null||client.getSingleplayerServer()!=null){restore();return;}

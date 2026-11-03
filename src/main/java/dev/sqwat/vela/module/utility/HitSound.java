@@ -28,9 +28,9 @@ public final class HitSound extends ClientModule {
     /** Display name → sound id under assets/velaclient/sounds.json. */
     private static final Map<String,String> BUILT_IN=new LinkedHashMap<>();
     static{
-        // Recorded sounds: Mixkit punches (Mixkit Sound Effects Free License) and Kimiko's hit sounds (CC0).
+        // Recorded sounds: Mixkit punches (Mixkit Sound Effects Free License) and Vela's own hit sounds.
         BUILT_IN.put("Сильный удар","hit.heavy");BUILT_IN.put("Удар в корпус","hit.body");BUILT_IN.put("Металл","hit.metal");
-        BUILT_IN.put("Стук","hit.knock");BUILT_IN.put("Эхо","hit.echo");BUILT_IN.put("Crime","hit.crime");
+        BUILT_IN.put("Стук","hit.knock");BUILT_IN.put("Crime","hit.crime");
     }
     private static final String FILE_PREFIX="Файл: ";
     private final SoundClips clips=new SoundClips(folder());
@@ -72,6 +72,8 @@ public final class HitSound extends ClientModule {
         lastTarget=target.getId();targetX=target.getX();targetY=target.getY();targetZ=target.getZ();targetUntil=System.nanoTime()+HURT_WINDOW;
         float vol=module.volume.value().floatValue()/100;
         var builtIn=BUILT_IN.get(module.sound.value());
+        // A saved choice that no longer exists (the removed "Эхо") falls back to the default sound instead of silence.
+        if(builtIn==null&&module.file()==null)builtIn="hit.heavy";
         if(builtIn!=null){
             var event=SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("velaclient",builtIn));
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event,module.pitch.value().floatValue()/100,vol));

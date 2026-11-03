@@ -34,6 +34,13 @@ public final class Optimization {
     private final BooleanSetting lookupCaches=setting(new BooleanSetting("lookup_caches","Быстрый поиск групп отрисовки",
         "Индекс вместо перебора списка при сборке кадра",true));
 
+    // Off by default: it held "Unlimited" near 250 FPS. A new id, so configs saved while it defaulted to on start off.
+    private final BooleanSetting displayCap=setting(new BooleanSetting("display_cap_opt_in","Лимит под монитор",
+        "При «Без ограничений» FPS держится на двух частотах монитора: лишние кадры экран всё равно не показывает, а видеокарта меньше греется",false));
+
+    public boolean displayCap(){return displayCap.value();}
+    /** The HUD is built at the monitor's refresh rate; always on, no setting. */
+    public boolean hudCache(){return true;}
     public boolean fogCulling(){return fogCulling.value();}
     public boolean occludePlayers(){return occludePlayers.value();}
     public boolean occludeMobs(){return occludeMobs.value();}

@@ -32,12 +32,12 @@
               "ru": "Умный чат: кликабельные координаты, упоминания вашего ника, личные сообщения во вкладках."
             },
             {
-              "en": "Key combinations such as Ctrl+F for every bind.",
-              "ru": "Сочетания клавиш вроде Ctrl+F для любых биндов."
+              "en": "Key combinations such as Ctrl+F for every bind, the menu keys in the settings included.",
+              "ru": "Сочетания клавиш вроде Ctrl+F для любых биндов, включая клавиши меню в настройках."
             },
             {
-              "en": "Chat privacy: a button above the chat hides what you type after /login and /register.",
-              "ru": "Приватность чата: кнопка над чатом скрывает то, что вы вводите после /login и /register."
+              "en": "Chat privacy: a button beside Dragmode above the chat blurs what you type after /l, /login, /reg and /register; hovering either button opens both with a caption.",
+              "ru": "Приватность чата: кнопка рядом с Dragmode над чатом размывает то, что вы вводите после /l, /login, /reg и /register; при наведении обе кнопки раскрываются с подписью."
             },
             {
               "en": "What's new: this list of changes in the main menu.",
@@ -64,16 +64,8 @@
               "ru": "Отсечение тумана: рельеф, полностью скрытый туманом (как в Незере), не рисуется."
             },
             {
-              "en": "Upscaler (MineSR): the world is drawn at a lower resolution and rebuilt to full; the interface stays sharp.",
-              "ru": "Upscaler (MineSR): мир рисуется в меньшем разрешении и достраивается до полного; интерфейс остаётся чётким."
-            },
-            {
               "en": "Hit Sound: recorded impact sounds.",
               "ru": "Hit Sound: записанные звуки ударов."
-            },
-            {
-              "en": "Frame Generation (MineSR): an extra frame between every two for smoother motion; works on its own or together with Upscaler.",
-              "ru": "Frame Generation (MineSR): дополнительный кадр между каждыми двумя для плавного движения; работает отдельно или вместе с Upscaler."
             },
             {
               "en": "Explosion Wave: the blast runs along the ground, flows around walls and merges with nearby blasts; a gust of wind as it passes and a short stun up close.",
@@ -92,8 +84,270 @@
               "ru": "Render Tweaks: руки не качаются при ходьбе."
             },
             {
-              "en": "Interface sounds: the new Rhythm set.",
-              "ru": "Звуки интерфейса: новый набор «Ритм»."
+              "en": "Interface sounds: the new Rhythm set — clicks in Vela and on vanilla buttons play with a varied pitch.",
+              "ru": "Звуки интерфейса: новый набор «Ритм» — клики в Vela и на обычных кнопках звучат со случайной высотой."
+            },
+            {
+              "en": "Shaders: a Sky quality setting (low, medium, high).",
+              "ru": "Шейдеры: настройка «Качество неба» (низкое, среднее, высокое)."
+            },
+            {
+              "en": "Music HUD: whatever is playing on the PC — a browser tab (YouTube, Twitch, YouTube Music…), Yandex Music, Spotify and other players: the cover with the service's icon, a spectrum that follows the music, a progress bar and playback buttons in the chat. Lyrics from LRCLIB and NetEase are highlighted word by word; where a source has no word timing, the highlight is paced by syllables. Covers and lyrics are cached on disk.",
+              "ru": "HUD Music: что играет на компьютере — вкладка браузера (YouTube, Twitch, YouTube Music…), Яндекс Музыка, Spotify и другие плееры: обложка со значком сервиса, спектр в такт музыке, полоса времени и кнопки управления в чате. Текст песни из LRCLIB и NetEase подсвечивается по словам; если у источника нет пословной разметки, темп подсветки рассчитывается по слогам. Обложки и тексты кэшируются на диске."
+            },
+            {
+              "en": "Swing Animation: a new set of first-person swings (Swing, Shift, Lunge, Spear, Down, Jelly, Slap, Bonk, Circle, Realism) with strength and duration; replaces Swing Animations.",
+              "ru": "Swing Animation: новый набор взмахов от первого лица (Взмах, Сдвиг, Выпад, Копьё, Вниз, Желе, Шлепок, Бонк, Круг, Реализм) с силой и длительностью; заменяет Swing Animations."
+            },
+            {
+              "en": "Music HUD: Mini mode — a notch at the top edge of the screen with the cover and rhythm bars that opens up to show the current line.",
+              "ru": "HUD Music: мини-режим — «чёлка» у верхнего края экрана с обложкой и полосками ритма, которая раскрывается под текущую строку текста."
+            },
+            {
+              "en": "Music HUD: the colour of the sung lyrics — the client's colour or any other from the colour wheel.",
+              "ru": "HUD Music: цвет спетого текста — цвет клиента или любой другой из цветового круга."
+            },
+            {
+              "en": "Item Highlight: Custom color — one colour of your choice from the colour wheel for every category.",
+              "ru": "Item Highlight: «Свой цвет» — один любой цвет из цветового круга для всех категорий."
+            },
+            {
+              "ru": "Меню модулей: панельный вид — модули списком, настройки выбранного в отдельной панели; включается в настройках (Интерфейс → Панельное меню модулей).",
+              "en": "Module menu: a panel layout — modules as a list, the selected module's settings in their own pane; turned on in the settings (Interface → Panel module menu)."
+            },
+            {
+              "en": "Music HUD: click the progress bar to jump to that point in the track.",
+              "ru": "HUD Music: клик по полосе прогресса перематывает трек на это место."
+            },
+            {
+              "en": "Mods button in the main menu: the list of installed mods with their settings (Mod Menu, built in).",
+              "ru": "Кнопка «Моды» в главном меню: список установленных модов с их настройками (Mod Menu, встроен)."
+            },
+            {
+              "en": "Optimization: Monitor-based limit (off by default): with Unlimited FPS, frames are capped at twice the monitor's refresh rate so the graphics card runs cooler.",
+              "ru": "Оптимизация: «Лимит под монитор» (по умолчанию выключен): при «Без ограничений» FPS ограничен двумя частотами монитора, видеокарта меньше греется."
+            },
+            {
+              "en": "Server rules: on ReallyWorld, FunTime and HolyWorld the functions their rules forbid are switched off automatically, with a notification saying which; they come back when you leave.",
+              "ru": "Правила серверов: на ReallyWorld, FunTime и HolyWorld запрещённые их правилами функции выключаются автоматически, уведомление говорит какие; после выхода они возвращаются."
+            },
+            {
+              "en": "Server opt-out: any server can switch off competitive modules (or a listed set) by sending the velaclient:disable packet; they come back when you leave.",
+              "ru": "Отключение сервером: любой сервер может выключить соревновательные модули (или свой список) пакетом velaclient:disable; после выхода они возвращаются."
+            },
+            {
+              "en": "Licences: a plain mod description, MIT for Vela with the full text and author, LGPL-3.0-or-later for the bundled parts, and every third-party sound and font credited in THIRD_PARTY.md.",
+              "ru": "Лицензии: понятное описание мода, MIT для Vela с полным текстом и автором, LGPL-3.0-or-later для встроенных частей, все сторонние звуки и шрифт указаны в THIRD_PARTY.md."
+            },
+            {
+              "en": "HUD cache, always on: the HUD is built at the monitor's refresh rate instead of every frame; the crosshair, vignette and in-world effects stay live.",
+              "ru": "Кэш интерфейса, всегда включён: HUD собирается с частотой монитора, а не каждый кадр; прицел, виньетка и эффекты в мире остаются живыми."
+            }
+          ]
+        },
+        {
+          "kind": "improved",
+          "items": [
+            {
+              "en": "GLSL editor: rebuilt with code colours, line numbers, error lines, the Vela font and larger text; the insert chips and the example button are gone.",
+              "ru": "Редактор GLSL: переделан — подсветка кода, номера строк, строки с ошибками, шрифт Vela и более крупный текст; кнопки вставки и «Пример» убраны."
+            },
+            {
+              "en": "Modules are sorted A–Z (favourites stay on top).",
+              "ru": "Модули отсортированы по алфавиту (избранные остаются сверху)."
+            },
+            {
+              "en": "Reflection quality now changes the reflection resolution, steps and distance.",
+              "ru": "«Качество отражения» теперь меняет разрешение, число шагов и дальность отражений."
+            },
+            {
+              "en": "The menu remembers the tab and scroll position after closing.",
+              "ru": "Меню запоминает вкладку и место прокрутки после закрытия."
+            },
+            {
+              "en": "Module categories reviewed: Brew Viewer, Tab Ping and Item Highlight are in Utilities; Motion Blur and Block Overlay are in Visuals.",
+              "ru": "Категории модулей пересмотрены: Brew Viewer, Tab Ping и Item Highlight — в «Утилитах»; Motion Blur и Block Overlay — в «Визуалах»."
+            },
+            {
+              "en": "Settings scroll smoothly: text no longer gets laid out again on every frame while scrolling.",
+              "ru": "Настройки листаются плавно: текст больше не перестраивается заново каждый кадр при прокрутке."
+            },
+            {
+              "en": "HUD editor: the middle-click and right-click menus are redesigned — more compact, every setting has a description, colour settings open a colour wheel, and the size is picked with a switch.",
+              "ru": "Редактор HUD: меню на колёсико и правую кнопку переделаны — компактнее, у каждой настройки есть описание, цветовые настройки открывают цветовой круг, а размер выбирается переключателем."
+            },
+            {
+              "en": "Trajectories: the throw preview is a smooth glowing curve from the hand with a ring where it lands.",
+              "ru": "Траектории: превью броска — плавная светящаяся линия от руки с кольцом в точке попадания."
+            },
+            {
+              "ru": "Главное меню, списки миров и серверов работают с ограничением кадров из настроек, а не с фиксированными 60 FPS.",
+              "en": "The main menu and the world and server lists run at the frame limit from the options instead of a fixed 60 FPS."
+            },
+            {
+              "ru": "Новый логотип Vela.",
+              "en": "A new Vela logo."
+            },
+            {
+              "en": "In-Game Account Switcher and Mod Menu are built into Vela; separate copies are no longer needed.",
+              "ru": "In-Game Account Switcher и Mod Menu встроены в Vela, отдельно ставить их больше не нужно."
+            },
+            {
+              "en": "Fabric Loader 0.20.1; Vela runs on Fabric Loader 0.19.2 and newer.",
+              "ru": "Fabric Loader 0.20.1; Vela работает на Fabric Loader 0.19.2 и новее."
+            },
+            {
+              "en": "Every HUD panel uses the same background as the Music HUD.",
+              "ru": "Все панели HUD с тем же фоном, что и у HUD Music."
+            },
+            {
+              "en": "Trajectories stay still while walking, whether view bobbing is on or off.",
+              "ru": "Траектории не качаются при ходьбе, включено покачивание камеры или нет."
+            },
+            {
+              "en": "Hologram hiding checks the entity type first, which takes less time per frame.",
+              "ru": "Скрытие голограмм сначала проверяет тип сущности, поэтому на каждый кадр уходит меньше времени."
+            },
+            {
+              "en": "Vela takes half the space: the jar is down from 23 MB to about 11 MB.",
+              "ru": "Vela весит вдвое меньше: с 23 МБ до 11 МБ."
+            },
+            {
+              "en": "Config import keys are several times shorter; older keys still work.",
+              "ru": "Ключи импорта конфигов стали в несколько раз короче; старые ключи по-прежнему работают."
+            },
+            {
+              "en": "Key Strokes: no background behind the keys.",
+              "ru": "Key Strokes: без фона под клавишами."
+            },
+            {
+              "en": "Account switching, the Mods screen and the Far terrain cache are now built into Vela itself instead of bundled mods: fewer files to load and less to start up.",
+              "ru": "Смена аккаунтов, экран модов и кэш чанков для Far теперь встроены в саму Vela, а не лежат отдельными модами: меньше файлов и быстрее запуск."
+            },
+            {
+              "en": "Frame Generation and the Upscaler are removed along with their models, so they no longer cost memory or frame time.",
+              "ru": "Frame Generation и апскейлер удалены вместе с моделями — больше не тратят память и время кадра."
+            },
+            {
+              "en": "Interface fonts are baked from the font files on first launch and cached, instead of 57 prebuilt glyph atlases; the fonts keep only English, Russian and the interface symbols (other scripts use Minecraft's font). The mod is about 6 MB smaller.",
+              "ru": "Шрифты интерфейса запекаются из файлов шрифтов при первом запуске и кешируются вместо 57 готовых атласов глифов; в шрифтах оставлены только английский, русский и символы интерфейса (остальное — шрифтом Minecraft). Мод стал примерно на 6 МБ меньше."
+            },
+            {
+              "en": "Profiler: a continuous mode that keeps the last three minutes and saves them on its own after a stutter, plus a text report next to every profile (slow frames, GC pauses, hottest methods, allocations).",
+              "ru": "Профайлер: непрерывный режим, который хранит последние три минуты и сам сохраняет их после фриза, и текстовый отчёт рядом с каждым профилем (медленные кадры, паузы GC, самые горячие методы, аллокации)."
+            },
+            {
+              "en": "Name tags: each entity's name is built once per tick instead of every frame, and its text layout is found without re-reading the text.",
+              "ru": "Подписи над сущностями: имя строится один раз за тик, а не каждый кадр, а раскладка текста находится без повторного разбора."
+            },
+            {
+              "en": "HUD: panels that are not animating are drawn in shared batches instead of one set of draw calls per panel.",
+              "ru": "HUD: панели без анимации рисуются общими пакетами, а не отдельными вызовами отрисовки на каждую."
+            },
+            {
+              "en": "Minecraft telemetry and the Realms notification polling on the vanilla title screen are switched off.",
+              "ru": "Отключены телеметрия Minecraft и опрос уведомлений Realms на ванильном главном экране."
+            },
+            {
+              "en": "Holding Tab on a crowded server no longer drops FPS: the player list is sorted a few times a second instead of every frame, and the interface layers find overlaps through a grid instead of checking every element against every other.",
+              "ru": "Зажатый Tab на людном сервере больше не роняет FPS: список игроков сортируется несколько раз в секунду, а не каждый кадр, а слои интерфейса ищут пересечения по сетке, а не сравнивают каждый элемент с каждым."
+            },
+            {
+              "en": "Fewer stutters: settings are read without waiting for a save to disk, the music panel and its brand detection no longer allocate every frame, and the HUD no longer copies the player list every tick.",
+              "ru": "Меньше подлагиваний: настройки читаются без ожидания записи на диск, музыкальная панель и определение сервиса не создают мусор каждый кадр, HUD не копирует список игроков каждый тик."
+            },
+            {
+              "en": "Armour of far players: when the server strips equipment from distant players (anti-ESP), the armour seen up close in the last 10 minutes stays on them.",
+              "ru": "Броня далёких игроков: если сервер убирает экипировку у дальних игроков (анти-ESP), на них остаётся броня, увиденная вблизи за последние 10 минут."
+            },
+            {
+              "en": "Lyrics in time: copies of one song's text are often timed differently (by ear, or to another release), from a few hundred milliseconds to seconds. The text whose timing most of the other copies agree with is now shown, instead of simply the one closest in length.",
+              "ru": "Текст в такт: копии текста одной песни часто размечены по-разному (на слух или под другой релиз) — от сотен миллисекунд до секунд. Теперь показывается та разметка, с которой согласно большинство других копий, а не просто ближайшая по длине."
+            },
+            {
+              "en": "More lyrics: QQ Music is a fourth source, with a large catalogue that includes Russian rap.",
+              "ru": "Больше текстов: QQ Music — четвёртый источник, большой каталог, в том числе русский рэп."
+            },
+            {
+              "en": "Music HUD covers: when the player sends no cover (Yandex Music) and Deezer and iTunes do not have the song, the cover is taken from NetEase.",
+              "ru": "Обложки в HUD Music: если плеер не присылает обложку (Яндекс Музыка), а в Deezer и iTunes песни нет, обложка берётся из NetEase."
+            },
+            {
+              "en": "More lyrics: when no source has a song's text timed, the plain text is shown and paced through the song, instead of nothing (for example Baby Cute).",
+              "ru": "Больше текстов: если ни у одного источника нет текста песни с разметкой, показывается обычный текст, который идёт по ходу песни, а не пустота (например, Baby Cute)."
+            },
+            {
+              "en": "More lyrics: entries where the source swapped the artist and the title are found too.",
+              "ru": "Больше текстов: находятся и записи, где источник перепутал местами исполнителя и название."
+            },
+            {
+              "en": "In-world effect modules are looked up once instead of on every frame.",
+              "ru": "Модули эффектов в мире ищутся один раз, а не каждый кадр."
+            },
+            {
+              "en": "Launcher: faster game start through the Java 25 AOT cache, recorded on the first launch and reused afterwards.",
+              "ru": "Лаунчер: игра запускается быстрее благодаря AOT-кэшу Java 25 — он записывается при первом запуске и используется дальше."
+            }
+          ]
+        },
+        {
+          "kind": "fixed",
+          "items": [
+            {
+              "en": "Hit Sound: removed the pause at the end of the Heavy hit sound.",
+              "ru": "Hit Sound: убрана пауза в конце звука «Сильный удар»."
+            },
+            {
+              "en": "Shaders: stripes on wet surfaces and a milky floor at night.",
+              "ru": "Шейдеры: полосы на мокрых поверхностях и молочный пол ночью."
+            },
+            {
+              "en": "Japanese, Chinese and Korean text (song titles, chat, names) shows up instead of question marks.",
+              "ru": "Японский, китайский и корейский текст (названия песен, чат, ники) показывается вместо вопросиков."
+            },
+            {
+              "en": "Key Strokes shows W A S D on any keyboard layout, not the letters of the current layout.",
+              "ru": "Key Strokes показывает W A S D при любой раскладке, а не буквы текущей."
+            },
+            {
+              "en": "Reset module binds also resets the menu and search keys in the settings.",
+              "ru": "«Сбросить бинды модулей» сбрасывает и клавиши меню и поиска в настройках."
+            },
+            {
+              "en": "Joining servers with a bot check such as mc.magicworld.pw: the ping display waits 20 seconds after entering a world and saved chunks appear after 10 seconds, so the check no longer kicks you.",
+              "ru": "Вход на серверы с проверкой на бота, например mc.magicworld.pw: пинг замеряется через 20 секунд после входа в мир, а сохранённые чанки появляются через 10 секунд — проверка больше не кикает."
+            },
+            {
+              "en": "The automatic FPS profile keeps recording after a world change instead of stopping.",
+              "ru": "Автоматический профиль FPS продолжает запись после смены мира, а не останавливается."
+            },
+            {
+              "en": "The middle-click menu in HUD editing marks experimental settings with EXPERIMENTAL, as the module settings do.",
+              "ru": "В меню по колёсику мыши в режиме редактирования HUD экспериментальные настройки помечены EXPERIMENTAL, как в настройках модуля."
+            },
+            {
+              "en": "Music HUD covers: a song by several artists (\"MellSher, 5opka\") is found when the catalogue lists it under any of them, not only the first; the title alone is also tried, still checked against the artists.",
+              "ru": "Обложки в HUD Music: песня нескольких артистов («MellSher, 5opka») находится, даже если каталог записал её на любого из них, а не только на первого; пробуется и поиск по одному названию с проверкой артистов."
+            },
+            {
+              "en": "Music HUD covers: a song with no cover found is looked up again after a few minutes instead of never until restart, and a failed lookup waits 20 seconds instead of being repeated every tick (which got NetEase to refuse requests).",
+              "ru": "Обложки в HUD Music: если обложка не нашлась, поиск повторяется через несколько минут, а не только после перезапуска; неудачный запрос ждёт 20 секунд вместо повтора каждый тик (из-за этого NetEase начинал отказывать)."
+            },
+            {
+              "en": "NetEase's \"too many requests\" answer is no longer taken for \"no such song\" (covers and lyrics).",
+              "ru": "Ответ NetEase «слишком много запросов» больше не считается «такой песни нет» (обложки и тексты)."
+            },
+            {
+              "en": "Removed the \"Invalid path in mod resource-pack\" error in the log on every resource reload (a notice file sat among the sounds).",
+              "ru": "Убрана ошибка «Invalid path in mod resource-pack» в логе при каждой перезагрузке ресурсов (файл лицензии лежал среди звуков)."
+            },
+            {
+              "en": "Music HUD covers that only NetEase has (for example Imbalance) no longer go missing when NetEase turns away requests made at the same moment as the lyrics search: requests are spaced out and retried once, and a failure is written to the log.",
+              "ru": "Обложки в HUD Music, которые есть только в NetEase (например, Imbalance), больше не пропадают, когда NetEase отклоняет запросы, отправленные одновременно с поиском текста: запросы разнесены по времени и повторяются один раз, а сбой пишется в лог."
+            },
+            {
+              "en": "Russian lyrics stored with a broken encoding (garbled letters) are repaired before they are shown.",
+              "ru": "Русские тексты, сохранённые в сломанной кодировке (кракозябры), исправляются перед показом."
             }
           ]
         }

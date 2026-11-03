@@ -60,7 +60,8 @@ void main() {
 
     // Fresnel: grazing edges reflect more, so the rim brightens; a specular glint where the surface faces the light.
     float facing = clamp(normal.z, 0.0, 1.0);
-    float fresnel = pow(1.0 - facing, 3.0);
+    float grazing = 1.0 - facing;
+    float fresnel = grazing * grazing * grazing;
     vec3 reflected = reflect(-normalize(LIGHT), normal);
     float specular = pow(clamp(reflected.z, 0.0, 1.0), 48.0) * 0.9;
     // Thin bright line on the lit side of the rim, a dimmer one opposite (as on real glass edges).

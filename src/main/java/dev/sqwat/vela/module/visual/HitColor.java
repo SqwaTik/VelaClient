@@ -4,7 +4,7 @@ import dev.sqwat.vela.module.ModuleCategory;
 import dev.sqwat.vela.module.setting.*;
 import dev.sqwat.vela.ui.render.VelaTheme;
 
-/** Player hurt tint inspired by Kimiko; native render state owns the effect lifetime. */
+/** Player hurt tint; native render state owns the effect lifetime. */
 public final class HitColor extends ClientModule {
     private final BooleanSetting mobs=setting(new BooleanSetting("mobs","Мобы","Вспышка и на мобах, не только на игроках",true));
     private final BooleanSetting armor=setting(new BooleanSetting("armor","Закрашивать броню","Применять цвет удара к броне",true));

@@ -1,6 +1,5 @@
 package dev.sqwat.vela.account;
 
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import dev.sqwat.vela.ui.screen.VelaMicrosoftLoginScreen;
@@ -21,15 +20,10 @@ import java.util.UUID;
 public final class IasIntegration {
     private IasIntegration() {}
 
-    public static boolean available() {
-        return FabricLoader.getInstance().isModLoaded("ias");
-    }
-
     private static void ensureReady() {
         Minecraft client = Minecraft.getInstance();
         if (client.getConnection() != null || client.level != null)
             throw new IllegalStateException("Сначала выйдите в главное меню");
-        if (!available()) throw new IllegalStateException("Установите In-Game Account Switcher для Minecraft 26.2");
     }
 
     public static List<VelaIasBridge.AccountView> accounts() {

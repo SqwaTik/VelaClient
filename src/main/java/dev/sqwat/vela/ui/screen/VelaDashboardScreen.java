@@ -178,10 +178,11 @@ public final class VelaDashboardScreen extends DashboardPanels {
         for (Map.Entry<VelaSection, Rect> entry : navHits.entrySet()) {
             if (entry.getValue().contains(mx, my)) {
                 if(section!=entry.getKey())sectionSwitchAt=System.nanoTime();
+                rememberScroll();
                 section = entry.getKey();sideReveal=sideScroll=sideScrollTarget=0;friendFocused=false;configKeyFocused=false;configNameFocused=false;
                 dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.TAB);
                 searchFocused = false;
-                targetScroll = scroll = 0;
+                targetScroll = scroll = rememberedScroll(section);
                 persistView();
                 return true;
             }
@@ -234,6 +235,8 @@ public final class VelaDashboardScreen extends DashboardPanels {
                     services.configs().requestSave();
                     return true;
                 }
+                // Panel layout: a row selects its module, whose settings the right pane shows.
+                if(panelLayout()){if(hit.card().contains(mx,my)){selectModule(hit.module());return true;}continue;}
                 if (hit.card().contains(mx, my) && my<hit.card().y()+44 && !visibleSettings(hit.module()).isEmpty()) {
                     dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.EXPAND);
                     if(!expandedModules.add(hit.module().id()))expandedModules.remove(hit.module().id());persistView();
@@ -280,6 +283,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
             sideScrollTarget=Math.max(0,Math.min(maximum,sideScrollTarget-(float)vertical*20));return true;
         }
         if(dragging!=null || binding!=null || contextModule!=null || choice!=null || !contentHit.contains(mouseX,mouseY))return true;
+        if(section.category()!=null&&panelLayout()&&paneHit.contains(mouseX,mouseY)){paneTarget=Math.clamp(paneTarget-(float)vertical*30,0,paneLimit);return true;}
         targetScroll = Math.max(0, Math.min(scrollLimit, targetScroll - (float) vertical * 34));
         return true;
     }
@@ -327,7 +331,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
         }
         if(friendFocused){
             boolean ctrl=(event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0;
-            if(ctrl&&event.key()==services.configs().current().searchKey){friendFocused=false;searchFocused=true;return true;}
+            if(dev.sqwat.vela.ui.input.BindInput.matches(services.configs().current().searchCombo(),event.key(),event.modifiers())){friendFocused=false;searchFocused=true;return true;}
             if(event.key()==GLFW.GLFW_KEY_ESCAPE){friendFocused=false;return true;}
             if(event.key()==GLFW.GLFW_KEY_ENTER){addFriend();return true;}
             if(event.key()==GLFW.GLFW_KEY_BACKSPACE&&!friendInput.isEmpty())friendInput=friendInput.substring(0,friendInput.length()-1);
@@ -349,7 +353,7 @@ public final class VelaDashboardScreen extends DashboardPanels {
             if(capturing){int code=dev.sqwat.vela.ui.input.BindCapture.press(event.key(),event.modifiers());if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING)finishCapture(code,event.key());}
             return true;
         }
-        if((event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0&&event.key()==services.configs().current().searchKey){searchFocused=true;return true;}
+        if(dev.sqwat.vela.ui.input.BindInput.matches(services.configs().current().searchCombo(),event.key(),event.modifiers())){searchFocused=true;return true;}
         if(choice!=null){if(event.key()==GLFW.GLFW_KEY_ESCAPE)choice=null;return true;}
         if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
             if (searchFocused) { searchFocused = false; return true; }

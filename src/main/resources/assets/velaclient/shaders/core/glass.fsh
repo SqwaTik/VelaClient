@@ -19,8 +19,7 @@ void main() {
     float coverage=1.0-smoothstep(-.7,.7,sdf);
     if(coverage<=0.0)discard;
     vec2 texel=1.0/vec2(textureSize(Sampler0,0));
-    // Edge Fresnel and separated colour refraction, following the Kimiko glass
-    // surface model without its palette arrays or repeated full-screen passes.
+    // Edge Fresnel and separated colour refraction, without palette arrays or repeated full-screen passes.
     float fresnel=pow(1.0-clamp(-sdf/max(1.0,min(extent.x,extent.y)*.5),0.0,1.0),3.0);
     vec2 direction=p/max(length(p),1.0);
     vec2 offset=-direction*texel*fresnel*8.0;

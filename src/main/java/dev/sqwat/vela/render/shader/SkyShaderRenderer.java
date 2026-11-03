@@ -69,7 +69,7 @@ public final class SkyShaderRenderer {
             boolean custom=pipeline!=AURORA&&pipeline!=STARFALL&&pipeline!=BLACKHOLE;
             var composite=custom?COPY:COMPOSITE;
             if(compiled!=pipeline){if(!device.precompilePipeline(pipeline).isValid()||(!custom&&!device.precompilePipeline(BLOOM).isValid())||!device.precompilePipeline(composite).isValid())throw new IllegalStateException("Sky shader compilation failed");compiled=pipeline;}
-            ensureTargets(target,resolutionDivisor(target.getColorTexture().getWidth(0),target.getColorTexture().getHeight(0)),custom?0:2);
+            ensureTargets(target,resolutionDivisor(target.getColorTexture().getWidth(0),target.getColorTexture().getHeight(0),settings.skyQuality()),custom?0:2);
             boolean usesNoise=pipeline==BLACKHOLE||pipeline==AURORA;
             if(usesNoise)ensureNoise();
             if(uniforms==null)uniforms=device.createBuffer(()->"Vela sky parameters",GpuBuffer.USAGE_UNIFORM|GpuBuffer.USAGE_COPY_DST,208);
@@ -110,6 +110,11 @@ public final class SkyShaderRenderer {
     /** Bounds fragment work to 960x540, while retaining the screen's aspect ratio. */
     public static int resolutionDivisor(int width,int height){
         return Math.max(2,Math.max((width-1)/960+1,(height-1)/540+1));
+    }
+    /** Sky quality: low draws at a quarter of medium's pixels, high at full resolution up to 1080p. */
+    public static int resolutionDivisor(int width,int height,String quality){
+        int base=Math.max((width-1)/960+1,(height-1)/540+1);
+        return switch(quality){case "Низкое"->Math.max(4,base*2);case "Высокое"->Math.max(1,base/2);default->Math.max(2,base);};
     }
     private static void ensureTargets(RenderTarget target,int scale,int levels){
         int w=Math.max(1,target.getColorTexture().getWidth(0)/scale),h=Math.max(1,target.getColorTexture().getHeight(0)/scale);

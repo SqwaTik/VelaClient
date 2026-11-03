@@ -1,4 +1,0 @@
-Hit sounds
-heavy.ogg, body1-3.ogg: Mixkit (mixkit.co) "Impact of a strong punch" and "Strong punches to the body",
-  Mixkit Sound Effects Free License; trimmed, faded and loudness-normalised for Vela.
-metal.ogg, knock.ogg, echo.ogg, crime.ogg: KimikoSRC assets (CC0 1.0, see META-INF/licenses/Kimiko-particle-assets-CC0.txt).

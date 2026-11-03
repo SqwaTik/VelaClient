@@ -23,7 +23,7 @@ public final class VelaTitleScreen extends VelaScreen {
     private final FrameClock clock = new FrameClock();
     private final List<MenuHit> hits = new ArrayList<>();
     private float entrance;
-    private final float[] buttonHover=new float[5];
+    private final float[] buttonHover=new float[6];
     private long clockSecond=-1;
     private String timeLabel="",dateLabel="";
     private static final java.time.format.DateTimeFormatter TIME=java.time.format.DateTimeFormatter.ofPattern("HH:mm");
@@ -50,11 +50,12 @@ public final class VelaTitleScreen extends VelaScreen {
         VelaDraw.centeredText(g,timeLabel,center,y,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,36);
         VelaDraw.centeredText(g,dateLabel,center,y+45,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,9);
         hits.clear();
-        String[] labels={"Singleplayer","Multiplayer","Accounts","Settings","Quit"};
-        PILL_W=Math.max(96,Math.round(maxLabel(labels)+50));ROW=PILL_W*4+PILL_GAP*3;
-        String[] icons={"singleplayer","multiplayer","account","settings","power"};
-        Action[] actions={Action.SINGLEPLAYER,Action.MULTIPLAYER,Action.ACCOUNTS,Action.SETTINGS,Action.QUIT};
-        for(int i=0;i<5;i++){
+        String[] labels={"Singleplayer","Multiplayer","Accounts","Mods","Settings","Quit"};
+        // Five pills in a row; on a narrow window they shrink to fit instead of running off the edges.
+        PILL_W=Math.min(Math.max(96,Math.round(maxLabel(labels)+50)),(width-24-PILL_GAP*4)/5);ROW=PILL_W*5+PILL_GAP*4;
+        String[] icons={"singleplayer","multiplayer","account","folder","settings","power"};
+        Action[] actions={Action.SINGLEPLAYER,Action.MULTIPLAYER,Action.ACCOUNTS,Action.MODS,Action.SETTINGS,Action.QUIT};
+        for(int i=0;i<labels.length;i++){
             int slot=i<2?i:i-1;
             Rect rect=i==2?new Rect(width-140,12,128,30):new Rect(center-ROW/2+slot*(PILL_W+PILL_GAP),y+86,PILL_W,PILL_H);
             boolean hovered=rect.contains(mouseX,mouseY)||i==2&&minecraft.gui.screen() instanceof VelaAccountScreen;
@@ -72,7 +73,7 @@ public final class VelaTitleScreen extends VelaScreen {
                 hits.add(new MenuHit(rect,actions[i]));continue;
             }
             // Labelled pill: the hover is a clear accent border, a tinted fill and a small lift; Quit turns red.
-            int accent=i==4?VelaTheme.DANGER:VelaTheme.PRIMARY;
+            int accent=actions[i]==Action.QUIT?VelaTheme.DANGER:VelaTheme.PRIMARY;
             float lift=h*2;
             Rect pill=new Rect(rect.x(),Math.round(rect.y()-lift),rect.width(),rect.height());
             if(h>.01f)VelaDraw.roundedRect(g,pill.x()-3,pill.y()-3,pill.width()+6,pill.height()+6,13,(Math.round(h*40)<<24)|(accent&0xFFFFFF));
@@ -81,8 +82,58 @@ public final class VelaTitleScreen extends VelaScreen {
             VelaDraw.text(g,labels[i],pill.x()+35,pill.y()+(pill.height()-9)/2f,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,h),VelaDraw.Weight.MEDIUM,9);
             hits.add(new MenuHit(rect,actions[i]));
         }
-        dev.sqwat.vela.ui.render.UiCursor.hand(hits.stream().anyMatch(hit->hit.rect.contains(mouseX,mouseY))||changelogHit.contains(mouseX,mouseY));
+        dev.sqwat.vela.ui.render.UiCursor.hand(hits.stream().anyMatch(hit->hit.rect.contains(mouseX,mouseY))||changelogHit.contains(mouseX,mouseY)||launcherHit.contains(mouseX,mouseY));
         drawChangelogPill(g,mouseX,mouseY,dt);
+        drawLauncherLink(g,mouseX,mouseY,dt);
+    }
+    private static final String LAUNCHER_RELEASE="https://github.com/SqwaTik/VelaLauncher/releases/latest";
+    private Rect launcherHit=new Rect(0,0,0,0);
+    private float launcherHover;
+    /** Tag of the newest launcher release ("v0.1.21"), asked from GitHub once per game; empty until it answers. */
+    private static volatile String launcherTag="";
+    private static boolean launcherAsked;
+    private static void askLauncherTag(){
+        if(launcherAsked)return;
+        launcherAsked=true;
+        Thread.ofVirtual().name("Vela launcher release").start(()->{
+            try{
+                var http=java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(5)).followRedirects(java.net.http.HttpClient.Redirect.NORMAL).build();
+                var response=http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://api.github.com/repos/SqwaTik/VelaLauncher/releases/latest"))
+                    .timeout(java.time.Duration.ofSeconds(8)).header("Accept","application/vnd.github+json").header("User-Agent","VelaClient").GET().build(),java.net.http.HttpResponse.BodyHandlers.ofString());
+                if(response.statusCode()!=200)return;
+                var tag=com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject().get("tag_name");
+                if(tag!=null&&!tag.isJsonNull())launcherTag=tag.getAsString().strip();
+            }catch(Exception ignored){}
+        });
+    }
+    /**
+     * Bottom-left card for the newest Vela Launcher release on GitHub: the logo, the name with the release tag below,
+     * and a download arrow that lights up on hover.
+     */
+    private void drawLauncherLink(GuiGraphicsExtractor g,int mouseX,int mouseY,float dt){
+        askLauncherTag();
+        String title="Vela Launcher";
+        String tag=launcherTag;
+        String sub=tag.isEmpty()?dev.sqwat.vela.ui.Lang.pick("Latest release","Последний релиз"):dev.sqwat.vela.ui.Lang.pick("Latest release · ","Последний релиз · ")+tag;
+        float titleW=VelaDraw.textWidth(title,VelaDraw.Weight.SEMIBOLD,9.5f),subW=VelaDraw.textWidth(sub,VelaDraw.Weight.MEDIUM,7.5f);
+        int w=(int)Math.ceil(Math.max(titleW,subW))+74,h=40,x=12,y=height-h-10;
+        // Narrow windows: stack it above the changelog pill instead of overlapping it.
+        if(x+w>changelogHit.x()-6){x=(width-w)/2;y=changelogHit.y()-h-6;}
+        launcherHit=new Rect(x,y,w,h);
+        float hover=launcherHover=Motion.approach(launcherHover,launcherHit.contains(mouseX,mouseY)?1:0,services.configs().current().reducedMotion?60:13,dt);
+        int accent=VelaTheme.PRIMARY;
+        int lift=Math.round(hover*2);
+        y-=lift;
+        if(hover>.01f)VelaDraw.roundedRect(g,x-3,y-3,w+6,h+6,15,(Math.round(hover*36)<<24)|(accent&0xFFFFFF));
+        VelaDraw.roundedOutline(g,x,y,w,h,12,VelaTheme.mix(0xFF262E3F,accent,.35f+hover*.5f),VelaTheme.mix(0xE8121722,VelaTheme.mix(0xFF121722,accent,.14f),hover));
+        VelaDraw.logo(g,x+9,y+8,24);
+        float textX=x+41;
+        VelaDraw.text(g,title,textX,y+9,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,9.5f);
+        VelaDraw.text(g,sub,textX,y+23,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,hover*.6f),VelaDraw.Weight.MEDIUM,7.5f);
+        // Download arrow in a round well on the right.
+        int ax=x+w-30,ay=y+(h-22)/2;
+        VelaDraw.roundedRect(g,ax,ay,22,22,11,VelaTheme.mix(0xFF1A2130,accent,hover*.85f));
+        dev.sqwat.vela.ui.render.VelaIcons.draw(g,"download",ax+5,ay+5,12,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,0xFFFFFFFF,hover));
     }
     private Rect changelogHit=new Rect(0,0,0,0);
     private float changelogHover;
@@ -135,12 +186,14 @@ public final class VelaTitleScreen extends VelaScreen {
     public boolean clickVela(MouseButtonEvent event, boolean doubled) {
         if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return super.clickVela(event, doubled);
         if(changelogHit.contains(event.x(),event.y())){minecraft.gui.setScreen(new ChangelogScreen(this));return true;}
+        if(launcherHit.contains(event.x(),event.y())){net.minecraft.util.Util.getPlatform().openUri(LAUNCHER_RELEASE);return true;}
         for (MenuHit hit : hits) {
             if (!hit.rect().contains(event.x(), event.y())) continue;
             switch (hit.action()) {
                 case SINGLEPLAYER -> minecraft.gui.setScreen(new SelectWorldScreen(this));
                 case MULTIPLAYER -> minecraft.gui.setScreen(new JoinMultiplayerScreen(this));
                 case ACCOUNTS -> minecraft.gui.setScreen(new VelaAccountScreen(this, services));
+                case MODS -> minecraft.gui.setScreen(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this));
                 case SETTINGS -> minecraft.gui.setScreen(new OptionsScreen(this, minecraft.options, false));
                 case QUIT -> minecraft.gui.setScreen(new FarewellScreen());
             }
@@ -153,6 +206,6 @@ public final class VelaTitleScreen extends VelaScreen {
     @Override public boolean shouldCloseOnEsc() { return false; }
     @Override public boolean isPauseScreen() { return false; }
 
-    private enum Action { SINGLEPLAYER, MULTIPLAYER, ACCOUNTS, SETTINGS, QUIT }
+    private enum Action { SINGLEPLAYER, MULTIPLAYER, ACCOUNTS, MODS, SETTINGS, QUIT }
     private record MenuHit(Rect rect, Action action) {}
 }

@@ -3,22 +3,26 @@
   "id": "velaclient",
   "version": "${version}",
   "name": "Vela Client",
-  "description": "A polished, extensible client foundation for Minecraft 26.2.",
+  "description": "An all-in-one client for Minecraft 26.2: a configurable HUD, visual effects, PvP helpers, a music player with lyrics and quality-of-life tools, in one mod with one settings menu.",
   "authors": ["sqwat"],
-  "license": ["MIT", "LGPL-3.0-only"],
+  "license": ["MIT", "LGPL-3.0-or-later"],
   "icon": "assets/velaclient/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": ["dev.sqwat.vela.VelaClient"],
-    "voicechat": ["dev.sqwat.vela.core.VelaVoicePlugin"]
+    "client": ["dev.sqwat.vela.VelaClient", "de.johni0702.minecraft.bobby.Bobby", "ru.vidtu.ias.platform.IFabric", "com.terraformersmc.modmenu.ModMenu"],
+    "voicechat": ["dev.sqwat.vela.core.VelaVoicePlugin"],
+    "modmenu": ["dev.sqwat.vela.core.VelaModMenu"]
   },
-  "mixins": ["velaclient.mixins.json"],
-  "jars": [{"file":"META-INF/jars/bobby-5.2.15+mc26.2.jar"}],
+  "mixins": ["velaclient.mixins.json", "bobby.mixins.json", "ias.mixins.json", "mixins.modmenu.json"],
   "depends": {
-    "fabricloader": ">=0.19.4",
+    "fabricloader": ">=0.19.2",
     "minecraft": "~26.2",
     "java": ">=25",
-    "fabric-api": "*",
-    "ias": ">=9.0.7"
+    "fabric-api": "*"
+  },
+  "breaks": {
+    "ias": "*",
+    "bobby": "*",
+    "modmenu": "*"
   }
 }

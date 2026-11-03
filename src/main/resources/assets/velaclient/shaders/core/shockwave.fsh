@@ -26,7 +26,8 @@ void main() {
     vec2 uv=clamp(sceneUv+offset,texel,1.0-texel);
     vec3 refracted=vec3(texture(Sampler0,clamp(uv+offset*.08,texel,1.0-texel)).r,
         texture(Sampler0,uv).g,texture(Sampler0,clamp(uv-offset*.08,texel,1.0-texel)).b);
-    float crest=exp(-pow((radius-.76)/.065,2.0));
+    float crestX=(radius-.76)*15.3846154;
+    float crest=exp(-crestX*crestX);
     vec3 glass=mix(refracted,vertexColor.rgb,.035*band);
     glass+=mix(vertexColor.rgb,vec3(1.0),.5)*crest*.10;
     fragColor=vec4(glass,band*vertexColor.a)*ColorModulator;

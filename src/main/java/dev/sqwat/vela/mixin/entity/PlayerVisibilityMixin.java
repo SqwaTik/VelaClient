@@ -21,10 +21,11 @@ abstract class PlayerVisibilityMixin {
                 ci.setReturnValue(false);return;
             }
         }
-        if(dev.sqwat.vela.module.utility.RenderTweaks.hide("holograms")
-                &&(entity instanceof net.minecraft.world.entity.Display.TextDisplay
+        // The type first: this runs for every entity every frame, the setting lookup only for holograms.
+        if((entity instanceof net.minecraft.world.entity.Display.TextDisplay
                 ||entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand
-                &&stand.isInvisible()&&stand.hasCustomName())){
+                &&stand.isInvisible()&&stand.hasCustomName())
+                &&dev.sqwat.vela.module.utility.RenderTweaks.hide("holograms")){
             ci.setReturnValue(false);return;
         }
         if(!(entity instanceof AbstractClientPlayer)||entity.isPassenger()||entity.isVehicle()||entity.isCurrentlyGlowing())return;

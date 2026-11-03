@@ -74,7 +74,12 @@ public class RenderPngPreview implements UiCanvas {
     }
     PngFontMetrics font(Weight weight,int size){
         String key=weight.name().toLowerCase(Locale.ROOT)+"_"+size;
-        return fonts.computeIfAbsent(key,k->{try{return new PngFontMetrics(Files.newInputStream(assets.resolve("ui/font_"+k+".csv")),Files.newInputStream(assets.resolve("ui/kerning_"+weight.name().toLowerCase(Locale.ROOT)+".csv")));}catch(Exception e){throw new IllegalStateException(e);}});
+        return fonts.computeIfAbsent(key,k->{try{
+            String name=weight.name().toLowerCase(Locale.ROOT);var baked=PngFontBaker.bake(PngFontBaker.font(name),size);
+            var atlas=new BufferedImage(baked.width(),baked.height(),BufferedImage.TYPE_INT_ARGB);
+            for(int i=0;i<baked.alpha().length;i++)atlas.setRGB(i%baked.width(),i/baked.width(),(baked.alpha()[i]&255)<<24|0xffffff);
+            images.put("font_"+k,atlas);return baked.metrics(name);
+        }catch(Exception e){throw new IllegalStateException(e);}});
     }
     public void text(String value,float x,float y,float em,int color,Weight weight){
         int size=FONT_SIZES[0];for(int candidate:FONT_SIZES)if(Math.abs(candidate-em*density)<Math.abs(size-em*density))size=candidate;

@@ -14,7 +14,7 @@ public final class BlockOverlay extends ClientModule {
     private final BooleanSetting fill=setting(new BooleanSetting("fill","Заливка","Полупрозрачная заливка",true));
     private final BooleanSetting theme=setting(new BooleanSetting("client_color","Цвет клиента","Использовать цвет темы",true));
     private final ColorSetting color=setting(new ColorSetting("color","Цвет",0x8877FF));
-    public BlockOverlay(){super("block_overlay","Block Overlay","Выделение блока под прицелом",ModuleCategory.UTILITIES);color.visibleWhen(this::customColor);}
+    public BlockOverlay(){super("block_overlay","Block Overlay","Выделение блока под прицелом",ModuleCategory.VISUALS);color.visibleWhen(this::customColor);}
     public boolean customColor(){return !theme.value();}
     public static BlockOverlay active(){return dev.sqwat.vela.module.Modules.active(BlockOverlay.class);}
     public void submit(BlockOutlineRenderState state){

@@ -11,6 +11,7 @@ public final class FrameSamples {
         if(!Double.isFinite(milliseconds)||milliseconds<=0)return;
         values[cursor]=milliseconds;cursor=(cursor+1)%values.length;count=Math.min(count+1,values.length);
     }
+    public void reset(){cursor=count=0;}
     public record Summary(int frames,double averageMs,double p95Ms,double p99Ms,double maxMs,int over16Ms){}
     public Summary summary(){
         if(count==0)return new Summary(0,0,0,0,0,0);

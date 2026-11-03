@@ -10,6 +10,10 @@ layout(std140) uniform HandsHologramData {
 in vec2 texCoord;
 out vec4 fragColor;
 
+// The ring directions are constants: no cos/sin per tap.
+const vec2 DIRS[8] = vec2[](vec2(1.0, 0.0), vec2(0.7071, 0.7071), vec2(0.0, 1.0), vec2(-0.7071, 0.7071),
+                            vec2(-1.0, 0.0), vec2(-0.7071, -0.7071), vec2(0.0, -1.0), vec2(0.7071, -0.7071));
+
 float coverageAt(vec2 uv) { return texture(SceneSampler, uv).a; }
 
 void main() {
@@ -29,11 +33,10 @@ void main() {
     }
     // Glow halo: the silhouette sampled in a ring, wider than the item.
     float near = 0.0, far = 0.0;
+    vec2 nearStep = screen.zw * 2.0, farStep = screen.zw * 5.0;
     for (int i = 0; i < 8; i++) {
-        float angle = float(i) * 0.785398;
-        vec2 dir = vec2(cos(angle), sin(angle));
-        near = max(near, coverageAt(uv + dir * screen.zw * 2.0));
-        far += coverageAt(uv + dir * screen.zw * 5.0);
+        near = max(near, coverageAt(uv + DIRS[i] * nearStep));
+        far += coverageAt(uv + DIRS[i] * farStep);
     }
     far /= 8.0;
     if (max(mask, max(near, far)) <= 0.001) discard;

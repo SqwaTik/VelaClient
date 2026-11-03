@@ -31,6 +31,11 @@ public final class HudPositionScreen extends Screen {
     private float menuReveal;
     private float contextReveal;
     private final float[] sizeHover=new float[3];
+    private float sizeSlide=Float.NaN;
+    private final java.util.Map<String,Float> rowHover=new java.util.HashMap<>();
+    private final RgbPicker picker=new RgbPicker();
+    private static final float[] SIZES={.5f,.75f,1f};
+    private static final int MENU_HEAD=22,SIZE_W=150,SIZE_H=44,SIZE_SEG_Y=22,SIZE_SEG_H=16;
     private final java.util.Map<String,Float> elementHover=new java.util.HashMap<>();
 
     public HudPositionScreen(Screen parent, HudLayoutService layout) {
@@ -101,55 +106,84 @@ public final class HudPositionScreen extends Screen {
         g.pose().popMatrix();
 
         if(transparencyTarget!=null){
-            var options=layout.contextSettings(transparencyTarget);
-            for(ElementHit hit:elements)if(hit.id.equals(transparencyTarget))transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height,transparencyTarget.equals("target")?176:108,34+options.size()*24);
+            var rows=menuRows();
+            for(ElementHit hit:elements)if(hit.id.equals(transparencyTarget))transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height,menuWidth(),menuHeight(rows));
             g.nextStratum();
             dev.sqwat.vela.ui.render.UiClip.enable(g,transparencyMenu.x()-1,transparencyMenu.y()-1,transparencyMenu.x()+transparencyMenu.width()+1,transparencyMenu.y()+Math.round(transparencyMenu.height()*contextReveal)+1);
-            g.pose().pushMatrix();g.pose().translate(transparencyMenu.x(),transparencyMenu.y()-3*(1-contextReveal));g.pose().scale(dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE);
-            int px=0,py=0,pw=transparencyMenu.width();
-            VelaDraw.roundedOutline(g,px,py,pw,transparencyMenu.height(),7,VelaTheme.BORDER,VelaTheme.WINDOW);
-            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"settings",px+8,py+8,10,VelaTheme.PRIMARY);
-            VelaDraw.text(g,VelaDraw.ellipsize(layout.functionName(transparencyTarget),pw-32,VelaDraw.Weight.MEDIUM,8),px+24,py+9,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
-            VelaDraw.roundedRect(g,px+7,py+24,pw-14,1,0,VelaTheme.BORDER);
-            float factor=dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE;
-            for(int i=0;i<options.size();i++){
-                var option=options.get(i);int rowY=30+i*24;
-                VelaDraw.roundedRect(g,5,rowY,pw-10,22,4,VelaTheme.SURFACE);
-                VelaDraw.text(g,option.id().equals("transparent")?"Прозрачность":option.name(),10,rowY+7,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);
-                VelaDraw.toggle(g,"hud-context-"+transparencyTarget+"-"+option.id(),pw-29,rowY+5,option.value(),dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(pw-29,rowY+5).contains((mouseX-transparencyMenu.x())/factor,(mouseY-transparencyMenu.y())/factor));
+            g.pose().pushMatrix();g.pose().translate(transparencyMenu.x(),transparencyMenu.y()-3*(1-contextReveal));
+            int pw=transparencyMenu.width(),ph=transparencyMenu.height();
+            VelaDraw.roundedOutline(g,0,0,pw,ph,8,VelaTheme.BORDER,VelaTheme.WINDOW);
+            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"settings",8,7,9,VelaTheme.PRIMARY);
+            VelaDraw.text(g,VelaDraw.ellipsize(layout.functionName(transparencyTarget),pw-28,VelaDraw.Weight.MEDIUM,8),21,8,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
+            VelaDraw.roundedRect(g,8,MENU_HEAD-1,pw-16,1,0,VelaTheme.BORDER);
+            float lx=mouseX-transparencyMenu.x(),ly=mouseY-transparencyMenu.y();
+            for(var row:rows){
+                var option=row.setting();
+                boolean over=new Rect(4,row.y(),pw-8,row.height()).contains(lx,ly)&&!picker.open();
+                float hover=rowHover.compute(option.id(),(k,v)->dev.sqwat.vela.ui.animation.Motion.approach(v==null?0:v,over?1:0,14,menuDt));
+                if(hover>.01f)VelaDraw.roundedRect(g,4,row.y(),pw-8,row.height(),5,VelaTheme.mix(VelaTheme.WINDOW,VelaTheme.SURFACE_HOVER,hover));
+                // The same EXPERIMENTAL mark as in the module's settings, after the name.
+                float badge=option.isExperimental()?VelaDraw.textWidth("EXPERIMENTAL",VelaDraw.Weight.SEMIBOLD,6f)+5:0;
+                String name=VelaDraw.ellipsize(optionName(option),Math.round(pw-44-badge),VelaDraw.Weight.MEDIUM,7.5f);
+                VelaDraw.text(g,name,10,row.y()+5,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,7.5f);
+                if(badge>0)VelaDraw.text(g,"EXPERIMENTAL",10+VelaDraw.textWidth(name,VelaDraw.Weight.MEDIUM,7.5f)+5,row.y()+6,VelaTheme.TEXT_MUTED,VelaDraw.Weight.SEMIBOLD,6f);
+                for(int l=0;l<row.description().size();l++)VelaDraw.text(g,row.description().get(l),10,row.y()+15+l*8,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,6.5f);
+                int cy=row.y()+row.height()/2;
+                if(option instanceof dev.sqwat.vela.module.setting.BooleanSetting toggle){
+                    VelaDraw.toggle(g,"hud-context-"+transparencyTarget+"-"+option.id(),pw-29,cy-5,toggle.value(),over);
+                }else if(option instanceof dev.sqwat.vela.module.setting.ColorSetting color){
+                    VelaDraw.roundedRect(g,pw-27,cy-7,14,14,7,VelaTheme.mix(VelaTheme.BORDER,0xFFFFFFFF,hover*.6f));
+                    VelaDraw.roundedRect(g,pw-25,cy-5,10,10,5,0xFF000000|color.value());
+                }
             }
             g.pose().popMatrix();
             g.disableScissor();
+            picker.draw(g,menuDt);
         }
         if(resizing!=null){
             g.nextStratum();dev.sqwat.vela.ui.render.UiClip.enable(g,sizeMenu.x()-1,sizeMenu.y()-1,sizeMenu.x()+sizeMenu.width()+1,sizeMenu.y()+Math.round(sizeMenu.height()*menuReveal)+1);
-            VelaDraw.roundedOutline(g,sizeMenu.x(),sizeMenu.y(),sizeMenu.width(),sizeMenu.height(),8,VelaTheme.BORDER,VelaTheme.SURFACE);
-            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"move",sizeMenu.x()+10,sizeMenu.y()+10,12,VelaTheme.PRIMARY);
-            VelaDraw.text(g,"Размер",sizeMenu.x()+29,sizeMenu.y()+12,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,9);
-            String[] labels={"Меньше","Компактный","Большой"};
-            VelaDraw.roundedRect(g,sizeMenu.x()+7,sizeMenu.y()+26,sizeMenu.width()-14,1,0,VelaTheme.BORDER);
+            int mx=sizeMenu.x(),my=sizeMenu.y()-Math.round(3*(1-menuReveal)),mw=sizeMenu.width();
+            VelaDraw.roundedOutline(g,mx,my,mw,sizeMenu.height(),8,VelaTheme.BORDER,VelaTheme.WINDOW);
+            dev.sqwat.vela.ui.render.VelaIcons.draw(g,"move",mx+8,my+7,9,VelaTheme.PRIMARY);
+            VelaDraw.text(g,"Размер",mx+21,my+8,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
+            float current=layout.scale(resizing);
+            String percent=Math.round(current*100)+"%";
+            VelaDraw.text(g,percent,mx+mw-8-VelaDraw.textWidth(percent,VelaDraw.Weight.REGULAR,7),my+8.5f,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
+            // A segmented switch; the selected pill slides between the three sizes.
+            int track=mx+6,trackW=mw-12,segY=my+SIZE_SEG_Y,seg=trackW/3;
+            VelaDraw.roundedRect(g,track,segY,trackW,SIZE_SEG_H,6,VelaTheme.SURFACE);
+            int chosen=-1;for(int i=0;i<3;i++)if(Math.abs(current-SIZES[i])<.01f)chosen=i;
+            if(chosen>=0){
+                sizeSlide=Float.isNaN(sizeSlide)?chosen:dev.sqwat.vela.ui.animation.Motion.approach(sizeSlide,chosen,18,menuDt);
+                VelaDraw.roundedRect(g,Math.round(track+2+sizeSlide*seg),segY+2,seg-4+(chosen==2?trackW-seg*3:0),SIZE_SEG_H-4,5,VelaTheme.readableAccentFill());
+            }
+            String[] labels={"Меньше","Средний","Большой"};
             for(int i=0;i<3;i++){
-                Rect row=new Rect(sizeMenu.x()+6,sizeMenu.y()+33+i*19,sizeMenu.width()-12,17);
-                boolean selected=Math.abs(layout.scale(resizing)-new float[]{.5f,.75f,1f}[i])<.01f;
-                sizeHover[i]=dev.sqwat.vela.ui.animation.Motion.approach(sizeHover[i],row.contains(mouseX,mouseY)?1:0,14,menuDt);
-                VelaDraw.roundedRect(g,row.x(),row.y(),row.width(),row.height(),4,selected?VelaTheme.readableAccentFill():VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,sizeHover[i]));
-                VelaDraw.text(g,labels[i],row.x()+7,row.y()+6,VelaTheme.TEXT,VelaDraw.Weight.REGULAR,8);
-                if(selected)dev.sqwat.vela.ui.render.VelaIcons.draw(g,"check",row.x()+row.width()-17,row.y()+6,10,VelaTheme.TEXT);
-            }g.disableScissor();
+                Rect cell=new Rect(track+i*seg,segY,seg,SIZE_SEG_H);
+                sizeHover[i]=dev.sqwat.vela.ui.animation.Motion.approach(sizeHover[i],cell.contains(mouseX,mouseY)?1:0,14,menuDt);
+                int color=i==chosen?VelaTheme.TEXT:VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,sizeHover[i]);
+                VelaDraw.centeredText(g,labels[i],cell.x()+cell.width()/2f,segY+5,color,VelaDraw.Weight.MEDIUM,7);
+            }
+            g.disableScissor();
         }
 
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if(picker.open()){
+            if(picker.click(event.x(),event.y()))return true;
+            saveSettings();
+            if(transparencyTarget!=null&&transparencyMenu.contains(event.x(),event.y())&&event.button()==0)return true;
+        }
         if(event.button()==GLFW.GLFW_MOUSE_BUTTON_MIDDLE){
             // The open popup owns its own area; other HUDs remain selectable.
             if(transparencyTarget!=null&&transparencyMenu.contains(event.x(),event.y()))return true;
             for(ElementHit hit:elements.reversed())if(hit.rect.contains(event.x(),event.y())&&layout.supportsTransparency(hit.id)){
-                if(!hit.id.equals(transparencyTarget))contextReveal=0;
+                if(!hit.id.equals(transparencyTarget)){contextReveal=0;rowHover.clear();}
                 transparencyTarget=hit.id;
                 dragging=null;resizing=null;
-                transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height);
+                transparencyMenu=dev.sqwat.vela.ui.hud.HudGeometry.context(hit.rect,width,height,menuWidth(),menuHeight(menuRows()));
                 return true;
             }
             transparencyTarget=null;
@@ -157,22 +191,28 @@ public final class HudPositionScreen extends Screen {
         }
         if(transparencyTarget!=null){
             if(event.button()==0&&transparencyMenu.contains(event.x(),event.y())){
-                float factor=dev.sqwat.vela.ui.hud.HudGeometry.CONTEXT_SCALE;
-                var options=layout.contextSettings(transparencyTarget);
-                for(int i=0;i<options.size();i++)if(contextReveal>.95f&&new Rect(5,30+i*24,transparencyMenu.width()-10,22).contains((event.x()-transparencyMenu.x())/factor,(event.y()-transparencyMenu.y())/factor)){layout.toggleContextSetting(transparencyTarget,options.get(i).id());break;}
+                double lx=event.x()-transparencyMenu.x(),ly=event.y()-transparencyMenu.y();
+                for(var row:menuRows())if(contextReveal>.95f&&new Rect(4,row.y(),transparencyMenu.width()-8,row.height()).contains(lx,ly)){
+                    if(row.setting() instanceof dev.sqwat.vela.module.setting.ColorSetting color)
+                        picker.show(color,new Rect(transparencyMenu.x(),transparencyMenu.y()+row.y(),transparencyMenu.width(),row.height()),width,height);
+                    else layout.toggleContextSetting(transparencyTarget,row.setting().id());
+                    break;
+                }
                 return true;
             }
-            transparencyTarget=null;return true;
+            transparencyTarget=null;picker.close();return true;
         }
         if(resizing!=null){
             if(event.button()==0&&sizeMenu.contains(event.x(),event.y())){
-                if(event.y()<sizeMenu.y()+33||menuReveal<.95f)return true;
-                int row=(int)(event.y()-sizeMenu.y()-33)/19;if(row>=0&&row<3)layout.setScale(resizing,new float[]{.5f,.75f,1f}[row]);
+                int track=sizeMenu.x()+6,seg=(sizeMenu.width()-12)/3,segY=sizeMenu.y()+SIZE_SEG_Y;
+                if(menuReveal<.95f||event.y()<segY||event.y()>segY+SIZE_SEG_H)return true;
+                int cell=(int)((event.x()-track)/seg);if(cell>=0&&cell<3)layout.setScale(resizing,SIZES[cell]);
+                return true;
             }
             resizing=null;return true;
         }
         if(event.button()==GLFW.GLFW_MOUSE_BUTTON_RIGHT){
-            for(ElementHit hit:elements.reversed())if(hit.rect.contains(event.x(),event.y())){resizing=hit.id;menuReveal=0;java.util.Arrays.fill(sizeHover,0);sizeMenu=new Rect(Math.max(2,Math.min(width-110,(int)event.x())),Math.max(2,Math.min(height-96,(int)event.y())),108,94);return true;}
+            for(ElementHit hit:elements.reversed())if(hit.rect.contains(event.x(),event.y())){resizing=hit.id;menuReveal=0;sizeSlide=Float.NaN;java.util.Arrays.fill(sizeHover,0);sizeMenu=new Rect(Math.max(2,Math.min(width-SIZE_W-2,(int)event.x())),Math.max(2,Math.min(height-SIZE_H-2,(int)event.y())),SIZE_W,SIZE_H);return true;}
             return true;
         }
         if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return super.mouseClicked(event, doubled);
@@ -191,6 +231,7 @@ public final class HudPositionScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if(picker.drag(event.x(),event.y()))return true;
         if(transparencyTarget!=null)return true;
         if (dragging == null || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return super.mouseDragged(event, deltaX, deltaY);
         var size=layout.bounds(minecraft,dragging);
@@ -223,6 +264,7 @@ public final class HudPositionScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if(picker.open()){picker.release();saveSettings();}
         if(transparencyTarget!=null)return true;
         if (dragging != null) {
             dragging = null;
@@ -232,7 +274,7 @@ public final class HudPositionScreen extends Screen {
         return super.mouseReleased(event);
     }
 
-    @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event){if(event.key()==GLFW.GLFW_KEY_ESCAPE&&transparencyTarget!=null){transparencyTarget=null;return true;}if(event.key()==GLFW.GLFW_KEY_ESCAPE&&resizing!=null){resizing=null;return true;}if(event.key()==GLFW.GLFW_KEY_TAB){minecraft.options.keyPlayerList.setDown(true);return true;}return super.keyPressed(event);}
+    @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event){if(event.key()==GLFW.GLFW_KEY_ESCAPE&&picker.open()){picker.close();saveSettings();return true;}if(event.key()==GLFW.GLFW_KEY_ESCAPE&&transparencyTarget!=null){transparencyTarget=null;return true;}if(event.key()==GLFW.GLFW_KEY_ESCAPE&&resizing!=null){resizing=null;return true;}if(event.key()==GLFW.GLFW_KEY_TAB){minecraft.options.keyPlayerList.setDown(true);return true;}return super.keyPressed(event);}
     @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event){if(event.key()==GLFW.GLFW_KEY_TAB){minecraft.options.keyPlayerList.setDown(false);return true;}return super.keyReleased(event);}
     @Override public void onClose() { layout.save(); minecraft.gui.setScreen(parent); }
     @Override public boolean isPauseScreen() { return false; }
@@ -268,4 +310,37 @@ public final class HudPositionScreen extends Screen {
 
     private static int snap(int value, int guide) { return Math.abs(value - guide) <= 4 ? guide : value; }
     private record ElementHit(String id, Rect rect) {}
+    /** One setting in the middle-click menu: its place, and its description wrapped to at most two lines. */
+    private record MenuRow(dev.sqwat.vela.module.setting.Setting<?> setting,int y,int height,List<String> description) {}
+    private int menuWidth(){return transparencyTarget!=null&&(transparencyTarget.equals("target")||transparencyTarget.equals("music"))?176:156;}
+    private int menuHeight(List<MenuRow> rows){return rows.isEmpty()?MENU_HEAD+6:rows.getLast().y()+rows.getLast().height()+4;}
+    private List<MenuRow> menuRows(){
+        var rows=new ArrayList<MenuRow>();if(transparencyTarget==null)return rows;
+        int y=MENU_HEAD+3,textWidth=menuWidth()-48;
+        for(var option:layout.contextSettings(transparencyTarget)){
+            String about=option.id().equals("transparent")?"Заменяет фон панели прозрачным стеклом"
+                :option instanceof dev.sqwat.vela.module.setting.ColorSetting?"Нажмите, чтобы выбрать цвет":option.description();
+            var lines=wrap(about,textWidth);
+            int h=16+lines.size()*8;
+            rows.add(new MenuRow(option,y,h,lines));y+=h+1;
+        }
+        return rows;
+    }
+    private static String optionName(dev.sqwat.vela.module.setting.Setting<?> option){return option.id().equals("transparent")?"Прозрачность":option.name();}
+    /** Word-wraps the shown (translated) text into at most two lines, the second cut with an ellipsis. */
+    private static List<String> wrap(String text,int width){
+        String shown=dev.sqwat.vela.ui.Lang.tr(text);
+        if(shown.isBlank())return List.of();
+        var lines=new ArrayList<String>();var line=new StringBuilder();
+        for(String word:shown.split(" ")){
+            String next=line.isEmpty()?word:line+" "+word;
+            if(line.isEmpty()||VelaDraw.textWidth(next,VelaDraw.Weight.REGULAR,6.5f)<=width){line.setLength(0);line.append(next);continue;}
+            lines.add(line.toString());line.setLength(0);line.append(word);
+            if(lines.size()==2)break;
+        }
+        if(lines.size()<2&&!line.isEmpty())lines.add(line.toString());
+        else if(lines.size()==2&&!line.isEmpty())lines.set(1,VelaDraw.ellipsize(lines.get(1)+" "+line,width,VelaDraw.Weight.REGULAR,6.5f));
+        return List.copyOf(lines);
+    }
+    private static void saveSettings(){var services=dev.sqwat.vela.VelaClient.services();if(services!=null)services.configs().requestSave();}
 }

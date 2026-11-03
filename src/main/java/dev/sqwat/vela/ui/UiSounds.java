@@ -7,22 +7,24 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 
 /**
- * Interface sounds in three profiles. "Ритм" (default) is cut from the opening drum figure of an instrumental: a high
- * "pim" opens, a lower "pam" closes, a short pim switches tabs, a 45 ms tick follows sliders; every play varies the
- * pitch by up to 3%, so repeated clicks are never identical. "Мягкий" and "Классика" are the earlier Kenney sounds.
+ * Interface sounds in two profiles. "Ритм" (default) is cut from the first half second of an instrumental (two drum
+ * hits): every click, in Vela's screens and on vanilla buttons alike, plays one of those two hits picked at random with
+ * the pitch varied by up to 8%, so repeated clicks are never identical; a 40 ms tick follows sliders. The clips must be
+ * audio-only Ogg Vorbis: one with the mp3's cover art left in as a video stream does not decode, and the profile was
+ * silent. "Классика" is the earlier Kenney set.
  */
 public final class UiSounds {
     private UiSounds() {}
     public enum Event { OPEN,CLOSE,TAB,EXPAND,TOGGLE,FAVORITE,SLIDER }
-    public static final String RHYTHM="Ритм",SOFT="Мягкий",CLASSIC="Классика";
-    public static final List<String> PRESETS=List.of(RHYTHM,SOFT,CLASSIC);
+    public static final String RHYTHM="Ритм",CLASSIC="Классика";
+    public static final List<String> PRESETS=List.of(RHYTHM,CLASSIC);
     private static long lastPlayed;
     private static final java.util.Random RANDOM=new java.util.Random();
 
-    /** The profile to use; names saved by earlier versions ("Soft", "Classic") map to their new names. */
+    /** The profile to use; "Classic" from earlier versions maps to its new name, the removed soft profile to Ритм. */
     public static String preset(String saved){
         if(PRESETS.contains(saved))return saved;
-        return "Soft".equals(saved)?SOFT:"Classic".equals(saved)?CLASSIC:RHYTHM;
+        return "Classic".equals(saved)?CLASSIC:RHYTHM;
     }
     public static String next(String saved){return PRESETS.get((PRESETS.indexOf(preset(saved))+1)%PRESETS.size());}
 
@@ -34,19 +36,27 @@ public final class UiSounds {
         String preset=preset(config.uiSoundPreset);
         String id;float pitch,volume;
         if(preset.equals(RHYTHM)){
-            String name=switch(event){case OPEN->"open";case CLOSE->"close";case TAB->"tab";case EXPAND->"expand";case SLIDER->"slider";default->"toggle";};
+            String name=event==Event.SLIDER?"slider":RANDOM.nextBoolean()?"open":"close";
             id="ui.rhythm."+name;
-            pitch=.97f+RANDOM.nextFloat()*.06f;
-            volume=switch(event){case SLIDER->.35f;case TAB,TOGGLE,FAVORITE->.45f;default->.55f;};
+            pitch=.92f+RANDOM.nextFloat()*.16f;
+            volume=event==Event.SLIDER?.35f:.55f;
         }else{
             var mapped=event==Event.EXPAND?Event.TAB:event==Event.FAVORITE?Event.TOGGLE:event;
             id="ui."+mapped.name().toLowerCase(java.util.Locale.ROOT);
-            pitch=switch(mapped){case OPEN->.95f;case CLOSE->.8f;case TAB->1.1f;default->1;};
-            if(preset.equals(CLASSIC))pitch*=.85f;
+            pitch=.85f*(switch(mapped){case OPEN->.95f;case CLOSE->.8f;case TAB->1.1f;default->1f;});
             volume=mapped==Event.TAB?.35f:.22f;
         }
         var sound=SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("velaclient",id));
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(sound,pitch,config.uiSoundVolume*volume));
+    }
+    /** Vanilla button clicks: true when Ритм played its own sound instead, so the vanilla click is skipped. */
+    public static boolean replaceVanillaClick(){
+        var services=dev.sqwat.vela.VelaClient.services();
+        if(services==null)return false;
+        var config=services.configs().current();
+        if(!config.uiSounds||!preset(config.uiSoundPreset).equals(RHYTHM))return false;
+        play(services,Event.TOGGLE);
+        return true;
     }
     /** A click in Vela's own screens (toggles, buttons, the "Прослушать" preview). */
     public static void play(VelaServices services, boolean enabled) {

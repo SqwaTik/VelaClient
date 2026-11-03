@@ -28,11 +28,13 @@ public final class ConfigService implements AutoCloseable {
         thread.setDaemon(true);
         return thread;
     });
-    private ClientConfig config;
+    // Read by the render thread every frame; never make that wait for a save holding the service lock.
+    private volatile ClientConfig config;
+    private final Object disk = new Object();
     private JsonFileStore<ClientConfig> store;
     private ScheduledFuture<?> pending;
-    private String saveError;
-    private long saveRevision;
+    private volatile String saveError;
+    private volatile long saveRevision;
     private List<String> profileCache=List.of();
     private long profileRefreshAt;
 
@@ -81,7 +83,7 @@ public final class ConfigService implements AutoCloseable {
         try { activeProfileStore.save(name); } catch (IOException error) { saveError = error.getMessage(); }
     }
 
-    public synchronized ClientConfig current() { return config; }
+    public ClientConfig current() { return config; }
     public Path profilesDirectory(){return profilesDirectory;}
     public Path profilePath(String name){return profilesDirectory.resolve(sanitize(name)+".vela");}
     private void migrateProfileExtensions(){
@@ -200,7 +202,7 @@ public final class ConfigService implements AutoCloseable {
         JsonFileStore<ClientConfig> destination = store;
         long revision = ++saveRevision;
         pending = writer.schedule(() -> {
-            synchronized (this) {
+            synchronized (disk) {
                 if (revision != saveRevision) return;
                 try { destination.save(snapshot); saveError = null; }
                 catch (IOException error) { saveError = error.getMessage(); }
@@ -213,7 +215,7 @@ public final class ConfigService implements AutoCloseable {
         if (pending != null) pending.cancel(false);
         if (store == null || config == null) return;
         captureModules();
-        store.save(config);
+        synchronized (disk) { store.save(config); }
         saveError = null;
     }
 

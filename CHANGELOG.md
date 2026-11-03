@@ -12,22 +12,87 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Recordings: every saved replay in one list, opened from the death screen, the module settings or its own key.
 - Storage Index: search everything in the chests, barrels and shulkers you have opened and mark the right one.
 - Smart chat: clickable coordinates, mentions of your name, private messages in tabs.
-- Key combinations such as Ctrl+F for every bind.
-- Chat privacy: a button above the chat hides what you type after /login and /register.
+- Key combinations such as Ctrl+F for every bind, the menu keys in the settings included.
+- Chat privacy: a button beside Dragmode above the chat blurs what you type after /l, /login, /reg and /register; hovering either button opens both with a caption.
 - What's new: this list of changes in the main menu.
 - English interface, with Russian available in the settings.
 - Mace Smash: a mace smash attack cracks the ground or sends out a shockwave.
 - Loot Memory: searched chests, broken spawners and opened trial vaults are marked, so you never check the same spot twice.
 - Vela players are marked with the Vela logo in the tab list.
 - Fog culling: terrain fully hidden by fog, as in the Nether, is not drawn.
-- Upscaler (MineSR): the world is drawn at a lower resolution and rebuilt to full; the interface stays sharp.
 - Hit Sound: recorded impact sounds.
-- Frame Generation (MineSR): an extra frame between every two for smoother motion; works on its own or together with Upscaler.
 - Explosion Wave: the blast runs along the ground, flows around walls and merges with nearby blasts; a gust of wind as it passes and a short stun up close.
 - Item Highlight: add any item with your own color.
 - Hand Swap: swap the main hand with your own key.
 - Render Tweaks: hands no longer bob while walking.
-- Interface sounds: the new Rhythm set.
+- Interface sounds: the new Rhythm set — clicks in Vela and on vanilla buttons play with a varied pitch.
+- Shaders: a Sky quality setting (low, medium, high).
+- Music HUD: whatever is playing on the PC — a browser tab (YouTube, Twitch, YouTube Music…), Yandex Music, Spotify and other players: the cover with the service's icon, a spectrum that follows the music, a progress bar and playback buttons in the chat. Lyrics from LRCLIB and NetEase are highlighted word by word; where a source has no word timing, the highlight is paced by syllables. Covers and lyrics are cached on disk.
+- Swing Animation: a new set of first-person swings (Swing, Shift, Lunge, Spear, Down, Jelly, Slap, Bonk, Circle, Realism) with strength and duration; replaces Swing Animations.
+- Music HUD: Mini mode — a notch at the top edge of the screen with the cover and rhythm bars that opens up to show the current line.
+- Music HUD: the colour of the sung lyrics — the client's colour or any other from the colour wheel.
+- Item Highlight: Custom color — one colour of your choice from the colour wheel for every category.
+- Module menu: a panel layout — modules as a list, the selected module's settings in their own pane; turned on in the settings (Interface → Panel module menu).
+- Music HUD: click the progress bar to jump to that point in the track.
+- Mods button in the main menu: the list of installed mods with their settings (Mod Menu, built in).
+- Optimization: Monitor-based limit (off by default): with Unlimited FPS, frames are capped at twice the monitor's refresh rate so the graphics card runs cooler.
+- Server rules: on ReallyWorld, FunTime and HolyWorld the functions their rules forbid are switched off automatically, with a notification saying which; they come back when you leave.
+- Server opt-out: any server can switch off competitive modules (or a listed set) by sending the velaclient:disable packet; they come back when you leave.
+- Licences: a plain mod description, MIT for Vela with the full text and author, LGPL-3.0-or-later for the bundled parts, and every third-party sound and font credited in THIRD_PARTY.md.
+- HUD cache, always on: the HUD is built at the monitor's refresh rate instead of every frame; the crosshair, vignette and in-world effects stay live.
+
+### Improved
+- GLSL editor: rebuilt with code colours, line numbers, error lines, the Vela font and larger text; the insert chips and the example button are gone.
+- Modules are sorted A–Z (favourites stay on top).
+- Reflection quality now changes the reflection resolution, steps and distance.
+- The menu remembers the tab and scroll position after closing.
+- Module categories reviewed: Brew Viewer, Tab Ping and Item Highlight are in Utilities; Motion Blur and Block Overlay are in Visuals.
+- Settings scroll smoothly: text no longer gets laid out again on every frame while scrolling.
+- HUD editor: the middle-click and right-click menus are redesigned — more compact, every setting has a description, colour settings open a colour wheel, and the size is picked with a switch.
+- Trajectories: the throw preview is a smooth glowing curve from the hand with a ring where it lands.
+- The main menu and the world and server lists run at the frame limit from the options instead of a fixed 60 FPS.
+- A new Vela logo.
+- In-Game Account Switcher and Mod Menu are built into Vela; separate copies are no longer needed.
+- Fabric Loader 0.20.1; Vela runs on Fabric Loader 0.19.2 and newer.
+- Every HUD panel uses the same background as the Music HUD.
+- Trajectories stay still while walking, whether view bobbing is on or off.
+- Hologram hiding checks the entity type first, which takes less time per frame.
+- Vela takes half the space: the jar is down from 23 MB to about 11 MB.
+- Config import keys are several times shorter; older keys still work.
+- Key Strokes: no background behind the keys.
+- Account switching, the Mods screen and the Far terrain cache are now built into Vela itself instead of bundled mods: fewer files to load and less to start up.
+- Frame Generation and the Upscaler are removed along with their models, so they no longer cost memory or frame time.
+- Interface fonts are baked from the font files on first launch and cached, instead of 57 prebuilt glyph atlases; the fonts keep only English, Russian and the interface symbols (other scripts use Minecraft's font). The mod is about 6 MB smaller.
+- Profiler: a continuous mode that keeps the last three minutes and saves them on its own after a stutter, plus a text report next to every profile (slow frames, GC pauses, hottest methods, allocations).
+- Name tags: each entity's name is built once per tick instead of every frame, and its text layout is found without re-reading the text.
+- HUD: panels that are not animating are drawn in shared batches instead of one set of draw calls per panel.
+- Minecraft telemetry and the Realms notification polling on the vanilla title screen are switched off.
+- Holding Tab on a crowded server no longer drops FPS: the player list is sorted a few times a second instead of every frame, and the interface layers find overlaps through a grid instead of checking every element against every other.
+- Fewer stutters: settings are read without waiting for a save to disk, the music panel and its brand detection no longer allocate every frame, and the HUD no longer copies the player list every tick.
+- Armour of far players: when the server strips equipment from distant players (anti-ESP), the armour seen up close in the last 10 minutes stays on them.
+- Lyrics in time: copies of one song's text are often timed differently (by ear, or to another release), from a few hundred milliseconds to seconds. The text whose timing most of the other copies agree with is now shown, instead of simply the one closest in length.
+- More lyrics: QQ Music is a fourth source, with a large catalogue that includes Russian rap.
+- Music HUD covers: when the player sends no cover (Yandex Music) and Deezer and iTunes do not have the song, the cover is taken from NetEase.
+- More lyrics: when no source has a song's text timed, the plain text is shown and paced through the song, instead of nothing (for example Baby Cute).
+- More lyrics: entries where the source swapped the artist and the title are found too.
+- In-world effect modules are looked up once instead of on every frame.
+- Launcher: faster game start through the Java 25 AOT cache, recorded on the first launch and reused afterwards.
+
+### Fixed
+- Hit Sound: removed the pause at the end of the Heavy hit sound.
+- Shaders: stripes on wet surfaces and a milky floor at night.
+- Japanese, Chinese and Korean text (song titles, chat, names) shows up instead of question marks.
+- Key Strokes shows W A S D on any keyboard layout, not the letters of the current layout.
+- Reset module binds also resets the menu and search keys in the settings.
+- Joining servers with a bot check such as mc.magicworld.pw: the ping display waits 20 seconds after entering a world and saved chunks appear after 10 seconds, so the check no longer kicks you.
+- The automatic FPS profile keeps recording after a world change instead of stopping.
+- The middle-click menu in HUD editing marks experimental settings with EXPERIMENTAL, as the module settings do.
+- Music HUD covers: a song by several artists ("MellSher, 5opka") is found when the catalogue lists it under any of them, not only the first; the title alone is also tried, still checked against the artists.
+- Music HUD covers: a song with no cover found is looked up again after a few minutes instead of never until restart, and a failed lookup waits 20 seconds instead of being repeated every tick (which got NetEase to refuse requests).
+- NetEase's "too many requests" answer is no longer taken for "no such song" (covers and lyrics).
+- Removed the "Invalid path in mod resource-pack" error in the log on every resource reload (a notice file sat among the sounds).
+- Music HUD covers that only NetEase has (for example Imbalance) no longer go missing when NetEase turns away requests made at the same moment as the lyrics search: requests are spaced out and retried once, and a failure is written to the log.
+- Russian lyrics stored with a broken encoding (garbled letters) are repaired before they are shown.
 
 ## 0.1.12 — 2026-10-26
 

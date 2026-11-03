@@ -10,7 +10,6 @@ import java.util.List;
 /** Offline supersampling and area prefiltering. Minecraft only reads the resulting PNGs. */
 public class GeneratePngAssets {
     static final int SS=4;
-    static final int[] PPEMS={8,9,10,11,12,13,14,15,16,18,19,20,22,24,28,32,36,40,48};
     static final int[] IMAGE_SIZES={16,20,24,32,48,64,96,128,256,512,1024};
     static Path root,gui,metrics;
     public static void main(String[] args)throws Exception {
@@ -18,7 +17,6 @@ public class GeneratePngAssets {
         Files.createDirectories(gui);Files.createDirectories(metrics);
         for(String weight:List.of("regular","medium","semibold")) {
             Font source=Font.createFont(Font.TRUETYPE_FONT,root.resolve("font/inter_"+weight+".ttf").toFile());
-            for(int ppem:PPEMS)exportFont(source,weight,ppem);
             exportKerning(source,weight);
         }
         exportChrome();exportWheel();
@@ -28,46 +26,9 @@ public class GeneratePngAssets {
         }
         BufferedImage logo=ImageIO.read(gui.resolve("logo.png").toFile());
         for(int size:IMAGE_SIZES)if(size>=24)write(resize(logo,size,size,false),gui.resolve("logo_"+size+".png"));
-        System.out.println("PNG export complete: "+(PPEMS.length*3)+" font atlases with four subpixel phases, 40 corner radii, prefiltered icons and logo.");
+        System.out.println("PNG export complete: kerning, 40 corner radii, prefiltered icons and logo. Glyph atlases are baked in game by PngFontBaker.");
     }
     static FontRenderContext frc(){return new FontRenderContext(null,true,true);}
-    static int[] alphabet(){
-        StringBuilder b=new StringBuilder();for(int cp=32;cp<=126;cp++)b.appendCodePoint(cp);
-        for(int cp=160;cp<=383;cp++)b.appendCodePoint(cp);
-        for(int cp=1024;cp<=1279;cp++)b.appendCodePoint(cp);
-        b.append("…—–·•↔↕↑↓←→✓✕×★☆▶◀▼▲●○°");return b.toString().codePoints().distinct().toArray();
-    }
-    record Raster(int cp,int phase,BufferedImage image,float dx,float dy,float advance){}
-    static void exportFont(Font source,String weight,int ppem)throws Exception {
-        Font font=source.deriveFont((float)ppem*SS);List<Raster> rasters=new ArrayList<>();
-        for(int cp:alphabet()) for(int phase=0;phase<4;phase++) {
-            if(!font.canDisplay(cp))continue;
-            GlyphVector vector=font.createGlyphVector(frc(),new String(Character.toChars(cp)));
-            float offset=phase/(float)4*SS;
-            Rectangle bounds=vector.getPixelBounds(frc(),offset,0);
-            int bx=(int)Math.floor(bounds.x/(float)SS)-1,by=(int)Math.floor(bounds.y/(float)SS)-1;
-            int w=Math.max(3,(int)Math.ceil((bounds.x+bounds.width)/(float)SS)-bx+1);
-            int h=Math.max(3,(int)Math.ceil((bounds.y+bounds.height)/(float)SS)-by+1);
-            BufferedImage high=new BufferedImage(w*SS,h*SS,BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g=high.createGraphics();hints(g);g.setColor(Color.WHITE);g.drawGlyphVector(vector,-bx*SS+offset,-by*SS);g.dispose();
-            BufferedImage filtered=resize(high,w,h,true);
-            // Gentle coverage correction for light text over dark, non-linear GUI targets.
-            for(int py=0;py<h;py++)for(int px=0;px<w;px++){int alpha=filtered.getRGB(px,py)>>>24;alpha=(int)Math.round(Math.pow(alpha/255.0,.88)*255);filtered.setRGB(px,py,alpha<<24|0xffffff);}
-            rasters.add(new Raster(cp,phase,filtered,bx,ppem*.82f+by,(float)vector.getGlyphPosition(vector.getNumGlyphs()).getX()/SS));
-        }
-        int aw=ppem>=32?2048:1024,ax=3,ay=3,row=0;
-        for(Raster r:rasters){if(ax+r.image.getWidth()+3>aw){ax=3;ay+=row+3;row=0;}ax+=r.image.getWidth()+3;row=Math.max(row,r.image.getHeight());}
-        int ah=128;while(ah<ay+row+3)ah*=2;
-        BufferedImage atlas=new BufferedImage(aw,ah,BufferedImage.TYPE_INT_ARGB);Graphics2D g=atlas.createGraphics();
-        StringBuilder csv=new StringBuilder(aw+","+ah+","+ppem+","+(ppem*.82f)+"\n");ax=3;ay=3;row=0;
-        for(Raster r:rasters){
-            int w=r.image.getWidth(),h=r.image.getHeight();if(ax+w+3>aw){ax=3;ay+=row+3;row=0;}
-            g.drawImage(r.image,ax,ay,null);
-            csv.append(String.format(Locale.ROOT,"%d,%d,%d,%d,%d,%.5f,%.5f,%.5f,%d%n",r.cp,ax,ay,w,h,r.dx,r.dy,r.advance,r.phase));
-            ax+=w+3;row=Math.max(row,h);
-        }
-        g.dispose();whiteRgb(atlas);write(atlas,gui.resolve("font_"+weight+"_"+ppem+".png"));Files.writeString(metrics.resolve("font_"+weight+"_"+ppem+".csv"),csv);
-    }
     static void exportKerning(Font source,String weight)throws Exception {
         Font font=source.deriveFont(128f).deriveFont(Map.of(TextAttribute.KERNING,TextAttribute.KERNING_ON));
         int[] chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя0123456789.,:;!?-()«»".codePoints().toArray();

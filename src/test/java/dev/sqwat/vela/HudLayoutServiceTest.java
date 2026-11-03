@@ -13,6 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudLayoutServiceTest {
+    @Test void onlySettledPanelsDropTheirClipSoTheyBatchTogether(){
+        assertTrue(HudLayoutService.settled("armor",1f,40f,40f));
+        assertTrue(!HudLayoutService.settled("armor",.6f,40f,40f),"revealing panels stay clipped");
+        assertTrue(!HudLayoutService.settled("armor",1f,32f,40f),"resizing panels stay clipped");
+        assertTrue(!HudLayoutService.settled("music",1f,40f,40f),"the notch body reaches past its bounds");
+    }
     @Test void snappedNativePositionFollowsNewServerBounds(){
         var layout=new HudLayoutService(directory,new ModuleRegistry());
         layout.recordNative("scoreboard",new dev.sqwat.vela.ui.render.Rect(200,70,110,80));

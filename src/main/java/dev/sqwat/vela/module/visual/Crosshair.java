@@ -8,7 +8,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-/** Cross/circle and cooldown spread inspired by Kimiko's Crosshair. */
+/** Cross/circle crosshair with the attack cooldown shown as spread. */
 public final class Crosshair extends ClientModule {
     private final ChoiceSetting mode=setting(new ChoiceSetting("mode","Вид","Форма прицела","Крестик",List.of("Крестик","Круг")));
     private final NumberSetting size=setting(new NumberSetting("size","Размер","Длина лучей или радиус круга",4,2,10,.5));

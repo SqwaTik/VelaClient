@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 
 /**
  * Third-person camera that orbits freely while the player keeps its real rotation, so movement direction and the
- * rotation the server receives do not change. Bind it as Hold for Kimiko-style behaviour, or Toggle.
+ * rotation the server receives do not change. Bind it as Hold or Toggle.
  */
 public final class Freelook extends ClientModule {
     private final BooleanSetting thirdPerson=setting(new BooleanSetting("third_person","Камера от третьего лица","Переключать вид сзади на время обзора",true));

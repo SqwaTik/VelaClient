@@ -106,7 +106,7 @@ public final class WorldShaderRenderer {
                     data.putFloat(16,(rgb>>16&255)/255f);data.putFloat(20,(rgb>>8&255)/255f);data.putFloat(24,(rgb&255)/255f);data.putFloat(28,settings.reflection());
                     data.putFloat(32,-(float)Math.sin(sky.sunAngle));data.putFloat(36,(float)Math.cos(sky.sunAngle));data.putFloat(44,settings.wetness());
                     data.putFloat(52,mc.level.dimensionType().hasSkyLight()?.45f:0);data.putFloat(56,settings.reflectionSteps());data.putFloat(60,.98f);
-                    data.putFloat(64,24);data.putFloat(68,1);data.putFloat(72,1);data.putFloat(76,device.getDeviceInfo().isZZeroToOne()?1:0);
+                    data.putFloat(64,settings.reflectionDistance());data.putFloat(68,1);data.putFloat(72,1);data.putFloat(76,device.getDeviceInfo().isZZeroToOne()?1:0);
                     inverse.get(80,data);viewProjection.get(144,data);encoder.writeToBuffer(uniforms.slice(),data);
                 }
                 try(var pass=device.createCommandEncoder().createRenderPass(()->"Vela wet surfaces",reflectionView,Optional.empty())){

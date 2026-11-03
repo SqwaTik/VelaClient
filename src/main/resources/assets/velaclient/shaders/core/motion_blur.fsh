@@ -12,6 +12,12 @@ in vec4 vertexColor;
 out vec4 fragColor;
 void main(){
     vec2 motion=(vertexColor.rg*(255.0/254.0)-0.5)*0.16;
+    // Under half a pixel of motion the 9 taps would all land on the same texel: one is enough.
+    vec2 pixels=motion*vec2(textureSize(Sampler0,0));
+    if(dot(pixels,pixels)<0.25){
+        fragColor=vec4(texture(Sampler0,sceneUv).rgb,1.0)*ColorModulator;
+        return;
+    }
     vec3 sum=vec3(0.0);
     float total=0.0;
     for(int i=0;i<9;i++){

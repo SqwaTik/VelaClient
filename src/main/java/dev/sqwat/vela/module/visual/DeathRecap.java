@@ -60,7 +60,7 @@ public final class DeathRecap extends ClientModule {
     private UUID lastAttacker;private String lastAttackerName;private Component deathMessage;
     private Recording recording;
 
-    public DeathRecap(){super("death_recap","Death Recap","Повтор последних секунд перед смертью с таймлайном",ModuleCategory.VISUALS);}
+    public DeathRecap(){super("death_recap","Death Recap","Повтор последних секунд перед смертью с таймлайном",ModuleCategory.UTILITIES);}
     public static DeathRecap current(){return dev.sqwat.vela.module.Modules.active(DeathRecap.class);}
     /** Adds "Повтор смерти" to the death screen; it fades in with Wasted's buttons when that effect is on. */
     public static void initialize(){

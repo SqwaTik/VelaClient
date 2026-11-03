@@ -16,13 +16,17 @@ public final class HandSwap extends ClientModule {
     private HumanoidArm original;
     private boolean held;
     public HandSwap(){super("hand_swap","Hand Swap","Смена ведущей руки по своей клавише",ModuleCategory.UTILITIES);}
-    @Override protected void onEnable(){original=Minecraft.getInstance().options.mainHand().get();held=true;}
+    // Config loading can enable modules before Minecraft has created its options; the hand is then remembered on the first tick.
+    @Override protected void onEnable(){var options=Minecraft.getInstance().options;original=options==null?null:options.mainHand().get();held=true;}
     @Override protected void onDisable(){
-        if(original!=null&&Minecraft.getInstance().options.mainHand().get()!=original)apply(original);
+        var options=Minecraft.getInstance().options;
+        if(original!=null&&options!=null&&options.mainHand().get()!=original)apply(original);
         original=null;
     }
     @Override public void onClientTick(){
         var mc=Minecraft.getInstance();
+        if(mc.options==null)return;
+        if(original==null)original=mc.options.mainHand().get();
         boolean down=mc.gui.screen()==null&&dev.sqwat.vela.ui.input.BindInput.down(mc.getWindow().handle(),key.value());
         if(down&&!held)apply(mc.options.mainHand().get().getOpposite());
         held=down;

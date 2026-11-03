@@ -86,6 +86,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             cy=toggle(g,"animations","Анимации",c.animations,cy);
             cy=toggle(g,"motion","Уменьшение движения",c.reducedMotion,cy);
             cy=toggle(g,"mainmenu","Кастомное главное меню",c.replaceMainMenu,cy);
+            cy=toggle(g,"panel-menu","Панельное меню модулей",c.panelModuleMenu,cy);
 
         } else if(tab==2){
             cy=toggle(g,"sounds","Звуки интерфейса",c.uiSounds,cy);
@@ -95,7 +96,7 @@ public final class VelaSettingsScreen extends VelaScreen {
             Rect preview=new Rect(content.x(),cy,content.width(),27);button(g,preview,"Прослушать",false);controls.add(new Control("preview",preview));cy+=37;
         } else {
             cy=toggle(g,"show-binds","Всегда показывать бинды",c.alwaysShowBinds,cy);
-            String[] names={"Открыть GUI","Поиск","Бинд"};String[] keys={capturingKey!=null&&capturingKey.equals("open")?"Нажмите…":dev.sqwat.vela.VelaClient.openKeyLabel(),capturingKey!=null&&capturingKey.equals("search")?"Нажмите…":"Ctrl+"+dev.sqwat.vela.ui.input.KeyLabels.of(c.searchKey,""),"СКМ"};
+            String[] names={"Открыть GUI","Поиск","Бинд"};String[] keys={capturingKey!=null&&capturingKey.equals("open")?dev.sqwat.vela.ui.input.BindCapture.prompt("Нажмите…"):dev.sqwat.vela.VelaClient.openKeyLabel(),capturingKey!=null&&capturingKey.equals("search")?dev.sqwat.vela.ui.input.BindCapture.prompt("Нажмите…"):dev.sqwat.vela.ui.input.KeyLabels.of(c.searchCombo(),""),"СКМ"};
             for(int i=0;i<names.length;i++){VelaDraw.text(g,names[i],content.x(),cy+7,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,8);Rect key=new Rect(content.x()+content.width()-82,cy,82,25);button(g,key,keys[i],false);if(i<2)controls.add(new Control(i==0?"bind-open":"bind-search",key));cy+=35;}
             Rect reset=new Rect(content.x(),cy+9,content.width(),27);button(g,reset,"Сбросить бинды модулей",false);controls.add(new Control("resetbinds",reset));cy+=45;
         }
@@ -160,12 +161,21 @@ public final class VelaSettingsScreen extends VelaScreen {
                 case "motion"->c.reducedMotion=!c.reducedMotion;
                 case "sounds"->c.uiSounds=!c.uiSounds;
                 case "mainmenu"->c.replaceMainMenu=!c.replaceMainMenu;
+                case "panel-menu"->c.panelModuleMenu=!c.panelModuleMenu;
                 case "lang-en","lang-ru"->{
                     String id=hit.id.substring(5);var target=id.equals("ru")?dev.sqwat.vela.ui.Lang.Language.RU:dev.sqwat.vela.ui.Lang.Language.EN;
                     // The text changes only while the transition overlay covers the screen.
                     if(!id.equals(c.language))dev.sqwat.vela.ui.LangTransition.begin(target,()->{c.language=id;dev.sqwat.vela.ui.Lang.set(target);services.configs().requestSave();});
                 }
-                case "resetbinds"->{for(var module:services.modules().all())module.bind(-1,"None",dev.sqwat.vela.module.ClientModule.BindMode.TOGGLE);}
+                case "resetbinds"->{
+                    // Module binds, the keys inside module settings, and the menu's own open and search keys.
+                    for(var module:services.modules().all()){
+                        module.bind(-1,"None",dev.sqwat.vela.module.ClientModule.BindMode.TOGGLE);
+                        for(var setting:module.settings())if(setting instanceof dev.sqwat.vela.module.setting.KeySetting key)key.reset();
+                    }
+                    c.searchBind=-1;c.searchKey=75;dev.sqwat.vela.VelaClient.resetOpenKey();
+                    dev.sqwat.vela.ui.Notifications.show("Бинды сброшены","Модули и клавиши меню вернулись к стандартным","settings");
+                }
                 case "preview"->UiSounds.play(services,true);
                 case "preset"->c.uiSoundPreset=UiSounds.next(c.uiSoundPreset);
             }
@@ -195,12 +205,27 @@ public final class VelaSettingsScreen extends VelaScreen {
     @Override public boolean dragVela(MouseButtonEvent event,double dx,double dy){if(dragging!=null){drag(event.x(),event.y());UiSounds.play(services,UiSounds.Event.SLIDER);return true;}return super.dragVela(event,dx,dy);}
     @Override public boolean releaseVela(MouseButtonEvent event){dragging=null;return super.releaseVela(event);}
     @Override public boolean scrollVela(double x,double y,double horizontal,double vertical){if(dragging==null&&content.contains(x,y))targetScroll=(float)Math.max(0,Math.min(maxScroll,targetScroll-vertical*30));return true;}
+    @Override public boolean keyReleased(KeyEvent event){
+        if(capturingKey!=null){int code=dev.sqwat.vela.ui.input.BindCapture.release(event.key());if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING)finishBind(code);return true;}
+        return super.keyReleased(event);
+    }
+    private void finishBind(int code){
+        if(capturingKey.equals("open"))dev.sqwat.vela.VelaClient.rebindOpenKey(code);
+        else{services.configs().current().searchBind=code;services.configs().requestSave();}
+        capturingKey=null;
+    }
     @Override public boolean charTyped(CharacterEvent event){
         if(hexFocused){String value=event.codepointAsString();if(value.matches("[#a-fA-F0-9]")&&hex.length()<7){hex+=value;applyHex();}return true;}
         return super.charTyped(event);
     }
     @Override public boolean keyPressed(KeyEvent event){
-        if(capturingKey!=null){if(event.key()!=GLFW.GLFW_KEY_ESCAPE){if(capturingKey.equals("open"))dev.sqwat.vela.VelaClient.rebindOpenKey(event.key());else{services.configs().current().searchKey=event.key();services.configs().requestSave();}}capturingKey=null;return true;}
+        if(capturingKey!=null){
+            if(event.key()==GLFW.GLFW_KEY_ESCAPE){dev.sqwat.vela.ui.input.BindCapture.reset();capturingKey=null;return true;}
+            // Ctrl, Shift or Alt first waits for the main key, so combinations bind the way they are pressed.
+            int code=dev.sqwat.vela.ui.input.BindCapture.press(event.key(),event.modifiers());
+            if(code!=dev.sqwat.vela.ui.input.BindCapture.PENDING)finishBind(code);
+            return true;
+        }
         if(hexFocused){
             if(event.key()==GLFW.GLFW_KEY_BACKSPACE&&(event.modifiers()&GLFW.GLFW_MOD_CONTROL)!=0){hex="";return true;}
             if(event.key()==GLFW.GLFW_KEY_BACKSPACE&&!hex.isEmpty()){hex=hex.substring(0,hex.length()-1);applyHex();}

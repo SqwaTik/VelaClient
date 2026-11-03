@@ -15,13 +15,20 @@ void main() {
     vec2 fraction = fract(pixel);
     vec3 delta = vec3(0.0);
     float total = 0.0;
+    // Closest-depth sample: the fallback when every neighbour is rejected. On distant ground at a grazing angle
+    // neighbouring reflection texels differ by more than the tolerance, so all four were dropped and whole rows
+    // came out unshaded - the horizontal stripes across a wet floor.
+    vec3 closest = vec3(0.0);
+    float closestDepth = 1e9;
     for (int y=0; y<2; y++) for (int x=0; x<2; x++) {
         vec4 sampleValue = texelFetch(Reflection, clamp(base+ivec2(x,y),ivec2(0),size-1),0);
         vec2 weight = mix(1.0-fraction,fraction,vec2(x,y));
         float relativeDepth = abs(sampleValue.a-depth) / max(depth,0.000001);
-        float w = weight.x*weight.y*(1.0-smoothstep(0.01,0.04,relativeDepth));
+        if (relativeDepth < closestDepth) { closestDepth = relativeDepth; closest = sampleValue.rgb; }
+        float w = weight.x*weight.y*(1.0-smoothstep(0.03,0.12,relativeDepth));
         delta += sampleValue.rgb*w;
         total += w;
     }
-    fragColor = vec4(clamp(scene.rgb+delta/max(total,0.00001),0.0,1.0),scene.a);
+    vec3 lighting = total > 0.001 ? delta/total : closest;
+    fragColor = vec4(clamp(scene.rgb+lighting,0.0,1.0),scene.a);
 }

@@ -12,8 +12,9 @@ public final class PngFontMetrics {
     private final Map<Integer,Glyph> glyphs;
     private final it.unimi.dsi.fastutil.ints.Int2ObjectMap<Glyph[]> phases;
     private final Map<Long,Float> kerning;
-    private final Map<String,Line> lines=new LinkedHashMap<>(128,.75f,true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<String,Line> e){return size()>512;}
+    // Large enough for a whole dashboard page: a page that needs more than the cache holds misses on every line.
+    private final Map<String,Line> lines=new LinkedHashMap<>(256,.75f,true) {
+        @Override protected boolean removeEldestEntry(Map.Entry<String,Line> e){return size()>2048;}
     };
     public final int width,height,ppem;
     public final float baseline;

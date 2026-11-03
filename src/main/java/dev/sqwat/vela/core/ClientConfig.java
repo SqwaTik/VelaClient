@@ -12,6 +12,8 @@ public final class ClientConfig {
     public boolean reducedMotion = false;
     public boolean animations = true;
     public boolean alwaysShowBinds = false;
+    /** Modules as the earlier two columns of expanding cards instead of the list + settings pane. */
+    public boolean panelModuleMenu = false;
     public boolean friendVisualsExpanded = false;
     public boolean uiSounds = true;
     public float uiSoundVolume = 0.55f;
@@ -37,7 +39,13 @@ public final class ClientConfig {
     public String expandedModule;
     public java.util.Set<String> expandedModules = new java.util.LinkedHashSet<>();
     public java.util.Set<String> favorites = new java.util.LinkedHashSet<>();
+    /** Old configs: the search key, always with Ctrl. */
     public int searchKey = 75;
+    /** The search bind with its own modifiers (BindInput); -1 reads {@link #searchKey} as Ctrl+key. */
+    public int searchBind = -1;
+    /** Ctrl/Shift/Alt (BindInput bits) the open-menu key needs held; the key itself is the vanilla key mapping. */
+    public int openModifiers = 0;
+    public int searchCombo(){return searchBind>=0?searchBind:dev.sqwat.vela.ui.input.BindInput.combo(searchKey,dev.sqwat.vela.ui.input.BindInput.CTRL);}
     public Map<String, ModuleState> modules = new LinkedHashMap<>();
     public Map<String, JsonElement> optimization;
 

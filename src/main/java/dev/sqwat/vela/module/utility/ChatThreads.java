@@ -61,10 +61,8 @@ public final class ChatThreads {
     private static void draw(GuiGraphicsExtractor g,int width,int height,int mouseX,int mouseY){
         HITS.clear();
         if(!visible())return;
-        // Start after the chat privacy toggle at the left (ChatPrivacy, drawn in the scaled viewport).
-        var mc=Minecraft.getInstance();
-        float scale=dev.sqwat.vela.ui.render.UiViewport.fit(mc.getWindow().getGuiScaledWidth(),mc.getWindow().getGuiScaledHeight(),mc.getWindow().getGuiScale(),dev.sqwat.vela.VelaClient.services().configs().current().uiScale).scale();
-        int x=Math.round((dev.sqwat.vela.ui.ChatPrivacy.SIZE+6)*scale)+4,y=height-14-16;
+        // The chat privacy toggle sits at the right next to Dragmode, so the tabs start at the left edge.
+        int x=4,y=height-14-16;
         x=tab(g,x,y,null,"Все",0,mouseX,mouseY);
         var names=new ArrayList<>(THREADS.keySet());Collections.reverse(names);
         for(String name:names)x=tab(g,x,y,name,name,THREADS.get(name),mouseX,mouseY);

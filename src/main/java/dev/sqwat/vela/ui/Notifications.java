@@ -71,9 +71,9 @@ public final class Notifications {
         try{
             int tone=VelaTheme.mix(WARN,VelaTheme.DANGER,worst);
             if(breath>.02f)for(int spread=4;spread>=1;spread--)c.round(-spread,-spread,width+spread*2,32+spread*2,7+spread,alpha(tone,a*breath*(5-spread)*.05f));
-            c.round(0,0,width,32,7,alpha(VelaTheme.SURFACE,a));
-            c.round(0,0,width,32,7,alpha(tone,a*(.05f+.18f*pulse+.08f*breath)));
-            c.border(0,0,width,32,7,alpha(VelaTheme.mix(VelaTheme.BORDER,tone,.35f+.65f*pulse),a));
+            c.round(0,0,width,32,6,alpha(0xFF000000|dev.sqwat.vela.ui.hud.HudBlock.FILL_RGB,a*dev.sqwat.vela.ui.hud.HudBlock.FILL_ALPHA/255f));
+            c.round(0,0,width,32,6,alpha(tone,a*(.05f+.18f*pulse+.08f*breath)));
+            c.border(0,0,width,32,6,alpha(VelaTheme.mix(0xFF000000|dev.sqwat.vela.ui.hud.HudBlock.BORDER_RGB,tone,.35f+.65f*pulse),a));
             if(pulse>0){float grow=(1-pulse)*5;c.border(-grow,-grow,width+grow*2,32+grow*2,7+grow,alpha(tone,a*pulse*.7f));}
             int x=0,index=0;
             for(var value:hudValues){

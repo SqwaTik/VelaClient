@@ -22,7 +22,8 @@ public final class CustomHotbar extends ClientModule {
     public static CustomHotbar current(){
         return dev.sqwat.vela.module.Modules.active(CustomHotbar.class);
     }
-    private int background(){return (Math.round(255*opacity.value().floatValue()/100)<<24)|(VelaTheme.SURFACE&0xFFFFFF);}
+    /** Same block as the other HUD panels; the opacity setting scales it. */
+    private int background(){return dev.sqwat.vela.ui.hud.HudBlock.fill(opacity.value().floatValue()/100*255/dev.sqwat.vela.ui.hud.HudBlock.FILL_ALPHA);}
 
     /** Draws the replacement for a vanilla hotbar sprite; false when the sprite is not one of ours to replace. */
     public boolean draw(GuiGraphicsExtractor g,String sprite,int x,int y,int width,int height){
@@ -35,6 +36,7 @@ public final class CustomHotbar extends ClientModule {
                     for(int i=0;i<9;i++)batch.roundedRect(x+2+i*20,y+2,18,18,4,cell);
                 }
                 batch.flush();
+                dev.sqwat.vela.ui.render.VelaDraw.roundedOutline(g,x,y,width,height,6,dev.sqwat.vela.ui.hud.HudBlock.border(1),0);
                 return true;
             }
             case "hud/hotbar_selection"->{

@@ -42,10 +42,24 @@ class ConfigShareTest {
   var config=new ClientConfig();config.accentColor="#123456";
   var state=new ClientConfig.ModuleState();state.enabled=true;state.settings.put("amount",new com.google.gson.JsonPrimitive(42));config.modules.put("example",state);
   String key=ConfigShare.encode(config);var restored=ConfigShare.decode(key);
-  assertTrue(key.startsWith("VELA4:"));assertEquals(config.accentColor,restored.accentColor);
+  assertTrue(key.startsWith("V5"));assertEquals(config.accentColor,restored.accentColor);
   assertTrue(restored.animations);assertEquals(-1,restored.modules.get("example").boundKey);
   assertEquals(42,restored.modules.get("example").settings.get("amount").getAsInt());
-  assertTrue(ConfigShare.encode(new ClientConfig()).length()<40);
+  assertTrue(ConfigShare.encode(new ClientConfig()).length()<16);
+ }
+ @Test void typicalKeyIsShortAndOldKeysStillRead()throws Exception{
+  var config=new ClientConfig();config.accentColor="#FF5577";config.lastSection="HUD";config.expandedModules.add("music");
+  for(String id:new String[]{"music","keystrokes","coordinates","motion_blur","hit_color"}){var state=new ClientConfig.ModuleState();state.enabled=true;config.modules.put(id,state);}
+  config.modules.get("motion_blur").settings.put("strength",new com.google.gson.JsonPrimitive(0.6));
+  config.modules.get("hit_color").settings.put("color",new com.google.gson.JsonPrimitive(16711680));
+  String key=ConfigShare.encode(config);var restored=ConfigShare.decode(key);
+  System.out.println("Typical share key: "+key.length()+" chars");
+  assertTrue(key.length()<120,key);
+  assertEquals("UTILITIES",restored.lastSection);assertTrue(restored.modules.get("music").enabled);
+  assertEquals(0.6,restored.modules.get("motion_blur").settings.get("strength").getAsDouble());
+  var out=new java.io.ByteArrayOutputStream();
+  try(var z=new java.util.zip.DeflaterOutputStream(out)){z.write("{\"accentColor\":\"#00FF00\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));}
+  assertEquals("#00FF00",ConfigShare.decode("VELA4:"+java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(out.toByteArray())).accentColor);
  }
  @Test void transfersBetweenIndependentPlayers()throws Exception{
   try(var a=new ConfigService(root.resolve("a"),new ModuleRegistry());var b=new ConfigService(root.resolve("b"),new ModuleRegistry())){

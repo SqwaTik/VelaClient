@@ -15,7 +15,7 @@ public abstract class ClientModule {
     private List<Setting<?>> settingSnapshot=List.of();
     private boolean enabled;
     private java.util.function.BooleanSupplier availability=()->true;
-    public final boolean available(){return availability.getAsBoolean();}
+    public final boolean available(){return availability.getAsBoolean()&&!ServerRules.blocked(id);}
     public final void require(java.util.function.BooleanSupplier availability){this.availability=Objects.requireNonNull(availability);if(!available())setEnabled(false);}
     private String keybind = "None";
     private int boundKey = -1;

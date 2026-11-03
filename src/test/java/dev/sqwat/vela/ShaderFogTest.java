@@ -12,9 +12,12 @@ class ShaderFogTest {
             assertTrue(Math.max(1,size[1]/divisor)<=540);
         }
     }
-    @Test void skyQualityIsNotExposedAndEffectsRemainOptIn(){
+    @Test void skyQualityChangesResolutionAndEffectsRemainOptIn(){
         var shader=new Shaders();assertFalse(shader.enabled());assertFalse(shader.skyActive());
-        assertTrue(shader.settings().stream().noneMatch(s->s.id().equals("sky_quality")));
+        assertEquals("Среднее",shader.skyQuality());
+        assertEquals(2,dev.sqwat.vela.render.shader.SkyShaderRenderer.resolutionDivisor(1920,1080,"Среднее"));
+        assertEquals(4,dev.sqwat.vela.render.shader.SkyShaderRenderer.resolutionDivisor(1920,1080,"Низкое"));
+        assertEquals(1,dev.sqwat.vela.render.shader.SkyShaderRenderer.resolutionDivisor(1920,1080,"Высокое"));
     }
     @Test void wetDefaultsAndQualityAreBounded(){
         var shader=new Shaders();assertFalse(shader.wetActive());
@@ -23,8 +26,9 @@ class ShaderFogTest {
         var wet=(BooleanSetting)shader.settings().stream().filter(s->s.id().equals("wet")).findFirst().orElseThrow();
         var quality=(ChoiceSetting)shader.settings().stream().filter(s->s.id().equals("wet_quality")).findFirst().orElseThrow();
         wet.set(true);assertTrue(shader.wetActive());
-        quality.set("Низкое");assertEquals(12,shader.reflectionSteps());assertEquals(3,shader.reflectionResolutionDivisor());
-        quality.set("Высокое");assertEquals(32,shader.reflectionSteps());assertEquals(1,shader.reflectionResolutionDivisor());
+        quality.set("Низкое");assertEquals(10,shader.reflectionSteps());assertEquals(4,shader.reflectionResolutionDivisor());
+        quality.set("Высокое");assertEquals(40,shader.reflectionSteps());assertEquals(1,shader.reflectionResolutionDivisor());
+        assertEquals(40f,shader.reflectionDistance());
         ((NumberSetting)shader.settings().stream().filter(s->s.id().equals("wet_reflection")).findFirst().orElseThrow()).set(0d);
         assertTrue(shader.wetActive());
         ((NumberSetting)shader.settings().stream().filter(s->s.id().equals("wet_amount")).findFirst().orElseThrow()).set(0d);

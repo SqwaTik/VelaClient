@@ -35,6 +35,7 @@ public final class HudLayoutService {
             case "armor"->java.util.Arrays.stream(ARMOR_SLOTS).anyMatch(slot->!c.player.getItemBySlot(slot).isEmpty());
             case "hotkeys"->hotkeyCount()>0;
             case "pickups"->pickups.hasRows();
+            case "music"->music.hasContent();
             case "module_list"->!moduleList.empty();
             case "target"->target!=null&&target.level()==c.level&&target.isAlive()&&System.nanoTime()<=targetUntil;
             default->true;
@@ -117,7 +118,7 @@ public final class HudLayoutService {
 
     public HudLayoutService(Path root, ModuleRegistry modules) {
         this.modules = modules;
-        this.coordinates=new CoordinatesHud(modules,this::labelWidth);this.pickups=new PickupsHud(modules);
+        this.coordinates=new CoordinatesHud(modules,this::labelWidth);this.pickups=new PickupsHud(modules);this.music=new MusicHudPanel(modules);
         this.moduleList = new ModuleListHud(modules);
         store=new JsonFileStore<>(root.resolve("hud.vela"),dev.sqwat.vela.core.HudConfig.class,dev.sqwat.vela.core.HudConfig::new);
         boolean migrate=!java.nio.file.Files.exists(root.resolve("hud.vela"));
@@ -140,6 +141,7 @@ public final class HudLayoutService {
         positions.putIfAbsent("keystrokes",new HudPosition(10,240));
         positions.putIfAbsent("module_list",new HudPosition(420,10));
         positions.putIfAbsent("pickups",new HudPosition(10,120));
+        positions.putIfAbsent("music",new HudPosition(10,290));
         var defaults=new JsonFileStore<Map<String,HudPosition>>(root.resolve("hud-default-layout.json"),new TypeToken<Map<String,HudPosition>>(){}.getType(),()->new LinkedHashMap<>(positions));
         var sizeDefaults=new JsonFileStore<Map<String,Float>>(root.resolve("hud-default-scale.json"),new TypeToken<Map<String,Float>>(){}.getType(),()->new LinkedHashMap<>(scales));
         defaultPositions=migrate?new LinkedHashMap<>(defaults.load()):hudConfig.defaultPositions==null?new LinkedHashMap<>(positions):hudConfig.defaultPositions;
@@ -177,6 +179,16 @@ public final class HudLayoutService {
     private float renderScale(String id){return scale(id)*(isNative(id)?1:viewportFactor);}
 
     public synchronized HudPosition position(String id, int screenWidth, int screenHeight) {
+        // Mini music hangs from the top centre; on the way there and back it slides from where the full panel was put.
+        if(id.equals("music")){
+            float shape=music.shape();
+            if(shape>0){
+                var stored=positions.get(id);
+                var full=stored==null?defaultPosition(id,screenWidth,screenHeight):new HudPosition(Math.round(stored.x()*viewportFactor),Math.round(stored.y()*viewportFactor));
+                float centre=(screenWidth-music.width()*renderScale(id))/2f;
+                return new HudPosition(Math.round(full.x()+(centre-full.x())*shape),Math.round(full.y()+(6-full.y())*shape-6*music.notch()));
+            }
+        }
         var stored=positions.get(id);if(stored==null)return defaultPosition(id,screenWidth,screenHeight);
         if(id.equals("notifications")&&!editing)return new HudPosition(
             Math.round(stored.x()*viewportFactor+HudGeometry.notificationOffset(notificationWidth())*renderScale(id)),
@@ -197,6 +209,8 @@ public final class HudLayoutService {
     }
 
     public synchronized void move(String id, int x, int y, int screenWidth, int screenHeight, RectSize size) {
+        // The mini notch has its own place: dragging it must not overwrite where the full panel goes back to.
+        if(id.equals("music")&&(music.mini()||music.shape()>0))return;
         if(isNative(id)){var origin=defaultPosition(id,screenWidth,screenHeight);if(Math.abs(x-origin.x())<=12&&Math.abs(y-origin.y())<=12){positions.remove(id);return;}}
         int elementWidth = size.width();
         int elementHeight = size.height();
@@ -216,6 +230,37 @@ public final class HudLayoutService {
 
     public synchronized void setEditing(boolean editing) { this.editing = editing; }
 
+    /**
+     * The effect modules, resolved once per registry snapshot: extractEffects runs every frame, and fifteen map lookups
+     * by id per frame showed up in profiles.
+     */
+    private final class EffectModules {
+        final Object source=modules.all();
+        final ClientModule jump,bubbles,counter,wave,target,trail,kill,brew,particles,ambient,trajectories,mace,loot,pinger,near=modules.byId("near");
+        final dev.sqwat.vela.module.setting.Setting<?> nearMode=setting(near,"mode");
+        EffectModules(){
+            jump=modules.byId("jump_circle");
+            bubbles=modules.byId("hit_bubbles");
+            counter=modules.byId("hp_counter");
+            wave=modules.byId("explosion_wave");
+            target=modules.byId("target_esp");
+            trail=modules.byId("dash_trail");
+            kill=modules.byId("kill_effect");
+            brew=modules.byId("brew_viewer");
+            particles=modules.byId("particles");
+            ambient=modules.byId("world_particles");
+            trajectories=modules.byId("trajectories");
+            mace=modules.byId("mace_smash");
+            loot=modules.byId("loot_memory");
+            pinger=modules.byId("pinger");
+        }
+    }
+    private static dev.sqwat.vela.module.setting.Setting<?> setting(ClientModule module,String id){
+        if(module!=null)for(var s:module.settings())if(s.id().equals(id))return s;
+        return null;
+    }
+    private EffectModules effectModules;
+    private EffectModules effects(){var e=effectModules;if(e==null||e.source!=modules.all())effectModules=e=new EffectModules();return e;}
     /** Uncached path: everything in one pass, effects below panels. */
     public void extractRenderState(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
         extractEffects(g,deltaTracker);
@@ -230,21 +275,22 @@ public final class HudLayoutService {
         Minecraft client = Minecraft.getInstance();
         if(!HudVisibility.allowed(client)){hudMotion.clear();return;}
         viewport(client.getWindow().getGuiScale());
-        if(modules.byId("jump_circle") instanceof dev.sqwat.vela.module.visual.JumpCircle jump&&jump.enabled())jump.draw(g);
-        if(modules.byId("hit_bubbles") instanceof dev.sqwat.vela.module.visual.HitBubbles bubbles&&bubbles.enabled())bubbles.draw(g);
-        if(modules.byId("hp_counter") instanceof dev.sqwat.vela.module.visual.HpCounter counter&&counter.enabled())counter.draw(g);
-        if(modules.byId("explosion_wave") instanceof dev.sqwat.vela.module.visual.ExplosionWave wave&&wave.enabled())wave.draw(g);
-        if(modules.byId("target_esp") instanceof dev.sqwat.vela.module.visual.TargetESP target&&target.enabled())target.draw(g);
-        if(modules.byId("dash_trail") instanceof dev.sqwat.vela.module.visual.DashTrail trail&&trail.enabled())trail.draw(g);
-        if(modules.byId("kill_effect") instanceof dev.sqwat.vela.module.visual.KillEffect kill&&kill.enabled())kill.draw(g);
+        var e=effects();
+        if(e.jump instanceof dev.sqwat.vela.module.visual.JumpCircle jump&&jump.enabled())jump.draw(g);
+        if(e.bubbles instanceof dev.sqwat.vela.module.visual.HitBubbles bubbles&&bubbles.enabled())bubbles.draw(g);
+        if(e.counter instanceof dev.sqwat.vela.module.visual.HpCounter counter&&counter.enabled())counter.draw(g);
+        if(e.wave instanceof dev.sqwat.vela.module.visual.ExplosionWave wave&&wave.enabled())wave.draw(g);
+        if(e.target instanceof dev.sqwat.vela.module.visual.TargetESP target&&target.enabled())target.draw(g);
+        if(e.trail instanceof dev.sqwat.vela.module.visual.DashTrail trail&&trail.enabled())trail.draw(g);
+        if(e.kill instanceof dev.sqwat.vela.module.visual.KillEffect kill&&kill.enabled())kill.draw(g);
         dev.sqwat.vela.module.visual.Wasted.draw(g);
-        if(modules.byId("brew_viewer") instanceof dev.sqwat.vela.module.visual.BrewViewer brew&&brew.enabled())brew.draw(g);
-        if(modules.byId("particles") instanceof dev.sqwat.vela.module.visual.Particles particles&&particles.enabled())particles.draw(g);
-        if(modules.byId("world_particles") instanceof dev.sqwat.vela.module.visual.WorldParticles ambient&&ambient.enabled())ambient.draw(g);
-        if(modules.byId("trajectories") instanceof dev.sqwat.vela.module.utility.Trajectories trajectories&&trajectories.enabled())trajectories.draw(g);
-        if(modules.byId("mace_smash") instanceof dev.sqwat.vela.module.visual.MaceSmash mace&&mace.enabled())mace.draw(g);
-        if(modules.byId("loot_memory") instanceof dev.sqwat.vela.module.utility.LootMemory loot&&loot.enabled())loot.draw(g);
-        if(modules.byId("pinger") instanceof dev.sqwat.vela.module.utility.Pinger pinger&&pinger.screenWarningActive()){
+        if(e.brew instanceof dev.sqwat.vela.module.visual.BrewViewer brew&&brew.enabled())brew.draw(g);
+        if(e.particles instanceof dev.sqwat.vela.module.visual.Particles particles&&particles.enabled())particles.draw(g);
+        if(e.ambient instanceof dev.sqwat.vela.module.visual.WorldParticles ambient&&ambient.enabled())ambient.draw(g);
+        if(e.trajectories instanceof dev.sqwat.vela.module.utility.Trajectories trajectories&&trajectories.enabled())trajectories.draw(g);
+        if(e.mace instanceof dev.sqwat.vela.module.visual.MaceSmash mace&&mace.enabled())mace.draw(g);
+        if(e.loot instanceof dev.sqwat.vela.module.utility.LootMemory loot&&loot.enabled())loot.draw(g);
+        if(e.pinger instanceof dev.sqwat.vela.module.utility.Pinger pinger&&pinger.screenWarningActive()){
             var config=dev.sqwat.vela.VelaClient.services().configs().current();
             int edge=Math.max(16,g.guiHeight()/6),alpha=Math.round(255*pinger.warningOpacity(System.nanoTime(),config.reducedMotion||!config.animations)),color=(alpha<<24)|0xC51028;
             g.fillGradient(0,0,g.guiWidth(),edge,color,0x00FF2448);
@@ -257,7 +303,7 @@ public final class HudLayoutService {
                 canvas.fill(i*band,0,band,g.guiHeight(),tint);canvas.fill(g.guiWidth()-(i+1)*band,0,band,g.guiHeight(),tint);
             }
         }
-        if(nearArrows()&&modules.byId("near") instanceof ClientModule near&&near.enabled()&&near.available())
+        if(nearArrows()&&e.near instanceof ClientModule near&&near.enabled()&&near.available())
             drawNearArrows(g,client,deltaTracker.getGameTimeDeltaPartialTick(false));
     }
     /**
@@ -285,15 +331,22 @@ public final class HudLayoutService {
             if(hudMotion.skipHidden(id,visible))continue;
             var size=bounds(client,id);
             var service=dev.sqwat.vela.VelaClient.services();boolean immediate=service!=null&&(!service.configs().current().animations||service.configs().current().reducedMotion);
-            var frame=hudMotion.update(id,visible,size.height()/renderScale(id),System.nanoTime(),immediate);
+            float target=size.height()/renderScale(id);
+            var frame=hudMotion.update(id,visible,target,System.nanoTime(),immediate);
             float reveal=frame.reveal();panel(id).height=frame.height();
             if(reveal<.005f)continue;
             HudPosition position = position(id,g.guiWidth(),g.guiHeight());
+            // The GUI renderer batches by scissor first, so a clip per panel splits every panel into its own draw
+            // calls. Settled panels need no clip; only revealing or resizing ones (and the morphing music notch) do.
+            if(settled(id,reveal,frame.height(),target)){drawChip(g,client,id,position.x(),position.y());continue;}
             dev.sqwat.vela.ui.render.UiClip.enable(g,position.x()-1,position.y()-1,position.x()+size.width()+2,position.y()+(int)Math.ceil(frame.height()*renderScale(id)*reveal)+2);
             try{drawChip(g,client,id,position.x(),position.y());}finally{g.disableScissor();}
         }
     }
 
+    public static boolean settled(String id,float reveal,float height,float target){
+        return reveal>=.999f&&Math.abs(height-target)<.05f&&!id.equals("music");
+    }
     public void drawChip(GuiGraphicsExtractor g,Minecraft client,String id,int x,int y){
             float scale=renderScale(id);
             g.pose().pushMatrix();g.pose().translate(x,y);g.pose().scale(scale);
@@ -428,7 +481,7 @@ public final class HudLayoutService {
             }
             if(id.equals("keystrokes")){
                 boolean mouse=keyFlag("mouse"),space=keyFlag("space");
-                drawPanel(g,id,KeyStrokesHud.WIDTH,KeyStrokesHud.height(mouse,space),panel);
+                // No panel behind it: the keys carry their own backgrounds.
                 var config=dev.sqwat.vela.VelaClient.services().configs().current();
                 keyStrokes.draw(g,client,mouse,space,keyFlag("cps"),!config.animations||config.reducedMotion);
                 return;
@@ -448,6 +501,7 @@ public final class HudLayoutService {
 
             if(id.equals("coordinates")){coordinates.draw(g,client,w->drawPanel(g,id,w,CoordinatesHud.HEIGHT,panel));return;}
             if(id.equals("pickups")){pickups.draw(g,client,editing,h->drawPanel(g,id,PickupsHud.WIDTH,h,panel));return;}
+            if(id.equals("music")){music.draw(g,client,editing,(h,r,notch)->drawPanel(g,id,music.width(),h,r,notch,panel));return;}
             String text = label(client, id);
             int width = labelWidth(text) + 16;
             drawPanel(g,id,width,22,panel);
@@ -498,6 +552,7 @@ public final class HudLayoutService {
             case "keystrokes" -> new RectSize(Math.round(KeyStrokesHud.WIDTH*scale(id)),Math.round(KeyStrokesHud.height(keyFlag("mouse"),keyFlag("space"))*scale(id)));
             case "coordinates" -> new RectSize(Math.round(coordinates.width(client)*scale(id)),Math.round(CoordinatesHud.HEIGHT*scale(id)));
             case "pickups" -> new RectSize(Math.round(PickupsHud.WIDTH*scale(id)),Math.round(pickups.height(client,editing)*scale(id)));
+            case "music" -> new RectSize(Math.round(music.width()*scale(id)),Math.round(music.height()*scale(id)));
             default -> new RectSize(Math.round((labelWidth(label(client, id)) + 16)*scale(id)), Math.round(22*scale(id)));
         };
     }
@@ -517,6 +572,7 @@ public final class HudLayoutService {
 
     private final CoordinatesHud coordinates;
     private final PickupsHud pickups;
+    private final MusicHudPanel music;
     // Measured twice per frame (bounds + draw) for text chips; the label rarely changes between frames.
     private final Map<String,Integer> labelWidths=new java.util.HashMap<>();
     private Object labelMask;
@@ -539,9 +595,8 @@ public final class HudLayoutService {
     }
     private boolean flag(String id,String setting){var module=modules.byId(id);if(module==null)return false;for(var option:module.settings())if(option.id().equals(setting))return Boolean.TRUE.equals(option.value());return false;}
     private boolean nearArrows(){
-        var module=modules.byId("near");
-        if(module!=null)for(var s:module.settings())if(s.id().equals("mode"))return "Стрелки".equals(s.value());
-        return false;
+        var mode=effects().nearMode;
+        return mode!=null&&"Стрелки".equals(mode.value());
     }
     private final NearArrowsHud nearArrows=new NearArrowsHud();
     private void drawNearArrows(GuiGraphicsExtractor g,Minecraft client,float partial){
@@ -553,12 +608,14 @@ public final class HudLayoutService {
     }
     public boolean supportsTransparency(String id){var module=modules.byId(id);return module!=null&&module.settings().stream().anyMatch(s->s.id().equals("transparent"));}
     public boolean transparent(String id){return flag(id,"transparent");}
-    public java.util.List<dev.sqwat.vela.module.setting.BooleanSetting> contextSettings(String id){
+    /** Switches and colours shown in the middle-click menu of a HUD in the layout editor. */
+    public java.util.List<dev.sqwat.vela.module.setting.Setting<?>> contextSettings(String id){
         var module=modules.byId(id);if(module==null)return List.of();
-        return module.settings().stream().filter(s->s instanceof dev.sqwat.vela.module.setting.BooleanSetting&&s.visible()&&(id.equals("target")||s.id().equals("transparent"))).map(s->(dev.sqwat.vela.module.setting.BooleanSetting)s).toList();
+        boolean all=id.equals("target")||id.equals("music");
+        return module.settings().stream().filter(s->s.visible()&&(s instanceof dev.sqwat.vela.module.setting.BooleanSetting&&(all||s.id().equals("transparent"))||all&&s instanceof dev.sqwat.vela.module.setting.ColorSetting)).<dev.sqwat.vela.module.setting.Setting<?>>map(s->s).toList();
     }
     public void toggleContextSetting(String id,String setting){
-        for(var option:contextSettings(id))if(option.id().equals(setting)){option.toggle();var services=dev.sqwat.vela.VelaClient.services();if(services!=null)services.configs().requestSave();return;}
+        for(var option:contextSettings(id))if(option.id().equals(setting)&&option instanceof dev.sqwat.vela.module.setting.BooleanSetting toggle){toggle.toggle();var services=dev.sqwat.vela.VelaClient.services();if(services!=null)services.configs().requestSave();return;}
     }
     public void toggleTransparency(String id){var module=modules.byId(id);if(module==null)return;module.settings().stream().filter(s->s.id().equals("transparent")&&s instanceof dev.sqwat.vela.module.setting.BooleanSetting).forEach(s->((dev.sqwat.vela.module.setting.BooleanSetting)s).toggle());var services=dev.sqwat.vela.VelaClient.services();if(services!=null)services.configs().requestSave();}
     private List<net.minecraft.world.item.ItemStack> targetEquipment(net.minecraft.world.entity.LivingEntity entity){
@@ -578,20 +635,40 @@ public final class HudLayoutService {
         dev.sqwat.vela.ui.render.VelaIcons.draw(g,icon,7,6,10,VelaTheme.PRIMARY);
         VelaDraw.text(g,title,23,7,VelaTheme.TEXT,VelaDraw.Weight.MEDIUM,8);
     }
-    private void drawPanel(GuiGraphicsExtractor g,String id,int width,int height,int panel){
+    private void drawPanel(GuiGraphicsExtractor g,String id,int width,int height,int panel){drawPanel(g,id,width,height,6,panel);}
+    private void drawPanel(GuiGraphicsExtractor g,String id,int width,int height,int radius,int panel){drawPanel(g,id,width,height,radius,0,panel);}
+    /**
+     * {@code notch} 0..1 presses the panel against the top edge of the screen: the body reaches above the edge, so
+     * the top corners disappear and only the rounded bottom ones remain.
+     */
+    private void drawPanel(GuiGraphicsExtractor g,String id,int width,int height,int radius,float notch,int panel){
         var state=panels.get(id);
         if(!editing&&Minecraft.getInstance().gui.screen()==null&&state!=null&&!Float.isNaN(state.height))height=Math.round(state.height);
-        VelaDraw.roundedRect(g,0,0,width,height,6,panel);
+        int reach=Math.round(radius*notch);
+        VelaDraw.roundedRect(g,0,-reach,width,height+reach,radius,panel);// panel is HudBlock's fill with the fade
         float opaque=state==null||Float.isNaN(state.alpha)?1f:state.alpha;
         dev.sqwat.vela.ui.render.GlassSurface.draw(g,0,0,width,height,1-opaque);
-        int borderAlpha=Math.round(112*opaque);
-        if(borderAlpha>0)VelaDraw.roundedOutline(g,0,0,width,height,6,(borderAlpha<<24)|0x576578,0x00000000);
+        int borderAlpha=Math.round(112*opaque*(1-notch));
+        if(borderAlpha>0)VelaDraw.roundedOutline(g,0,0,width,height,radius,HudBlock.border(borderAlpha/(float)HudBlock.BORDER_ALPHA),0x00000000);
+    }
+    /** Mouse over the Music panel while the chat is open: hover, clicks on its controls and the wheel on its lyrics. */
+    public boolean musicMouse(double mx,double my,double scroll,boolean click){
+        Minecraft client=Minecraft.getInstance();
+        var module=modules.byId("music");
+        if(module==null||!module.enabled()||!module.available()||!music.hasContent())return false;
+        viewport(client.getWindow().getGuiScale());
+        var pos=position("music",client.getWindow().getGuiScaledWidth(),client.getWindow().getGuiScaledHeight());
+        float scale=renderScale("music");
+        float lx=(float)((mx-pos.x())/scale),ly=(float)((my-pos.y())/scale);
+        if(click)return music.click(lx,ly);
+        if(scroll!=0)return music.scroll(lx,ly,scroll);
+        music.hover(lx,ly);return false;
     }
     private int panelColor(String id){
         long now=System.nanoTime();var state=panel(id);boolean first=Float.isNaN(state.alpha);
         float target=flag(id,"transparent")?0:1;
         float alpha=dev.sqwat.vela.ui.animation.Motion.approach(first?target:state.alpha,target,12,first?0:Math.min(.1f,(now-state.time)/1e9f));
-        state.time=now;state.alpha=alpha;return (Math.round(184.5f*alpha)<<24)|0x10141C;
+        state.time=now;state.alpha=alpha;return HudBlock.fill(alpha);
     }
     private final WatermarkHud watermark=new WatermarkHud();
     private String watermark(Minecraft client){
@@ -603,7 +680,8 @@ public final class HudLayoutService {
         if(nearbyLevel!=client.level)nearPresence.clear();
         nearbyLevel=client.level;nearbyTick=client.player.tickCount;
         var connection=client.getConnection();if(connection==null)return nearbyCache=java.util.List.of();
-        var listed=new java.util.HashSet<>(connection.getListedOnlinePlayers());
+        // Vanilla keeps the listed players in a hash set already; copying it every tick cost a big server's whole tab list.
+        var listed=connection.getListedOnlinePlayers();
         nearbyCache=NearPlayers.<net.minecraft.world.entity.player.Player>closest(client.level.players(),nearArrows()?24:NearDirection.LIMIT,p->{
             if(p==client.player||!p.isAlive()||p.isSpectator())return false;
             var info=connection.getPlayerInfo(p.getUUID());

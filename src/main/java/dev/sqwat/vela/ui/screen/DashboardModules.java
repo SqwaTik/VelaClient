@@ -29,15 +29,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Dashboard module cards and their expandable settings. */
+/**
+ * Dashboard modules. By default a panel layout: the tab's modules as a compact list on the left and the selected
+ * module's settings in their own pane on the right, like the menus of competitive shooters. The previous layout (two
+ * columns of cards that expand in place) stays available as a setting.
+ */
 abstract class DashboardModules extends DashboardBase {
+    /** The module whose settings the right pane shows (panel layout). */
+    protected String selectedModule;
+    protected float paneScroll,paneTarget,paneLimit;
+    protected Rect paneHit=new Rect(0,0,0,0),listHit=paneHit;
+    protected static final int ROW=30,ROW_GAP=4,PANE_HEADER=50;
+
+    protected boolean panelLayout(){return services.configs().current().panelModuleMenu;}
+    /** The tab's modules (or every match while searching): favourites first, then A–Z by the name as shown. */
+    protected List<ClientModule> shownModules(){
+        List<ClientModule> modules = search.isBlank() ? services.modules().find(section.category(), search) : services.modules().findAll(search);
+        var favorites=services.configs().current().favorites;
+        return modules.stream().filter(ClientModule::available).sorted(java.util.Comparator.<ClientModule,Boolean>comparing(m->!favorites.contains(m.id()))
+            .thenComparing(m->dev.sqwat.vela.ui.Lang.tr(m.name()),String.CASE_INSENSITIVE_ORDER)).toList();
+    }
+    protected void selectModule(ClientModule module){
+        if(module.id().equals(selectedModule))return;
+        selectedModule=module.id();paneScroll=paneTarget=0;
+        dev.sqwat.vela.ui.UiSounds.play(services,dev.sqwat.vela.ui.UiSounds.Event.EXPAND);
+    }
 
     protected void drawModules(GuiGraphicsExtractor g, Rect content, int mouseX, int mouseY, float dt) {
         moduleContentHit=content;
         cardHits.clear();
         settingHits.clear();
-        List<ClientModule> modules = search.isBlank() ? services.modules().find(section.category(), search) : services.modules().findAll(search);
-        modules=modules.stream().filter(ClientModule::available).sorted(java.util.Comparator.comparing(m->!services.configs().current().favorites.contains(m.id()))).toList();
+        if(panelLayout()){drawModulePanels(g,content,mouseX,mouseY,dt);return;}
+        listHit=paneHit=new Rect(0,0,0,0);
+        List<ClientModule> modules=shownModules();
         if (modules.isEmpty()) {
             scrollLimit = targetScroll = scroll = 0;
             drawEmpty(g, content, search.isBlank() ? "В этом разделе пока нет модулей" : "Ничего не найдено");
@@ -52,7 +76,7 @@ abstract class DashboardModules extends DashboardBase {
             int column = index % 2;
             boolean expanded = expandedModules.contains(module.id());
             float expand=controls.animate("expand-"+module.id(),expanded?1:0);
-            int fullExtra=animatedSettingsExtra(module);
+            int fullExtra=expand>0?animatedSettingsExtra(module):0; // collapsed cards skip measuring every setting
             int cardHeight=44+Math.round(expand*fullExtra);
             // Height already animates: a second position spring made following cards overlap live controls.
             int tx=content.x()+column*(columnWidth+gap),ty=y[column];
@@ -71,8 +95,150 @@ abstract class DashboardModules extends DashboardBase {
         scrollLimit = Math.max(0, max);
         targetScroll = Math.max(0, Math.min(targetScroll, scrollLimit));
     }
+    private void drawModulePanels(GuiGraphicsExtractor g,Rect content,int mouseX,int mouseY,float dt){
+        List<ClientModule> modules=shownModules();
+        if(modules.isEmpty()){
+            listHit=paneHit=new Rect(0,0,0,0);
+            scrollLimit=targetScroll=scroll=0;
+            drawEmpty(g,content,search.isBlank()?"В этом разделе пока нет модулей":"Ничего не найдено");
+            return;
+        }
+        int gap=10,listW=Math.clamp(Math.round(content.width()*.4f),150,230);
+        Rect list=listHit=new Rect(content.x(),content.y(),listW,content.height());
+        Rect pane=paneHit=new Rect(content.x()+listW+gap,content.y(),content.width()-listW-gap,content.height());
+        // A search result clicked elsewhere, or a selection no longer in this list, moves the selection.
+        ClientModule selected=null;
+        if(revealModule!=null){for(var m:modules)if(m.id().equals(revealModule))selected=m;}
+        if(selected==null)for(var m:modules)if(m.id().equals(selectedModule))selected=m;
+        if(selected==null)selected=modules.getFirst();
+        if(!selected.id().equals(selectedModule)){selectedModule=selected.id();paneScroll=paneTarget=0;}
+        // The list.
+        int index=modules.indexOf(selected);
+        if(selected.id().equals(revealModule)){targetScroll=Math.max(0,index*(ROW+ROW_GAP)-list.height()/2+ROW);revealModule=null;}
+        dev.sqwat.vela.ui.render.UiClip.enable(g,list.x()-1,list.y()-1,list.x()+list.width()+1,list.y()+list.height()+1);
+        int y=list.y()-Math.round(scroll);
+        for(var module:modules){
+            Rect row=new Rect(list.x(),y,list.width(),ROW);
+            y+=ROW+ROW_GAP;
+            if(row.y()+row.height()<list.y()||row.y()>list.y()+list.height())continue;
+            drawModuleRow(g,module,row,module==selected,mouseX,mouseY,dt);
+        }
+        g.disableScissor();
+        scrollLimit=Math.max(0,modules.size()*(ROW+ROW_GAP)-ROW_GAP-list.height());
+        targetScroll=Math.clamp(targetScroll,0,scrollLimit);
+        drawModulePane(g,selected,pane,mouseX,mouseY,dt);
+    }
+    private void drawModuleRow(GuiGraphicsExtractor g,ClientModule module,Rect row,boolean selected,int mouseX,int mouseY,float dt){
+        boolean hovered=row.contains(mouseX,mouseY)&&listHit.contains(mouseX,mouseY);
+        float h=animate("row-"+module.id(),hovered,dt),sel=controls.animate("row-selected-"+module.id(),selected?1:0),on=controls.animate("toggle-"+module.id(),module.enabled()?1:0);
+        int base=VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.SURFACE_HOVER,h);
+        VelaDraw.roundedRect(g,row.x(),row.y(),row.width(),row.height(),7,VelaTheme.mix(VelaTheme.mix(base,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.2f),sel),VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.3f),flash(module)));
+        // Accent bar on the left edge of the selected row, growing from its middle.
+        int bar=Math.round((row.height()-12)*sel);
+        if(bar>0)VelaDraw.roundedRect(g,row.x()+3,row.y()+(row.height()-bar)/2,3,bar,1,VelaTheme.PRIMARY);
+        // Dot: lit while the module is on.
+        int dot=VelaTheme.mix(0xFF3A4254,VelaTheme.PRIMARY,on);
+        VelaDraw.roundedRect(g,row.x()+11,row.y()+row.height()/2-2,5,5,2,dot);
+        int toggleX=row.x()+row.width()-29,textX=row.x()+22;
+        Rect favorite=new Rect(toggleX-17,row.y()+7,15,16);
+        boolean fav=services.configs().current().favorites.contains(module.id());
+        if(fav||hovered){
+            favoriteHits.put(favorite,module.id());
+            controls.favorite(g,"module-favorite-"+module.id(),new Rect(favorite.x()+3,favorite.y()+3,9,9),fav,favorite.contains(mouseX,mouseY));
+        }
+        int labelWidth=favorite.x()-textX-4;
+        String sub=!search.isBlank()?dev.sqwat.vela.ui.Lang.tr("в ")+sectionOf(module).title()
+            :module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):"";
+        int titleColor=VelaTheme.mix(VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,Math.max(on,h)),0xFFFFFFFF,sel*.4f);
+        String title=VelaDraw.ellipsize(module.name(),labelWidth,VelaDraw.Weight.MEDIUM);
+        if(sub.isEmpty())dev.sqwat.vela.ui.render.SearchText.draw(g,title,search,textX,row.y()+10,titleColor,VelaDraw.Weight.MEDIUM,28f/3);
+        else{
+            dev.sqwat.vela.ui.render.SearchText.draw(g,title,search,textX,row.y()+5,titleColor,VelaDraw.Weight.MEDIUM,28f/3);
+            VelaDraw.text(g,VelaDraw.ellipsize(sub,labelWidth,VelaDraw.Weight.REGULAR,7),textX,row.y()+18,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7);
+        }
+        VelaDraw.toggle(g,toggleX,row.y()+9,on,dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(toggleX,row.y()+9).contains(mouseX,mouseY));
+        cardHits.add(new CardHit(module,row,dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(toggleX,row.y()+9)));
+    }
+    private void drawModulePane(GuiGraphicsExtractor g,ClientModule module,Rect pane,int mouseX,int mouseY,float dt){
+        float flash=flash(module);
+        VelaDraw.roundedRect(g,pane.x(),pane.y(),pane.width(),pane.height(),9,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.mix(VelaTheme.SURFACE,VelaTheme.PRIMARY,.16f),flash));
+        // Header: name, description, favourite and the module's switch.
+        int toggleX=pane.x()+pane.width()-33,x=pane.x()+14;
+        Rect favorite=new Rect(toggleX-19,pane.y()+11,15,16);
+        favoriteHits.put(favorite,module.id());
+        controls.favorite(g,"pane-favorite-"+module.id(),new Rect(favorite.x()+3,favorite.y()+3,9,9),services.configs().current().favorites.contains(module.id()),favorite.contains(mouseX,mouseY));
+        int textW=favorite.x()-x-6;
+        VelaDraw.text(g,VelaDraw.ellipsize(module.name(),textW,VelaDraw.Weight.SEMIBOLD,11),x,pane.y()+11,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,11);
+        String description=dev.sqwat.vela.ui.Lang.tr(module.description()).strip();
+        // Short descriptions stay in the header; a longer one moves, whole, to the top of the scrolled area, so the
+        // wheel over the pane reads it to the end instead of it being cut off after two lines.
+        List<String> lines=descriptionLines(description,textW);
+        boolean inHeader=lines.size()<=2;
+        if(inHeader){
+            if(lines.size()==2){
+                VelaDraw.text(g,lines.get(0),x,pane.y()+26,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
+                VelaDraw.text(g,lines.get(1),x,pane.y()+36,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
+            }else if(!lines.isEmpty())VelaDraw.text(g,lines.getFirst(),x,pane.y()+28,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
+        }
+        Rect toggle=dev.sqwat.vela.ui.hud.HudGeometry.toggleHit(toggleX,pane.y()+14);
+        VelaDraw.toggle(g,toggleX,pane.y()+14,controls.animate("toggle-"+module.id(),module.enabled()?1:0),toggle.contains(mouseX,mouseY));
+        cardHits.add(new CardHit(module,new Rect(pane.x(),pane.y(),pane.width(),PANE_HEADER-4),toggle));
+        String key=module.boundKey()>=0?dev.sqwat.vela.ui.input.KeyLabels.of(module.boundKey(),module.keybind()):dev.sqwat.vela.ui.Lang.tr("СКМ — бинд");
+        float keyW=VelaDraw.textWidth(key,VelaDraw.Weight.MEDIUM,7)+10;
+        int kx=Math.round(pane.x()+pane.width()-12-keyW);
+        VelaDraw.roundedRect(g,kx,pane.y()+32,Math.round(keyW),12,4,0x14FFFFFF);
+        VelaDraw.text(g,key,kx+5,pane.y()+34,VelaTheme.TEXT_MUTED,VelaDraw.Weight.MEDIUM,7);
+        // Settings, scrolled on their own.
+        Rect area=new Rect(pane.x()+12,pane.y()+PANE_HEADER,pane.width()-24,pane.height()-PANE_HEADER-6);
+        paneScroll=reducedMotion()?paneTarget:Motion.scroll(paneScroll,paneTarget,dt);
+        int first=settingHits.size();
+        dev.sqwat.vela.ui.render.UiClip.enable(g,area.x()-2,area.y()-4,area.x()+area.width()+2,area.y()+area.height());
+        int lead=0;
+        if(!inHeader){
+            List<String> full=descriptionLines(description,area.width());
+            int top=area.y()+2-Math.round(paneScroll);
+            for(int i=0;i<full.size();i++)VelaDraw.text(g,full.get(i),area.x(),top+i*10,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
+            lead=full.size()*10+8;
+        }
+        drawSettings(g,module,area.x(),area.y()+4+lead-Math.round(paneScroll),area.width());
+        g.disableScissor();
+        for(int i=settingHits.size()-1;i>=first;i--){
+            SettingHit hit=settingHits.get(i);Rect r=hit.rect();
+            int top=Math.max(r.y(),area.y()),bottom=Math.min(r.y()+r.height(),area.y()+area.height());
+            if(bottom<=top)settingHits.remove(i);
+            else settingHits.set(i,new SettingHit(hit.setting(),r,new Rect(r.x(),top,r.width(),bottom-top)));
+        }
+        int total=ModuleSettingsGeometry.FIRST_ROW_OFFSET+8+lead;
+        for(var setting:visibleSettings(module))total+=Math.round(ModuleSettingsGeometry.rowHeight(setting)*settingReveal(module,setting));
+        paneLimit=Math.max(0,total-area.height());
+        paneTarget=Math.clamp(paneTarget,0,paneLimit);
+        if(paneLimit>0){
+            int thumb=Math.max(16,Math.round(area.height()*area.height()/(float)(area.height()+paneLimit)));
+            int sy=area.y()+Math.round((area.height()-thumb)*paneScroll/paneLimit);
+            VelaDraw.roundedRect(g,pane.x()+pane.width()-5,sy,2,thumb,1,(VelaTheme.PRIMARY&0xFFFFFF)|0x99000000);
+        }
+        new dev.sqwat.vela.ui.render.GameUiCanvas(g).border(pane.x(),pane.y(),pane.width(),pane.height(),9,VelaTheme.mix(VelaTheme.BORDER,VelaTheme.PRIMARY,flash));
+    }
+    // Where each card's description breaks into its second line, by text and width: measuring it again every frame
+    // (one shorter prefix at a time) was most of the cost of scrolling through the cards.
+    private final Map<String,Integer> descriptionSplits=new java.util.HashMap<>();
+    private final java.util.Map<String,List<String>> descriptionLines=new java.util.HashMap<>();
+    /** The description word-wrapped to {@code width}, cached: measuring it every frame costs a lot of text widths. */
+    private List<String> descriptionLines(String text,int width){
+        if(descriptionLines.size()>256)descriptionLines.clear();
+        return descriptionLines.computeIfAbsent(width+"|"+text,key->text.isEmpty()?List.of():List.copyOf(dev.sqwat.vela.ui.render.UiKit.wrap(text,width,VelaDraw.Weight.REGULAR,8)));
+    }
+    private int descriptionSplit(String text,int width){
+        if(descriptionSplits.size()>512)descriptionSplits.clear();
+        return descriptionSplits.computeIfAbsent(width+"|"+text,key->{
+            int split=text.length();
+            while(split>0&&VelaDraw.textWidth(text.substring(0,split),VelaDraw.Weight.REGULAR,8)>width)split=text.offsetByCodePoints(split,-1);
+            if(split<text.length()){int space=text.lastIndexOf(' ',split);if(space>0)split=space;}
+            return split;
+        });
+    }
     protected void drawDescriptionHint(GuiGraphicsExtractor g,int mx,int my){
-        if(sideOpen()||hasModal()||!contentHit.contains(mx,my))return;
+        if(panelLayout()||sideOpen()||hasModal()||!contentHit.contains(mx,my))return;
         for(var hit:cardHits){
             Rect r=hit.card;
             if(!new Rect(r.x()+8,r.y()+20,r.width()-90,22).contains(mx,my))continue;
@@ -120,10 +286,9 @@ abstract class DashboardModules extends DashboardBase {
             if(over>.02f)g.fill(chip.x()+LOCATION_PAD,chip.y()+11,chip.x()+LOCATION_PAD+Math.round(chipText*over),chip.y()+12,color);
             locationHits.put(chip,module);
         }
-        String remaining=dev.sqwat.vela.ui.Lang.tr(module.description()).strip();int split=remaining.length(); // translated before splitting into lines
-        while(split>0&&VelaDraw.textWidth(remaining.substring(0,split),VelaDraw.Weight.REGULAR,8)>labelWidth)split=remaining.offsetByCodePoints(split,-1);
+        String remaining=dev.sqwat.vela.ui.Lang.tr(module.description()).strip(); // translated before splitting into lines
+        int split=descriptionSplit(remaining,labelWidth);
         if(split<remaining.length()){
-            int space=remaining.lastIndexOf(' ',split);if(space>0)split=space;
             VelaDraw.text(g,remaining.substring(0,split),labelX,card.y()+21,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
             VelaDraw.text(g,remaining.substring(split).strip(),labelX,card.y()+31,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
         }else VelaDraw.text(g,remaining,labelX,card.y()+23,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,8);
@@ -224,6 +389,7 @@ abstract class DashboardModules extends DashboardBase {
                 g.pose().popMatrix();cursor+=Math.round(rowHeight*reveal);continue;
             }
             clippedText(g,setting.name(),x+15,cursor,width-(setting instanceof BooleanSetting?35:95),VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR);
+            if(setting.isExperimental())VelaDraw.text(g,"EXPERIMENTAL",x+15+VelaDraw.textWidth(setting.name(),VelaDraw.Weight.REGULAR)+5,cursor+1.5f,VelaTheme.TEXT_MUTED,VelaDraw.Weight.SEMIBOLD,6f);
             String value = setting instanceof BooleanSetting b ? (b.value() ? "Вкл" : "Выкл")
                 : setting instanceof NumberSetting n ? n.display() : setting instanceof ChoiceSetting c ? c.value() : String.valueOf(setting.value());
             value=VelaDraw.ellipsize(value,76,VelaDraw.Weight.MEDIUM);

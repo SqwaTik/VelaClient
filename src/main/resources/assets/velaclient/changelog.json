@@ -18,6 +18,10 @@
             {
               "en": "Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.",
               "ru": "Быстрая сборка моделей: модели мобов и игроков записываются в буфер вершин сразу целым кубом, а не по одной вершине. На Vulkan это заметно разгружает поток рендера. Выключается в настройках оптимизации."
+            },
+            {
+              "en": "Minecraft 26.3 build: the same Vela for 26.3, built from this code by a port layer (versions/26.3). Shaders, the first-person hands, the sky and the HUD cache are adapted to the new renderer; a test checks every mixin target against the game before it starts.",
+              "ru": "Сборка для Minecraft 26.3: та же Vela для 26.3, собирается из этого же кода слоем портирования (versions/26.3). Шейдеры, руки от первого лица, небо и кэш HUD переведены на новый рендер; тест проверяет каждую цель миксинов по игре ещё до запуска."
             }
           ]
         },

@@ -1,0 +1,119 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+}
+
+// Vela's own version and dependencies come from the main build
+def vela = file('..')
+def velaProps = new Properties()
+vela.toPath().resolve('gradle.properties').withInputStream { velaProps.load(it) }
+
+subprojects {
+    // loom=fabric-loom on 26.x (the game ships in Mojang names), fabric-loom-remap on 1.21.11 and older (obfuscated)
+    apply plugin: "net.fabricmc.${project.loom}"
+    def remap = project.loom == 'fabric-loom-remap'
+
+    version = "${velaProps.mod_version}+${project.minecraft_version}"
+    group = velaProps.maven_group
+    base.archivesName = velaProps.archives_base_name
+
+    repositories {
+        maven { url = 'https://api.modrinth.com/maven' }
+        mavenCentral()
+        maven { url = 'https://maven.maxhenkel.de/repository/public' }
+    }
+
+    // The module's sources: Vela's src/ rewritten for this game version (tools/port_mappings.py rewrite), plus the module's own src/
+    def ported = layout.buildDirectory.dir('ported')
+    def portSources = tasks.register('portSources', Exec) {
+        group = 'build'
+        description = 'Writes Vela\'s sources renamed for this game version to build/ported'
+        inputs.dir(new File(vela, 'src'))
+        inputs.files(file('port.txt'), file('manual.txt'), file('drop.txt'), new File(vela, 'tools/port_mappings.py'))
+        inputs.files(fileTree('src'))
+        outputs.dir(ported)
+        commandLine 'python', '-I', new File(vela, 'tools/port_mappings.py').absolutePath, 'rewrite', projectDir.absolutePath, ported.get().asFile.absolutePath
+    }
+    ['main', 'test'].each { set ->
+        sourceSets.maybeCreate(set).with {
+            java.srcDirs = [ported.map { it.dir("${set}/java") }, "src/${set}/java"]
+            resources.srcDirs = [ported.map { it.dir("${set}/resources") }, "src/${set}/resources"]
+        }
+    }
+    tasks.matching { it.name in ['compileJava', 'compileTestJava', 'processResources', 'processTestResources', 'sourcesJar'] }.configureEach { dependsOn portSources }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok:1.18.42'
+        annotationProcessor 'org.projectlombok:lombok:1.18.42'
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        if (remap) {
+            mappings loom.officialMojangMappings()
+            modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+            modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+            if (project.hasProperty('sodium_version')) modCompileOnly "maven.modrinth:sodium:${project.sodium_version}"
+            if (project.hasProperty('iris_version')) modCompileOnly "maven.modrinth:iris:${project.iris_version}"
+            if (project.hasProperty('immediatelyfast_version')) modCompileOnly "maven.modrinth:immediatelyfast:${project.immediatelyfast_version}"
+        } else {
+            implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+            implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+            if (project.hasProperty('sodium_version')) compileOnly "maven.modrinth:sodium:${project.sodium_version}"
+            if (project.hasProperty('iris_version')) compileOnly "maven.modrinth:iris:${project.iris_version}"
+            if (project.hasProperty('immediatelyfast_version')) compileOnly "maven.modrinth:immediatelyfast:${project.immediatelyfast_version}"
+        }
+        compileOnly 'de.maxhenkel.voicechat:voicechat-api:2.6.0'
+
+        testImplementation platform('org.junit:junit-bom:5.13.4')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        if (project.hasProperty('sodium_version')) testRuntimeOnly "maven.modrinth:sodium:${project.sodium_version}"
+    }
+
+    processResources {
+        filesMatching(['assets/**/INTER_LICENSE.txt', 'assets/**/Kenney-License.txt']) {
+            name = name.toLowerCase(java.util.Locale.ROOT)
+        }
+        def props = [version: project.version, minecraft: project.minecraft_range, java: ">=${project.java_release}"]
+        inputs.properties props
+        filesMatching('fabric.mod.json') {
+            expand 'version': props.version
+            filter { String line ->
+                line.replaceFirst(/("minecraft":\s*)"[^"]*"/, "\$1\"${props.minecraft}\"").replaceFirst(/("java":\s*)"[^"]*"/, "\$1\"${props.java}\"")
+            }
+        }
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.release = project.java_release as int
+        options.encoding = 'UTF-8'
+        options.compilerArgs += ['-Xmaxerrs', '5000']
+    }
+
+    java {
+        withSourcesJar()
+    }
+
+    // Source-reading tests (mixin lists, changelog, file contracts) run against this version's sources: build/testroot holds
+    // the ported tree under src/, the module's own src/ on top, and the main build's files the tests read
+    def testRoot = layout.buildDirectory.dir('testroot')
+    def testTree = tasks.register('testTree', Sync) {
+        dependsOn portSources
+        into testRoot
+        from(ported) { into 'src'; include 'main/**', 'test/**' }
+        from('src') { into 'src' }
+        from(vela) { include 'build.gradle', 'CHANGELOG.md', 'gradle.properties' }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+
+    test {
+        useJUnitPlatform()
+        dependsOn testTree
+        workingDir = testRoot.get().asFile
+    }
+
+    jar {
+        from(new File(vela, 'LICENSE')) {
+            rename { "${it}_${base.archivesName.get()}" }
+        }
+    }
+}

@@ -9,6 +9,7 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 ### New
 - Render optimization: a new set of render optimizations (fewer GPU waits and framebuffer switches, a vertex ring buffer, HUD at the monitor rate, LOD for distant items, mobs, players and particles, caches for text, signs and block entities, multithreaded particles and models) with its own settings screen, an in-game FPS panel (F6) and automatic tuning for your device. Open it from Settings > Interface > Render optimization. With VulkanMod the OpenGL-only parts stay off.
 - Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.
+- Minecraft 26.3 build: the same Vela for 26.3, built from this code by a port layer (versions/26.3). Shaders, the first-person hands, the sky and the HUD cache are adapted to the new renderer; a test checks every mixin target against the game before it starts.
 
 ### Fixed
 - Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.

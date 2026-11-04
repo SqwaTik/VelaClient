@@ -1,6 +1,4 @@
-# Vela's render optimizations (the velaopt stack) are written against the 26.x renderer (render states, GPU buffers, Vulkan)
-dev/sqwat/vela/opt/**
-vela-opt.mixins.json
+
 # 26.x GPU/Vulkan, HUD cache and input-reload optimizations: hooks that do not exist on 1.21.11
 dev/sqwat/vela/mixin/perf/VulkanAcquireRingMixin.java
 dev/sqwat/vela/mixin/perf/TerrainAllocationMapMixin.java
@@ -13,13 +11,7 @@ dev/sqwat/vela/mixin/perf/ReloadGameInputMixin.java
 dev/sqwat/vela/mixin/perf/ReloadGuiInputMixin.java
 dev/sqwat/vela/mixin/perf/ReloadKeyboardInputMixin.java
 dev/sqwat/vela/mixin/perf/ReloadMouseInputMixin.java
-# shader world/sky/hand passes and their hooks (the renderers are stubs in this module's src)
-dev/sqwat/vela/render/shader/HandFlameRenderer.java
-dev/sqwat/vela/render/effect/HitBubbleRenderer.java
-dev/sqwat/vela/mixin/world/AtmosphereFogMixin.java
-dev/sqwat/vela/mixin/world/ProceduralSkyMixin.java
-dev/sqwat/vela/mixin/world/HandShaderMixin.java
-dev/sqwat/vela/mixin/world/ShaderProjectionMixin.java
+# the hand projection accessor (hudProjection is 26.x) and the 26.x shader usage test
 dev/sqwat/vela/mixin/entity/HandProjectionAccessor.java
 dev/sqwat/vela/ShaderTextureUsageTest.java
 # Bobby's sky fog clamp hooks 26.x's camera render state
@@ -43,3 +35,22 @@ dev/sqwat/vela/RecentMixinTargetsTest.java
 dev/sqwat/vela/TerrainAllocationMapTest.java
 dev/sqwat/vela/TerrainAllocationTest.java
 dev/sqwat/vela/UiIntegrationTargetsTest.java
+# velaopt hooks into 26.x-only classes: the framebuffer cache, GlBuffer.Direct, the GUI item atlas, the feature renderers
+# (submits, FeatureFrameContext) and the item submit LOD; the rest of velaopt runs on 1.21.11 (HudGpu, ScaleGpu, AtlasTexture in src/)
+dev/sqwat/vela/opt/mixin/gl/FrameBufferCacheMixin.java
+dev/sqwat/vela/opt/mixin/gl/GlBufferCloseMixin.java
+dev/sqwat/vela/opt/mixin/hud/GuiItemAtlasAccessor.java
+dev/sqwat/vela/opt/mixin/hud/GuiItemAtlasMixin.java
+dev/sqwat/vela/opt/mixin/hud/ImmediatelyFastAnimatedAtlasMixin.java
+dev/sqwat/vela/opt/mixin/entity/ModelFeatureRendererMixin.java
+dev/sqwat/vela/opt/mixin/entity/ModelFeatureRendererInvoker.java
+dev/sqwat/vela/opt/mixin/entity/RenderTypeFeatureRendererInvoker.java
+dev/sqwat/vela/opt/mixin/entity/ItemFeatureRendererMixin.java
+dev/sqwat/vela/opt/entity/ParallelModelHook.java
+# the velaopt HUD cache wraps 26.x's Hud extraction; GameRendererHudMixin in src/ keeps the benchmark monitor overlay
+dev/sqwat/vela/opt/mixin/hud/GuiHudMixin.java
+dev/sqwat/vela/opt/mixin/hud/HudLiveMixin.java
+dev/sqwat/vela/opt/mixin/hud/HudInvoker.java
+dev/sqwat/vela/opt/mixin/hud/RenderTargetHudMixin.java
+dev/sqwat/vela/opt/mixin/hud/GuiRendererTargetMixin.java
+dev/sqwat/vela/opt/mixin/hud/DeltaTrackerHudMixin.java

@@ -746,13 +746,15 @@ def substitute(text, old, new):
 
 def read_layer(module):
     """One version layer's rules: port.txt (written by the report), then manual.txt (same format, hand-made), drop.txt."""
-    classes, members, gone, patches = [], defaultdict(list), [], defaultdict(list)
+    classes, members, gone, patches, unpatch = [], defaultdict(list), [], defaultdict(list), []
     lines = [l for p in (module / 'port.txt', module / 'manual.txt') if p.exists() for l in p.read_text('utf-8').splitlines()]
     for line in lines:
         if line.startswith('gone '):
             gone.append(line[5:].strip())
         elif line.startswith('patch '):  # patch <path|*> <old text> => <new text>: replace every occurrence after the renames
             path, rest = line[6:].split(' ', 1); o, n = rest.split(' => ', 1); patches[path].append((o, n))
+        elif line.startswith('unpatch '):  # unpatch <path|*> <old text>: a lower layer's patch with this old text is not applied
+            path, o = line[8:].split(' ', 1); unpatch.append((path, o))
         elif line.startswith('patchre '):  # patchre <path|*> <regex> => <replacement>: same, as a regular expression
             path, rest = line[8:].split(' ', 1); o, n = rest.split(' => ', 1); patches[path].append((re.compile(o), n))
         elif line.startswith('class '):
@@ -762,7 +764,7 @@ def read_layer(module):
     drops = module / 'drop.txt'
     globs = [l.strip() for l in drops.read_text('utf-8').splitlines() if l.strip() and not l.startswith('#')] if drops.exists() else []
     everywhere = patches.pop('*', [])
-    return dict(module=module, classes=classes, members=members, gone=gone, patches=patches, globs=globs,
+    return dict(module=module, classes=classes, members=members, gone=gone, patches=patches, globs=globs, unpatch=unpatch,
                 everywhere=everywhere, hits=[0] * len(everywhere))
 
 def layers_of(module):
@@ -786,6 +788,22 @@ def rewrite_main(argv):
     a = ap.parse_args(argv)
     module, into = Path(a.module).resolve(), Path(a.into).resolve()
     layers = [read_layer(m) for m in layers_of(module)]
+    for i, layer in enumerate(layers):  # an upper layer's `unpatch` lines take patches out of the layers below it
+        for path, o in layer['unpatch']:
+            hit = 0
+            for low in layers[:i]:
+                if path == '*':
+                    keep = [(k, (po, pn)) for k, (po, pn) in enumerate(low['everywhere']) if getattr(po, 'pattern', po) != o]
+                    hit += len(low['everywhere']) - len(keep)
+                    low['everywhere'] = [x for _, x in keep]; low['hits'] = [0] * len(keep)
+                else:
+                    before = low['patches'].get(path, [])
+                    after = [(po, pn) for po, pn in before if getattr(po, 'pattern', po) != o]
+                    hit += len(before) - len(after)
+                    if path in low['patches']:
+                        if after: low['patches'][path] = after
+                        else: del low['patches'][path]
+            if not hit: sys.exit(f'{layer["module"].name}: unpatch for {path} matches no lower patch: {o}')
     written, changed = set(), 0
     def put(to, data):
         nonlocal changed
@@ -819,12 +837,17 @@ def rewrite_main(argv):
                     data = text.encode('utf-8')
                 put(into / sset / kind / rel, data)
     # root mixin configs: keep the mixins whose class this module still compiles
+    props = module / 'gradle.properties'
+    release = re.search(r'^java_release=(\d+)', props.read_text('utf-8'), re.M) if props.is_file() else None
     for sset in ('main', 'gametest'):
         res = into / sset / 'resources'
         for cfg in res.glob('*.json') if res.is_dir() else ():
             if not cfg.name.endswith('mixins.json'): continue
             if cfg not in written: continue  # left over from an earlier run and dropped since
             d = json.loads(cfg.read_text('utf-8'))
+            # a JAVA_25 config fails to load on a version that runs on Java 21 (NeoForge starts the game on java_release)
+            level = re.fullmatch(r'JAVA_(\d+)', d.get('compatibilityLevel', ''))
+            if release and level and int(level[1]) > int(release[1]): d['compatibilityLevel'] = f'JAVA_{release[1]}'
             pkg = d.get('package', '').replace('.', '/')
             # written this run, not merely left over from an earlier one (a file dropped since is deleted only at the end)
             has = lambda e: (into / sset / 'java' / f'{pkg}/{e.replace(".", "/")}.java') in written or (module / 'src' / sset / 'java' / f'{pkg}/{e.replace(".", "/")}.java').exists()

@@ -1,0 +1,42 @@
+# NeoForge 1.21.11: the shared neoforge layer (written in 26.2 names) on the 1.21.11 layer (base.txt).
+# The neoforge layer's own sources get this layer's rules only, so the 26.2 -> 1.21.11 class renames they need are here.
+class net.minecraft.client.gui.GuiGraphicsExtractor=net.minecraft.client.gui.GuiGraphics
+
+# The 1.21.11 layer renames these Fabric API classes to their 1.21.11 names; the shim keeps the 26.x ones
+patch * fabric.api.client.command.v2.ClientCommandManager => fabric.api.client.command.v2.ClientCommands
+patch * fabric.api.client.keybinding.v1.KeyBindingHelper => fabric.api.client.keymapping.v1.KeyMappingHelper
+patch * KeyBindingHelper.registerKeyBinding( => KeyMappingHelper.registerKeyMapping(
+patch * PayloadTypeRegistry.playS2C() => PayloadTypeRegistry.clientboundPlay()
+# the 1.21.11 layer's toast manager patch only hits Mod Menu, which NeoForge leaves out
+unpatch * .gui.toastManager()
+
+# The neoforge layer's patches for 26.2 text; their 1.21.11 forms follow
+unpatch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="extractHotbarAndDecorations",at=@At("HEAD"))
+unpatch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="extractHotbarAndDecorations",at=@At("RETURN"))
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="renderHotbarAndDecorations",at=@At("HEAD")) => /* NeoForge: NeoHud moves the hotbar group */
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="renderHotbarAndDecorations",at=@At("RETURN")) => /* NeoForge: NeoHud moves the hotbar group */
+# the 3-argument tryExtractRenderState only delegates to its overload with a Frustum, which looks the renderer up
+unpatch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java method="tryExtractRenderState"
+patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java method="tryExtractRenderState" => method="tryExtractRenderState(Lnet/minecraft/world/level/block/entity/BlockEntity;FLnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;Lnet/minecraft/client/renderer/culling/Frustum;)Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;"
+# the title screen's Mods button (ModListScreen is in client.gui and has a constructor)
+unpatch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this)
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this) => new net.neoforged.neoforge.client.gui.ModListScreen(this)
+# GameRenderer draws the screen through ClientHooks.drawScreen (GUI layers and ScreenEvent.Render)
+patch dev/sqwat/vela/mixin/screen/MenuTransitionRenderMixin.java Lnet/minecraft/client/gui/screens/Screen;renderWithTooltipAndSubtitles(Lnet/minecraft/client/gui/GuiGraphics;IIF)V => Lnet/neoforged/neoforge/client/ClientHooks;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;IIF)V
+patch dev/sqwat/vela/mixin/screen/MenuTransitionRenderMixin.java screen.renderWithTooltipAndSubtitles(g, => net.neoforged.neoforge.client.ClientHooks.drawScreen(screen,g,
+
+# Fabric API 1.21.11's screen callbacks are render ones (26.x: extract), and a few names differ
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenEvents.java beforeExtract(Screen screen) => beforeRender(Screen screen)
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenEvents.java afterExtract(Screen screen) => afterRender(Screen screen)
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/Screens.java getWidgets(Screen screen) => getButtons(Screen screen)
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/command/v2/FabricClientCommandSource.java ClientLevel getLevel(); => ClientLevel getWorld();
+patch dev/sqwat/vela/neoforge/ClientCommandBridge.java case "getLevel" => case "getWorld"
+# 1.21.11's chat is on Gui (26.x: Gui.hud)
+patch dev/sqwat/vela/neoforge/ClientCommandBridge.java client.gui.hud.getChat() => client.gui.getChat()
+patch dev/sqwat/vela/neoforge/ClientCommandBridge.java .addClientSystemMessage( => .addMessage(
+# the 1.21.11 layer's compat/CharEvents listens to Fabric's ScreenEvents.BEFORE_INIT; NeoForge's ScreenEvent.Init.Pre runs it
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenEvents.java public static final Event<AfterInit> AFTER_INIT = new Event<>(); => public static final Event<BeforeInit> BEFORE_INIT = new Event<>(); public static final Event<AfterInit> AFTER_INIT = new Event<>();
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenEvents.java public interface AfterInit { => public interface BeforeInit { void beforeInit(Minecraft client, Screen screen, int width, int height); } public interface AfterInit {
+patch dev/sqwat/vela/neoforge/NeoEvents.java game.addListener((ScreenEvent.Init.Pre e) -> ScreenHooks.reset(e.getScreen())); => game.addListener((ScreenEvent.Init.Pre e) -> { var screen = e.getScreen(); ScreenHooks.reset(screen); for (var l : ScreenEvents.BEFORE_INIT.listeners()) l.beforeInit(Minecraft.getInstance(), screen, screen.width, screen.height); });
+# the main pass lambda in Mojang names (the 1.21.11 layer names it by its intermediary name)
+patch dev/sqwat/vela/opt/mixin/entity/LevelRendererOutlineMixin.java method = "method_62214" => method = "lambda$addMainPass$1"

@@ -61,8 +61,19 @@ subprojects {
         compileOnly 'org.projectlombok:lombok:1.18.42'
         annotationProcessor 'org.projectlombok:lombok:1.18.42'
         if (neo) {
-            // Vela's Fabric-built optional integrations: only their API classes are compiled against
-            if (project.hasProperty('sodium_version')) compileOnly "maven.modrinth:sodium:${project.sodium_version}"
+            // Vela's optional integrations: only their API classes are compiled against
+            if (project.hasProperty('sodium_version')) {
+                // Sodium's NeoForge jar carries the mod itself as a nested jar (META-INF/jarjar/*-mod.jar); the build compiles against that one
+                def sodium = configurations.detachedConfiguration(dependencies.create("maven.modrinth:sodium:${project.sodium_version}"))
+                sodium.transitive = false
+                def nested = tasks.register('nestedSodium', Sync) {
+                    from({ sodium.collect { zipTree(it).matching { include 'META-INF/jarjar/*-mod.jar' } } }) { eachFile { path = name } }
+                    includeEmptyDirs = false
+                    into layout.buildDirectory.dir('nested')
+                }
+                compileOnly files(nested.map { fileTree(it.destinationDir).include('*.jar') }).builtBy(nested)
+                compileOnly "maven.modrinth:sodium:${project.sodium_version}"
+            }
             if (project.hasProperty('iris_version')) compileOnly "maven.modrinth:iris:${project.iris_version}"
             if (project.hasProperty('immediatelyfast_version')) compileOnly "maven.modrinth:immediatelyfast:${project.immediatelyfast_version}"
         } else minecraft "com.mojang:minecraft:${project.minecraft_version}"

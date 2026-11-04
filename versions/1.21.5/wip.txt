@@ -1,0 +1,8 @@
+1.21.5 is being ported: it builds on the 1.21.11 layer (base.txt) and does not compile yet, so settings.gradle leaves it
+out unless -Pwip is given. port.txt is the 1.21.11 -> 1.21.5 report's renames:
+  python -I tools/port_mappings.py 1.21.5 --from 1.21.11 --classes versions/1.21.11/build/classes/java/main \
+    --sources versions/1.21.11/build/ported/main/java --sources versions/1.21.11/src/main/java
+The report (build/port/1.21.5/report.md) lists 268 items by hand. The big ones: 1.21.5 has no GUI render state
+(GuiRenderState, GuiElementRenderState, TextureSetup, GuiRenderer: the GUI draws straight away), no submit node
+collector (SubmitNodeCollector, OrderedSubmitNodeCollector), no input event records (MouseButtonEvent, KeyEvent,
+CharacterEvent), no KeyMapping.Category, no debug screen entries, no GpuTextureView / GpuSampler / GpuBufferSlice.

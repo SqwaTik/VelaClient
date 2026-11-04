@@ -136,6 +136,8 @@ patch dev/sqwat/vela/opt/hud/HudGpu.java main.useDepth => main.hasDepth()
 patchre dev/sqwat/vela/Foo.java \.bar\((\w+)\) => .baz(\1)
 # `*` instead of a path: every compiled file; fails only when no file matches
 patch * InputConstants.Type.KEYSYM => InputConstants.Type.KEYBOARD
+# a lower layer's patch with this old text is not applied (`*` for its `patch *` lines); fails when none matches
+unpatch dev/sqwat/vela/Foo.java .bar(x)
 ```
 
 An empty replacement (`=> ` at the end of the line) deletes the text. Class renames also cover descriptors in mixin strings (`(ILa/b/Old;)V`), but method names in `method = "..."` change only through `member` or `patch` lines. Tests that check vanilla structure (the `*TargetsTest` and `*ContractTest` classes) catch most mixin targets that are gone, so update those tests together with the mixin.
@@ -169,25 +171,39 @@ cd versions
 ```
 
 - `manual.txt` replaces the unnamed variables (`_`) that Java 21 lacks, renames the 26.x GUI calls (`text`/`centeredText`/`item` to `drawString`/`drawCenteredString`/`renderItem`, `extract*` render methods to `render*`) and fixes mixin handlers whose target signatures differ (`patchre` lines match `method\s*=\s*"..."`). Per-file `patch` lines run before `patch *` lines, so they match the root text.
-- `drop.txt` leaves out the velaopt stack (`dev/sqwat/vela/opt/**`, `vela-opt.mixins.json`), the 26.x GPU, Vulkan, HUD cache and input-reload mixins, `BufferBuilderQuadMixin` (FastCubes falls back to the vanilla vertex path), the shader sky, fog and hand passes, Bobby's sky fog hooks, `LegacyHeadModelMixin`, and the tests that pin 26.x bytecode names (`MixinTargetAuditTest` checks every target against 1.21.11 instead).
-- The module's `src/` replaces what has a different shape on 1.21.11: the camera, FOV, zoom and aspect ratio mixins (`Camera.setup`, `GameRenderer.getFov`), the menu transition (`Minecraft.setScreen`, `Screen.renderWithTooltipAndSubtitles`), the block outline, the `compat/` accessors, stub shader renderers and the HUD cache, and Mod Menu's title and pause screen mixins (1.21.11's pause menu has no icon row, so both button styles add the full-width button).
+- `drop.txt` leaves out the 26.x GPU, Vulkan, HUD cache and input-reload mixins, the velaopt mixins written for the 26.x renderer (frame buffer cache, GUI item atlas, parallel model and HUD cache hooks), `BufferBuilderQuadMixin` (FastCubes falls back to the vanilla vertex path), Bobby's sky fog hooks, `LegacyHeadModelMixin`, and the tests that pin 26.x bytecode names (`MixinTargetAuditTest` checks every target against 1.21.11 instead). The rest of velaopt is built; `GameRendererTimerMixin` marks the lightmap at `LightTexture.updateLightTexture`.
+- The module's `src/` replaces what has a different shape on 1.21.11: the camera, FOV, zoom and aspect ratio mixins (`Camera.setup`, `GameRenderer.getFov`), the menu transition (`Minecraft.setScreen`, `Screen.renderWithTooltipAndSubtitles`), the block outline, the `compat/` accessors, the HUD cache, and Mod Menu's title and pause screen mixins (1.21.11's pause menu has no icon row, so both button styles add the full-width button).
+- The shader sky, fog, hand and hit bubble passes are 1.21.11 versions in `src/.../render/shader` and `src/.../mixin/world`: pipelines come from `RenderPipeline.builder` (`ShaderPipelines.fullscreen`; no bind group layouts or color target states), the textures are `RGBA8` (1.21.11 has no float formats), samplers come from `RenderSystem.getSamplerCache()`, and GL depth runs from -1 to 1. `ShaderCamera` captures the camera at `LevelRenderer.renderLevel`. The fog pass leaves out the wet surface effect. `DistanceFogMixin` reads the `FogData` local before `FogRenderer.updateBuffer` (1.21.11's `setupFog` returns a `Vector4f`).
 - `tools/port_mappings.py` keeps only the mixin configs that are still written, so a dropped config is not listed in `fabric.mod.json`.
+
+### 1.21.5 (in progress)
+
+`versions/1.21.5` builds on the 1.21.11 layer, so its `port.txt` is the 1.21.11 -> 1.21.5 report:
+
+```bash
+python -I tools/port_mappings.py 1.21.5 --from 1.21.11 --classes versions/1.21.11/build/classes/java/main --sources versions/1.21.11/build/ported/main/java --sources versions/1.21.11/src/main/java
+```
+
+It has a `wip.txt`, so Gradle builds it only with `-Pwip`. The report lists what 1.21.5 lacks: the GUI render state (`GuiRenderState`, `TextureSetup`, `GuiRenderer`; the GUI draws straight away), the submit node collector, the input event records (`MouseButtonEvent`, `KeyEvent`, `CharacterEvent`), `KeyMapping.Category`, the debug screen entries and the GPU texture views, samplers and buffer slices.
 
 ### Layers (`base.txt`)
 
 A module with a `base.txt` builds on the layers it names, one per line, lowest first (e.g. `26.3`, then `neoforge`). A layer is a folder like a module; it needs no `gradle.properties` (`versions/neoforge` has none, so Gradle does not build it on its own). The base layers' `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.
 
-### NeoForge (`versions/26.2-neoforge`, `versions/26.3-neoforge`)
+### NeoForge (`versions/26.2-neoforge`, `versions/26.3-neoforge`, `versions/1.21.11-neoforge`)
 
 `loom=neoforge` in `gradle.properties` builds the module with ModDevGradle (`moddev_version` in `versions/gradle.properties`) against NeoForge `neoforge_version`. The NeoForge code is the shared layer `versions/neoforge`, written against Vela's own game version (26.2): `26.2-neoforge` builds on it alone, and `26.3-neoforge` builds on `26.3`, then on it. What differs per version sits in the module:
 
 - `26.2-neoforge/manual.txt`: on NeoForge 26.2 Bobby's sky fog hook targets the `addSkyPass` overload with the model-view matrix.
 - `26.3-neoforge/.../accesstransformer.cfg`: 26.3 moved `RenderPipeline` to `com.mojang.renderpearl`.
+- `1.21.11-neoforge` builds on `1.21.11`, then on the shared layer. The shared layer's own sources get only the module's rules, so its `manual.txt` renames `GuiGraphicsExtractor` to `GuiGraphics` and gives the screen shim 1.21.11's `beforeRender`/`afterRender`. `unpatch` lines take out the shared layer's 26.2-text patches, and the 1.21.11 forms follow. Its `accesstransformer.cfg` has the 1.21.11 names. NeoForm's tools need a Java 21 toolchain: `-Porg.gradle.java.installations.paths=<jdk 21>` (with `_JAVA_OPTIONS` set, Gradle cannot probe a JDK). Sodium, Iris and ImmediatelyFast are their `-neoforge` builds (the Fabric jars of an obfuscated version are in intermediary names). Sodium's NeoForge jar carries the mod as a nested jar, and `nestedSodium` unpacks it for the compiler. The NeoForge main pass lambda is `lambda$addMainPass$1` (Fabric: `method_62214`).
+- The rewrite caps each mixin config's `compatibilityLevel` at the module's `java_release`. NeoForge runs the game on that Java, and a `JAVA_25` config stops FML without a message.
 
 ```bash
 cd versions
 ./gradlew :26.2-neoforge:build :26.3-neoforge:build
 ./gradlew :26.3-neoforge:runClient
+./gradlew :1.21.11-neoforge:build -Porg.gradle.java.installations.paths=<jdk 21>
 ```
 
 Jars are named `vela-client-<version>+<game>-<loader>.jar`.

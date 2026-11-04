@@ -166,3 +166,23 @@ patch dev/sqwat/vela/module/visual/BrewViewer.java if(s==null)return EMPTY; => i
 # 1.21.11 tryExtractRenderState has no `global` flag (26.x passes it for block entities drawn regardless of the frustum)
 patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java ,ModelFeatureRenderer.CrumblingOverlay breaking,boolean global){ => ,ModelFeatureRenderer.CrumblingOverlay breaking){
 patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java AutomaticVisibility.outsideView(entity,global) => AutomaticVisibility.outsideView(entity,false)
+# velaopt panels: 1.21.11 GuiGraphics names; item components are bound from the item's constructor
+patch dev/sqwat/vela/opt/PanelScreen.java graphics.text( => graphics.drawString(
+patch dev/sqwat/vela/opt/PanelScreen.java graphics.item( => graphics.renderItem(
+patch dev/sqwat/vela/opt/PanelScreen.java !item.builtInRegistryHolder().areComponentsBound() => false
+# velaopt mixins: 1.21.11 targets
+patchre dev/sqwat/vela/opt/mixin/block/BlockEntityRenderStateMixin.java L[\w/]+;getLightCoords\(L[\w/]+; => Lnet/minecraft/client/renderer/LevelRenderer;getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;
+patchre dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java Lnet/minecraft/world/phys/Vec3;Z\)V => Lnet/minecraft/client/Camera;Z)V
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java Vec3 cameraPos => net.minecraft.client.Camera cameraPos
+patch dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderTexBufferMixin.java Lorg/lwjgl/opengl/GL33C;glBindTexture(II)V => Lorg/lwjgl/opengl/GL11C;glBindTexture(II)V
+patch dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderTexBufferMixin.java Lorg/lwjgl/opengl/GL33C;glTexBuffer(III)V => Lorg/lwjgl/opengl/GL31;glTexBuffer(III)V
+patch dev/sqwat/vela/opt/mixin/block/PistonHeadRendererMixin.java Lnet/minecraft/client/multiplayer/ClientLevel;getBiome( => Lnet/minecraft/world/level/Level;getBiome(
+patch dev/sqwat/vela/opt/mixin/block/PistonHeadRendererMixin.java (ClientLevel level, => (net.minecraft.world.level.Level level,
+patch dev/sqwat/vela/opt/mixin/entity/ItemLayerAccessor.java @Accessor("itemTransform") => @Accessor("transform")
+patchre dev/sqwat/vela/opt/mixin/entity/ItemLayerAccessor.java \s*@Accessor\("localTransform"\)\s*Matrix4f velaopt\$localTransform\(\); => 
+patch dev/sqwat/vela/opt/mixin/entity/ItemStackRenderStateMixin.java (layer.velaopt$localTransform().properties() & Matrix4fc.PROPERTY_IDENTITY) == 0 => false
+patch dev/sqwat/vela/opt/mixin/gl/MinecraftFrameMixin.java method = "renderFrame" => method = "runTick"
+patch dev/sqwat/vela/opt/mixin/gl/MinecraftTimerMixin.java method = "renderFrame" => method = "runTick"
+patch dev/sqwat/vela/opt/mixin/particle/ParticleMixin.java method = "getLightCoords" => method = "getLightColor"
+# 1.21.11: the lightmap is updated by LightTexture at the start of renderLevel
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererTimerMixin.java @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Lightmap;render")) => @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LightTexture;updateLightTexture"))

@@ -68,7 +68,8 @@ subprojects {
         } else minecraft "com.mojang:minecraft:${project.minecraft_version}"
         if (neo) {
         } else if (remap) {
-            mappings loom.officialMojangMappings()
+            // (`loom` alone would be the gradle.properties value)
+            mappings project.extensions.getByName('loom').officialMojangMappings()
             modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
             modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
             if (project.hasProperty('sodium_version')) modCompileOnly "maven.modrinth:sodium:${project.sodium_version}"

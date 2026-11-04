@@ -10,6 +10,8 @@ pluginManagement {
 }
 
 rootProject.name = 'vela-versions'
+// A folder with a wip.txt is a port still being written (it does not compile yet): it is left out unless -Pwip is given.
+def wip = providers.gradleProperty('wip').isPresent()
 file('.').eachDir { dir ->
-    if (new File(dir, 'gradle.properties').exists()) include dir.name
+    if (new File(dir, 'gradle.properties').exists() && (wip || !new File(dir, 'wip.txt').exists())) include dir.name
 }

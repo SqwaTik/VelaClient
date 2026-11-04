@@ -157,6 +157,23 @@ Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into 
 - 26.3 compiles shaders to SPIR-V. `compat/SpirvGlsl` (applied by `SpirvGlslMixin` to `velaclient:` and `velaopt:` shaders, files and the custom sky) adds `layout(location = N)` to every stage input and output and turns `gl_VertexID` into `gl_VertexIndex`. Varyings take their location from their name (`texCoord` is 0, as in vanilla `screenquad.vsh`); a new varying name goes into `SpirvGlsl.VARYINGS`.
 - `drop.txt` drops `LevelRendererOutlineMixin`: 26.3 already skips the outline pass when nothing glows.
 
+### 1.21.11 (work in progress)
+
+`versions/1.21.11` holds `wip.txt`, so the build leaves it out unless `-Pwip` is given:
+
+```bash
+cd versions
+./gradlew -Pwip :1.21.11:compileJava   # JDK 25 compiles it with --release 21
+```
+
+It builds with `fabric-loom-remap` and Mojang's mappings, and `manual.txt` already replaces the unnamed variables (`_`) that Java 21 lacks. The first full compile gives about 1080 errors. Most come from APIs that 26.x added:
+
+- the GUI: `minecraft.gui.screen()`/`setScreen` (1.21.11: `minecraft.screen`/`minecraft.setScreen`), the `Hud` class, `GuiGraphics` `text`/`centeredText`/`item` (1.21.11: `drawString`/`drawCenteredString`/`renderItem`) and the `extractRenderState`/`extractBackground` screen methods (1.21.11: `render`/`renderBackground`);
+- rendering: render states (`LightmapRenderState`, `gameRenderState()`), `ModelFeatureRenderer$Submit`, `BlendFactor`, `GpuFormat`, `ColorTargetState`, bind groups, the Vulkan classes, `GuiItemAtlas`, `Projection`, `FeatureFrameContext`;
+- the friends service (`FriendsService`, `RemoteFriendListUpdateHandler`).
+
+Files with the most errors: `opt/bench/Bench`, `opt/gl/OcclusionCull`, Mod Menu's `ModsScreen`, `opt/cpu/CorePin`, `opt/OptScreen`, the shader renderers and the HUD caches. Next steps: `patch *` lines for the GUI calls, `compat/` classes for the rest, and `drop.txt` for the GPU optimizations that need 26.x (frame buffer cache, Vulkan rings, GPU scale, HUD GPU cache).
+
 ### Layers (`base.txt`)
 
 A module with a `base.txt` builds on the layers it names, one per line, lowest first (e.g. `26.3`, then `neoforge`). A layer is a folder like a module; it needs no `gradle.properties` (`versions/neoforge` has none, so Gradle does not build it on its own). The base layers' `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.

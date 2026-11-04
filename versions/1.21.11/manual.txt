@@ -1,0 +1,3 @@
+# Java 21: no unnamed variables
+patch com/terraformersmc/modmenu/mixin/MixinPauseScreen.java _ -> => button ->
+patch com/terraformersmc/modmenu/mixin/MixinTitleScreen.java _ -> => button ->

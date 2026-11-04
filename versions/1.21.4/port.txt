@@ -1,0 +1,2 @@
+# Vela 1.21.5 -> 1.21.4, written by tools/port_mappings.py 1.21.4. Do not edit: fix tools/port/1.21.4.renames and run it again.
+member dev/sqwat/vela/module/utility/ClickPearl.java methods setSelectedSlot=setSelectedHotbarSlot

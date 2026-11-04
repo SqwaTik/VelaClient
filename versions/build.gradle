@@ -163,7 +163,7 @@ subprojects {
         into testRoot
         from(ported) { into 'src'; include 'main/**', 'test/**' }
         from('src') { into 'src' }
-        from(vela) { include 'build.gradle', 'CHANGELOG.md', 'gradle.properties' }
+        from(vela) { include 'build.gradle', 'CHANGELOG.md', 'gradle.properties', 'server-plugin/src/main/resources/config.yml' }
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 

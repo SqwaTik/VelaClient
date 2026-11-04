@@ -98,7 +98,10 @@ patch dev/sqwat/vela/module/utility/ChatThreads.java register((s,event)->!click(
 patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java register((s,event)->click(event.x(),event.y(),event.button(),event.modifiers())) => register((s,x,y,b)->click(x,y,b,dev.sqwat.vela.compat.input.Modifiers.current()))
 patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java register((s,event)->key(event)) => register((s,k,sc,m)->key(new KeyEvent(k,sc,m)))
 patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java key(new KeyEvent(k,sc,m)) => key(new dev.sqwat.vela.compat.input.KeyEvent(k,sc,m))
-patch dev/sqwat/vela/render/perf/FastCubes.java vertex.worldX(), vertex.worldY(), vertex.worldZ() => vertex.pos().x()/16f, vertex.pos().y()/16f, vertex.pos().z()/16f
+patch dev/sqwat/vela/render/perf/CubeLayout.java vertex.worldX(), y = vertex.worldY(), z = vertex.worldZ() => vertex.pos().x() / 16f, y = vertex.pos().y() / 16f, z = vertex.pos().z() / 16f
+patch dev/sqwat/vela/render/perf/CubeLayoutTest.java vertex.worldX() => vertex.pos().x() / 16f
+patch dev/sqwat/vela/render/perf/CubeLayoutTest.java vertex.worldY() => vertex.pos().y() / 16f
+patch dev/sqwat/vela/render/perf/CubeLayoutTest.java vertex.worldZ() => vertex.pos().z() / 16f
 patchre * createTexture\("([^"]*)",[^,]*,source\.getFormat\(\),source\.getWidth\(0\),source\.getHeight\(0\),1,1\);\s*textureView=RenderSystem\.getDevice\(\)\.createTextureView\(texture\); => createTexture("\1",source.getFormat(),source.getWidth(0),source.getHeight(0),1);
 patch dev/sqwat/vela/module/visual/Hitboxes.java mc.debugEntries.isCurrentlyEnabled(net.minecraft.client.gui.components.debug.DebugScreenEntries.ENTITY_HITBOXES) => mc.getEntityRenderDispatcher().shouldRenderHitBoxes()
 patch dev/sqwat/vela/module/visual/SwingAnimation.java player.getMainHandItem().getSwingAnimation().duration() => 6

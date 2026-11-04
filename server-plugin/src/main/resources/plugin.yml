@@ -1,0 +1,19 @@
+name: VelaRules
+version: '${version}'
+main: dev.sqwat.vela.rules.VelaRules
+api-version: '1.20'
+description: Switches Vela client functions off for the players on this server.
+author: sqwat
+website: https://github.com/SqwaTik/VelaClient
+commands:
+  velarules:
+    description: Reloads config.yml and sends the new list to the players online.
+    usage: /velarules reload
+    permission: vela.rules.admin
+permissions:
+  vela.rules.admin:
+    description: /velarules reload
+    default: op
+  vela.rules.bypass:
+    description: Vela functions are not switched off for this player.
+    default: false

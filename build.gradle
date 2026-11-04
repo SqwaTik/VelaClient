@@ -83,11 +83,18 @@ fabricApi {
 tasks.matching { it.name == 'runClientGameTest' }.configureEach {
     jvmArgs "-Dvela.fpsBaseline=${file('perf/fps-baseline.properties').absolutePath}"
     if (project.hasProperty('rebaseline')) jvmArgs '-Dvela.fpsRebaseline=true'
+    // Played full screen, so measured at the monitor's size (the gametest default is 854x480). -PbenchSize=WxH overrides.
+    def benchSize = (project.findProperty('benchSize') ?: '1920x1080').toString().split('x')
+    args '--width', benchSize[0], '--height', benchSize[1]
     // The module set of a real profile, so the benchmark measures Vela as it is played, not with everything off.
     jvmArgs "-Dvela.perfModules=${file('perf/user-modules.txt').absolutePath}"
     // ./gradlew verifyClient -Pjfr records a profile of the whole run to build/gametest.jfr.
     if (project.hasProperty('visualChecks')) jvmArgs '-Dvela.visualChecks=true'
     if (project.hasProperty('perfBreakdown')) jvmArgs '-Dvela.perfBreakdown=true'
+    // -PcrowdScene: 48 armoured players and a wall of map art, each optimization measured on and off there.
+    if (project.hasProperty('crowdScene')) jvmArgs '-Dvela.crowdScene=true'
+    // -PfarScene: a generated world to the horizon at render distance 24, for distant-chunk work.
+    if (project.hasProperty('farScene')) jvmArgs '-Dvela.farScene=true'
     // ./gradlew verifyClient -Pvulkan runs the client on the Vulkan backend instead of OpenGL.
     if (project.hasProperty('vulkan')) args '--graphicsBackend', 'vulkan'
     if (project.hasProperty('jfr')) jvmArgs "-XX:StartFlightRecording=filename=${file('build/gametest.jfr').absolutePath},settings=profile"

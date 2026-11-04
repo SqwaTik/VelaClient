@@ -16,6 +16,30 @@
               "ru": "Оптимизация рендера: новый набор оптимизаций (меньше ожиданий видеокарты и переключений буферов кадра, кольцевой буфер вершин, HUD с частотой монитора, LOD для дальних предметов, мобов, игроков и частиц, кэши текста, табличек и блок-сущностей, многопоточные частицы и модели) со своим окном настроек, игровой панелью FPS (F6) и автоподбором под устройство. Открывается в Настройки > Интерфейс > Оптимизация рендера. С VulkanMod части только для OpenGL остаются выключены."
             },
             {
+              "en": "Fast model building: mob and player models are written into the vertex buffer a whole cube at a time (each corner transformed once), and items and armour a whole quad at a time, instead of vertex by vertex. This takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.",
+              "ru": "Быстрая сборка моделей: модели мобов и игроков записываются в буфер вершин сразу целым кубом (каждый угол считается один раз), а предметы и броня целым квадом, а не по одной вершине. На Vulkan это заметно разгружает поток рендера. Выключается в настройках оптимизации."
+            },
+            {
+              "en": "Map atlas: framed maps are drawn from shared 2048x2048 textures, so a wall of map art is a few draw calls instead of one per map. A map is no longer uploaded again when a server resends the same picture or only its markers change. It can be turned off in the optimization settings.",
+              "ru": "Атлас карт: карты в рамках рисуются из общих текстур 2048x2048, поэтому стена из map-art занимает несколько вызовов отрисовки, а не по одному на карту. Карта больше не перезаливается, когда сервер присылает ту же картинку или меняются только её метки. Выключается в настройках оптимизации."
+            },
+            {
+              "en": "Crowds of players: the skin lookup by name no longer runs a regular expression for every player on every frame, and the letters of name tags, signs and holograms are written to the buffer a whole letter at a time (part of Fast model building).",
+              "ru": "Толпы игроков: поиск скина по нику больше не прогоняет регулярное выражение для каждого игрока на каждом кадре, а буквы ников, табличек и голограмм пишутся в буфер целой буквой за раз (часть «Быстрой сборки моделей»)."
+            },
+            {
+              "en": "Distant chunk simplification: past 128 blocks leaves are drawn solid, as with Fast graphics, with the faces between them hidden, and grass, flowers and ferns are not built into the mesh. Crops, lily pads and anything that glows stay. When you walk closer, a chunk is rebuilt in full detail. It can be turned off in the optimization settings.",
+              "ru": "Упрощение дальних чанков: дальше 128 блоков листва рисуется сплошной, как в быстрой графике, без граней между соседними листьями, а трава, цветы и папоротники не попадают в меш. Посевы, кувшинки и всё, что светится, остаются. Когда подходишь ближе, чанк перестраивается с полной детализацией. Выключается в настройках оптимизации."
+            },
+            {
+              "en": "Server opt-out without a plugin: a server can switch Vela functions off with a plain message, for example /tellraw @a \"velaclient:disable freelook hitboxes\" or a join message. Vela hides the line from chat; only messages from the server itself count, so another player cannot switch your functions off. For servers that prefer a config there is the Vela Rules plugin for Paper and Spigot (server-plugin): every Vela function is listed in its config.yml, true switches it off.",
+              "ru": "Отключение функций без плагина: сервер может выключить функции Vela обычным сообщением, например /tellraw @a \"velaclient:disable freelook hitboxes\" или сообщением при входе. Vela прячет эту строку из чата; принимаются только сообщения самого сервера, поэтому другой игрок не сможет отключить тебе функции. Для серверов, которым удобнее конфиг, есть плагин Vela Rules для Paper и Spigot (server-plugin): в его config.yml перечислены все функции Vela, true отключает функцию."
+            },
+            {
+              "en": "For developers: tools/port_mappings.py finds every Minecraft class, field and method Vela uses, renames what moved in another game version (26.3, 1.21.11 and older, with Mojang's official mappings) and lists what has to be ported by hand. See docs/PORTING.md. docs/HANDOFF.md explains how to build, test, install and release Vela, the house rules, what is done and what is left. The README on GitHub is rewritten: installation, every feature, compatibility and the velaclient:disable packet for server owners.",
+              "ru": "Для разработчиков: tools/port_mappings.py находит все классы, поля и методы Minecraft, которые использует Vela, переименовывает то, что переехало в другой версии игры (26.3, 1.21.11 и старше, по официальным маппингам Mojang), и перечисляет то, что нужно портировать вручную. Подробности в docs/PORTING.md. В docs/HANDOFF.md описано, как собирать, проверять, ставить и выпускать Vela, правила работы, что сделано и что осталось. README на GitHub переписан: установка, все функции, совместимость и пакет velaclient:disable для владельцев серверов."
+            },
+            {
               "en": "Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.",
               "ru": "Быстрая сборка моделей: модели мобов и игроков записываются в буфер вершин сразу целым кубом, а не по одной вершине. На Vulkan это заметно разгружает поток рендера. Выключается в настройках оптимизации."
             },
@@ -46,6 +70,10 @@
             {
               "en": "Vela Launcher installs every build: when you create an instance you pick Fabric or NeoForge and a Minecraft version (26.3, 26.2, 1.21.11, 1.21.5, 1.21.4). The launcher installs the right loader and Java, puts the matching Vela build in, and every screen (home, mods, settings) shows that instance's version and loader. Modrinth search and modpack import and export follow the instance too.",
               "ru": "Vela Launcher ставит любую сборку: при создании экземпляра выбираются Fabric или NeoForge и версия Minecraft (26.3, 26.2, 1.21.11, 1.21.5, 1.21.4). Лаунчер ставит нужный загрузчик и Java, кладёт подходящую сборку Vela, и все экраны (главная, моды, настройки) показывают версию и загрузчик этого экземпляра. Поиск на Modrinth, импорт и экспорт сборок тоже работают под экземпляр."
+            },
+            {
+              "en": "Minecraft 1.21.x and NeoForge builds: servers can now switch Vela functions off with a chat message there too; fast models work on 1.21.x, while the map atlas, distant chunk simplification and fast glyphs stay 26.x only.",
+              "ru": "Сборки для Minecraft 1.21.x и NeoForge: сервер теперь может отключить функции Vela сообщением в чате и там; быстрые модели работают на 1.21.x, а атлас карт, упрощение дальних чанков и быстрые глифы остаются только на 26.x."
             }
           ]
         },

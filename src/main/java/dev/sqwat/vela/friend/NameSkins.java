@@ -21,6 +21,8 @@ public final class NameSkins {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final Map<String, Optional<PlayerSkin>> cache = new ConcurrentHashMap<>();
     private static final Set<String> pending = ConcurrentHashMap.newKeySet();
+    // Answers by the exact name, so the per-frame skin lookup of every player skips the regex and the lowercase copy.
+    private static final Map<String, Optional<PlayerSkin>> byName = new ConcurrentHashMap<>();
 
     private NameSkins() {}
 
@@ -33,10 +35,20 @@ public final class NameSkins {
 
     /** The Mojang skin for this name, or null while it is loading or when the name has none. */
     public static PlayerSkin get(String name) {
-        if (name == null || !NAME.matcher(name).matches()) return null;
+        if (name == null) return null;
+        Optional<PlayerSkin> known = byName.get(name);
+        if (known != null) return known.orElse(null);
+        if (byName.size() >= 512) byName.clear();
+        if (!NAME.matcher(name).matches()) {
+            byName.put(name, Optional.empty());
+            return null;
+        }
         String key = name.toLowerCase(Locale.ROOT);
         Optional<PlayerSkin> skin = cache.get(key);
-        if (skin != null) return skin.orElse(null);
+        if (skin != null) {
+            byName.put(name, skin);
+            return skin.orElse(null);
+        }
         if (cache.size() >= 512) cache.clear();
         if (pending.add(key)) resolve(name, key);
         return null;

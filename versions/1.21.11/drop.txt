@@ -54,3 +54,14 @@ dev/sqwat/vela/opt/mixin/hud/HudInvoker.java
 dev/sqwat/vela/opt/mixin/hud/RenderTargetHudMixin.java
 dev/sqwat/vela/opt/mixin/hud/GuiRendererTargetMixin.java
 dev/sqwat/vela/opt/mixin/hud/DeltaTrackerHudMixin.java
+# distant chunk simplification hooks 26.x's LevelExtractor and block model dispatch; the map atlas uses 26.x GpuFormat;
+# the glyph writer targets 26.x BakedSheetGlyph. 1.21.x keeps the vanilla paths for all three
+dev/sqwat/vela/mixin/perf/DistantCompileMixin.java
+dev/sqwat/vela/mixin/perf/DistantLeavesMixin.java
+dev/sqwat/vela/mixin/perf/DistantRecompileMixin.java
+dev/sqwat/vela/mixin/perf/DistantSectionCompilerMixin.java
+dev/sqwat/vela/render/perf/DistantChunks.java
+dev/sqwat/vela/mixin/perf/MapInstanceUploadMixin.java
+dev/sqwat/vela/mixin/perf/MapRendererAtlasMixin.java
+dev/sqwat/vela/render/perf/MapAtlas.java
+dev/sqwat/vela/mixin/perf/GlyphQuadMixin.java

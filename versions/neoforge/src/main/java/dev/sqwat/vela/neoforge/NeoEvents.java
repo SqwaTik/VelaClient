@@ -99,6 +99,8 @@ final class NeoEvents {
                 if (!l.allowSendChatMessage(e.getMessage())) { e.setCanceled(true); return; }
         });
         game.addListener((ClientChatReceivedEvent.System e) -> {
+            for (var l : ClientReceiveMessageEvents.ALLOW_GAME.listeners())
+                if (!l.allowReceiveGameMessage(e.getMessage(), e.isOverlay())) { e.setCanceled(true); return; }
             for (var l : ClientReceiveMessageEvents.GAME.listeners()) l.onReceiveGameMessage(e.getMessage(), e.isOverlay());
         });
         game.addListener((ClientPlayerNetworkEvent.LoggingIn e) -> {

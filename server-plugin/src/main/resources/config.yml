@@ -1,0 +1,91 @@
+# Vela Rules: какие функции клиента Vela отключить у игроков на этом сервере.
+# true  — функция выключается и скрывается у игрока, пока он на сервере; когда он выходит, она возвращается.
+# false — не трогать.
+# Игроки без Vela ничего не получают. После правки: /velarules reload
+#
+# Vela rules: which Vela client functions to switch off for players on this server.
+# true switches the function off and hides it while the player is here; it comes back when they leave.
+
+# Отключить все функции, дающие преимущество (как "*" в /tellraw "velaclient:disable *"), поверх списка ниже.
+# Switch off every function that gives an edge, on top of the list below.
+all-competitive: false
+
+# Игроки с этим правом ничего не получают. Players with this permission are left alone.
+bypass-permission: vela.rules.bypass
+
+functions:
+
+  # Дают преимущество в PvP (их же отключает "*")
+  auto_tpaccept: false  # Auto TPAccept: Приём запросов телепортации вне боя / Accepts teleport requests outside combat
+  click_pearl: false  # Click Pearl: Бросок жемчуга с возвратом выбранного слота / Throws a pearl and returns to the selected slot
+  crystal_optimizer: false  # Crystal Optimizer: Снижает задержку установки кристалла / Lowers crystal placement delay
+  far: false  # Far: Показывает сохранённые чанки вдали / Shows saved chunks far away
+  freelook: false  # Freelook: Свободный обзор камерой без поворота персонажа / Look around freely without turning the character
+  gamma: false  # Gamma: Повышение яркости тёмных участков / Brightens dark areas
+  trajectories: false  # Trajectories: Прогноз броска и места попадания предметов / Predicts throws and where items land
+  hitboxes: false  # Hitboxes: Свои контуры хитбоксов вместо стандартных по F3+B / Vela hitbox outlines instead of the standard F3+B ones
+  near: false  # Near: Ближайшие игроки / Nearby players
+  macros: false  # Macros: Сообщения и команды по клавише / Messages and commands on a key
+  interval_commands: false  # Interval Commands: Сообщения и команды по таймеру / Messages and commands on a timer
+
+  # HUD
+  pickups: false  # Item Pickups: Лента подобранных предметов с анимацией / Animated feed of picked-up items
+  music: false  # Music: Что играет сейчас: браузер, Яндекс Музыка или любой плеер / What is playing: a browser, Yandex Music or any player
+  coordinates: false  # Coordinates: Отображение положения в мире / Shows your position in the world
+  armor: false  # Armor HUD: Отображение прочности брони / Armour durability
+  watermark: false  # Watermark: Логотип, FPS, скорость, пинг, тики, время и онлайн / Logo, FPS, speed, ping, ticks, time and online
+  hotkeys: false  # Hotkeys: Отображение активных биндов / Active binds
+  inventory: false  # Inventory HUD: Отображение предметов в инвентаре / Items in your inventory
+  target: false  # Target HUD: Отображение цели / Current target
+  potions: false  # Potions: Отображение активных эффектов / Active effects
+  speakers: false  # Speakers: Отображение говорящих игроков / Players who are speaking
+  cooldowns: false  # Cooldowns: Отображение перезарядки предметов / Item cooldowns
+  module_list: false  # Array List: Список включённых функций / List of enabled features
+  keystrokes: false  # Key Strokes: Нажатия клавиш движения и кликов / Movement keys and clicks
+
+  # Визуал
+  block_overlay: false  # Block Overlay: Выделение блока под прицелом / Outline of the block under the crosshair
+  ambience: false  # Ambience: Настройка времени суток, погоды и неба / Time of day, weather and sky
+  animations: false  # Animations: Анимации интерфейса / Interface animations
+  china_hat: false  # ChinaHat: Светящаяся шляпа над игроком и друзьями / Glowing hat over you and your friends
+  crosshair: false  # Crosshair: Настраиваемый прицел с индикацией перезарядки / Custom crosshair with attack cooldown
+  custom_hotbar: false  # Custom Hotbar: Стеклянный хотбар в стиле клиента / Glass hotbar in the client style
+  dash_trail: false  # DashTrail: Частицы, лента или спираль за движущимся игроком / Particles, ribbon or spiral behind a moving player
+  explosion_wave: false  # Explosion Wave: Ударная волна от взрывов по земле, огибает препятствия / Explosion shockwave along the ground that flows around obstacles
+  hit_bubbles: false  # Hit Bubbles: Преломляющая волна в месте удара / Refracting wave where you hit
+  hit_color: false  # Hit Color: Цветовая вспышка на игроках и мобах при получении урона / Color flash on players and mobs when they take damage
+  hp_counter: false  # HP Counter: Всплывающие числа урона и лечения игроков и мобов / Floating damage and healing numbers for players and mobs
+  item_physics: false  # Item Physics: Вращение и приземление предметов / Spinning and landing items
+  jump_circle: false  # JumpCircle: Круг или стеклянная ударная волна при прыжке / Ring or glass shockwave on jump
+  kill_effect: false  # KillEffect: Эффект при гибели текущей цели / Effect when the current target dies
+  mace_smash: false  # Mace Smash: Трещины или ударная волна при ударе булавой с высоты / Cracks or a shockwave on a mace smash from height
+  motion_blur: false  # Motion Blur: Размытие изображения при поворотах камеры / Blurs the image when turning the camera
+  particles: false  # Particles: Частицы ударов, прыжков, приземлений, смерти цели и тотема / Particles for hits, jumps, landings, target death and totems
+  self_tag: false  # Self Tag: Свой ник над персонажем от третьего лица / Your nickname above the character in third person
+  shaders: false  # Shaders: Шейдерные эффекты мира / Shader effects in the world
+  swing_animation: false  # Swing Animation: Кастомные анимации взмаха от первого лица / Custom first-person swing animations
+  target_esp: false  # TargetESP: Анимированные эффекты вокруг текущей цели / Animated effects around the current target
+  view_model: false  # ViewModel: Положение, размер и поворот рук от первого лица / Position, size and rotation of first-person hands
+  wasted: false  # Wasted: Кинематографичная смерть в стиле GTA / Cinematic GTA-style death
+  world_particles: false  # World Particles: Плавные фоновые частицы вокруг игрока / Smooth ambient particles around the player
+
+  # Утилиты
+  aspect_ratio: false  # Aspect Ratio: Соотношение сторон игрового мира / Aspect ratio of the game world
+  auto_reconnect: false  # Auto Reconnect: Кнопка и отсчёт переподключения при отключении от сервера / Reconnect button and countdown after a disconnect
+  autosprint: false  # AutoSprint: Автоматическое нажатие клавиши спринта / Holds the sprint key for you
+  chat: false  # Chat: Время, упоминания, ссылки на координаты и вкладки ЛС / Time, mentions, coordinate links and DM tabs
+  container_tools: false  # Container Tools: Поиск предметов и быстрый перенос в контейнерах / Item search and quick moving in containers
+  death: false  # Death: Координаты смерти в чате и авто-возрождение / Death coordinates in chat and auto respawn
+  fake_player: false  # FakePlayer: Локальный манекен для тренировки ударов / Local dummy for practising hits
+  hand_swap: false  # Hand Swap: Смена ведущей руки по своей клавише / Swap the main hand with a key
+  hit_sound: false  # Hit Sound: Свой звук при ударе по цели / Your own sound when hitting a target
+  loot_memory: false  # Loot Memory: Помнит обысканные сундуки, сломанные спавнеры и открытые хранилища / Remembers searched chests, broken spawners and opened vaults
+  pinger: false  # Pinger: Уведомляет о выбранном пороге прочности брони или здоровья / Warns at the chosen armour durability or health threshold
+  render_tweaks: false  # Render Tweaks: Скрытие элементов и эффектов / Hide elements and effects
+  shulker_preview: false  # Shulker Preview: Содержимое шалкера в подсказке, с закреплением / Shulker contents in the tooltip, with pinning
+  storage_index: false  # Storage Index: Поиск по всем открытым сундукам и шалкерам / Search every chest and shulker you have opened
+  streamer_mode: false  # Streamer Mode: Скрывает свой ник в отображаемом тексте / Hides your nickname in displayed text
+  brew_viewer: false  # Brew Viewer: Ход варки при наводке на зельеварку, с закреплением / Brewing progress when looking at a stand, with pinning
+  death_recap: false  # Death Recap: Повтор последних секунд перед смертью с таймлайном / Replay of the last seconds before death with a timeline
+  item_highlight: false  # Item Highlight: Цветные подложки важных предметов в интерфейсе / Coloured backdrops under important items in menus
+  tab_ping: false  # Tab Ping: Точный пинг игроков в списке Tab вместо делений / Exact ping of players in the Tab list instead of bars

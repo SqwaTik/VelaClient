@@ -765,9 +765,12 @@ def read_layer(module):
                 everywhere=everywhere, hits=[0] * len(everywhere))
 
 def layers_of(module):
-    """The module's layers, lowest first: a base.txt names the module it builds on (26.3-neoforge on 26.3)."""
+    """The module's layers, lowest first: a base.txt names the layers it builds on, one per line, lowest first (26.3-neoforge:
+    26.3, then the shared neoforge layer). Each of them may have a base.txt of its own; a layer shows up once."""
     base = module / 'base.txt'
-    below = layers_of(module.parent / base.read_text('utf-8').strip()) if base.exists() else []
+    below = []
+    for name in base.read_text('utf-8').split() if base.exists() else ():
+        below += [m for m in layers_of(module.parent / name) if m not in below]
     return below + [module]
 
 def rewrite_main(argv):

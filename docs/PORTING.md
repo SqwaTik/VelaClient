@@ -159,15 +159,18 @@ Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into 
 
 ### Layers (`base.txt`)
 
-A module with a `base.txt` builds on the module it names (one line, e.g. `26.3`). The base module's `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.
+A module with a `base.txt` builds on the layers it names, one per line, lowest first (e.g. `26.3`, then `neoforge`). A layer is a folder like a module; it needs no `gradle.properties` (`versions/neoforge` has none, so Gradle does not build it on its own). The base layers' `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.
 
-### NeoForge (`versions/26.3-neoforge`)
+### NeoForge (`versions/26.2-neoforge`, `versions/26.3-neoforge`)
 
-`loom=neoforge` in `gradle.properties` builds the module with ModDevGradle (`moddev_version` in `versions/gradle.properties`) against NeoForge `neoforge_version`, on top of `versions/26.3`:
+`loom=neoforge` in `gradle.properties` builds the module with ModDevGradle (`moddev_version` in `versions/gradle.properties`) against NeoForge `neoforge_version`. The NeoForge code is the shared layer `versions/neoforge`, written against Vela's own game version (26.2): `26.2-neoforge` builds on it alone, and `26.3-neoforge` builds on `26.3`, then on it. What differs per version sits in the module:
+
+- `26.2-neoforge/manual.txt`: on NeoForge 26.2 Bobby's sky fog hook targets the `addSkyPass` overload with the model-view matrix.
+- `26.3-neoforge/.../accesstransformer.cfg`: 26.3 moved `RenderPipeline` to `com.mojang.renderpearl`.
 
 ```bash
 cd versions
-./gradlew :26.3-neoforge:build
+./gradlew :26.2-neoforge:build :26.3-neoforge:build
 ./gradlew :26.3-neoforge:runClient
 ```
 

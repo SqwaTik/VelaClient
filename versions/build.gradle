@@ -11,7 +11,7 @@ vela.toPath().resolve('gradle.properties').withInputStream { velaProps.load(it) 
 
 subprojects {
     // loom=fabric-loom on 26.x (the game ships in Mojang names), fabric-loom-remap on 1.21.11 and older (obfuscated),
-    // loom=neoforge for a NeoForge module (ModDevGradle; its base.txt names the Fabric module it builds on)
+    // loom=neoforge for a NeoForge module (ModDevGradle; its base.txt names the layers it builds on: a Fabric version and the shared neoforge layer)
     def neo = project.loom == 'neoforge'
     apply plugin: neo ? 'net.neoforged.moddev' : "net.fabricmc.${project.loom}"
     def remap = project.loom == 'fabric-loom-remap'
@@ -35,12 +35,16 @@ subprojects {
         inputs.dir(new File(vela, 'src'))
         inputs.files(file('port.txt'), file('manual.txt'), file('drop.txt'), new File(vela, 'tools/port_mappings.py'))
         inputs.files(fileTree('src'), file('base.txt'))
-        // the layers this module builds on (base.txt, then that module's base.txt ...)
-        def below = file('base.txt')
-        while (below.exists()) {
-            def module = new File(projectDir.parentFile, below.text.trim())
-            inputs.files(new File(module, 'port.txt'), new File(module, 'manual.txt'), new File(module, 'drop.txt'), fileTree(new File(module, 'src')))
-            below = new File(module, 'base.txt')
+        // the layers this module builds on (each line of base.txt, and their own base.txt ...)
+        def below = [file('base.txt')]
+        while (!below.isEmpty()) {
+            def base = below.remove(0)
+            if (!base.exists()) continue
+            base.text.split().each { name ->
+                def module = new File(projectDir.parentFile, name)
+                inputs.files(new File(module, 'port.txt'), new File(module, 'manual.txt'), new File(module, 'drop.txt'), new File(module, 'base.txt'), fileTree(new File(module, 'src')))
+                below << new File(module, 'base.txt')
+            }
         }
         outputs.dir(ported)
         commandLine 'python', '-I', new File(vela, 'tools/port_mappings.py').absolutePath, 'rewrite', projectDir.absolutePath, ported.get().asFile.absolutePath
@@ -101,6 +105,8 @@ subprojects {
                 velaclient { sourceSet sourceSets.main }
             }
         }
+        // META-INF/accesstransformer.cfg is found among the main resources, which include the ported ones (the shared layer's file)
+        tasks.named('createMinecraftArtifacts') { dependsOn portSources }
         // the tests compile against the game too (as with Loom)
         neoForge.addModdingDependenciesTo(sourceSets.test)
     }

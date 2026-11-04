@@ -52,9 +52,10 @@ public final class VelaClient implements ClientModInitializer {
             var project=dev.sqwat.vela.module.ServerRules.active();
             if(project!=null&&!off.isEmpty())dev.sqwat.vela.ui.Notifications.show(project.name()+": "+dev.sqwat.vela.ui.Lang.tr("правила сервера"),
                 dev.sqwat.vela.ui.Lang.tr("Отключено")+": "+String.join(", ",off),"settings",0xFFFFA24D,"",null,()->true,0);
+            dev.sqwat.vela.core.UpdateCheck.joined();
         }));
         dev.sqwat.vela.core.ServerOptOut.register(services.modules());
-        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->client.execute(()->dev.sqwat.vela.module.ServerRules.leave(services.modules())));
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->client.execute(()->{dev.sqwat.vela.module.ServerRules.leave(services.modules());dev.sqwat.vela.core.UpdateCheck.left();}));
         services.modules().byId("speakers").require(()->FabricLoader.getInstance().isModLoaded("voicechat"));
         KeyMapping.Category category = KeyMapping.Category.register(id("controls"));
         openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(

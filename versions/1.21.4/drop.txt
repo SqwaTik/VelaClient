@@ -1,0 +1,12 @@
+
+# velaopt on 1.21.4: the GL encoder, GlTexture and GpuDevice textures are 1.21.5+, GlStateManager has no fbo cache
+dev/sqwat/vela/opt/gl/DepthFbos.java
+dev/sqwat/vela/opt/gl/SharedDepthFbos.java
+dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderClearMixin.java
+dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderDepthClearMixin.java
+dev/sqwat/vela/opt/mixin/gl/GlStateManagerMixin.java
+dev/sqwat/vela/opt/entity/AtlasTexture.java
+dev/sqwat/vela/opt/entity/AtlasSprite.java
+# 1.21.4 item render state has no per-layer extents/transform; the Lunar multi-draw hook targets the 1.21.5+ GL encoder
+dev/sqwat/vela/opt/mixin/entity/ItemLayerAccessor.java
+dev/sqwat/vela/opt/mixin/gl/LunarMultiDrawMixin.java

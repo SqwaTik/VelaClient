@@ -1,0 +1,65 @@
+# no render pipelines or GPU device before 1.21.5: compat.pipeline builds render types over vanilla shaders,
+# compat.gpu wraps GL texture ids (Vela's own shaders are not loaded, see RenderPipeline.supported)
+class com.mojang.blaze3d.pipeline.RenderPipeline=dev.sqwat.vela.compat.pipeline.RenderPipeline
+class com.mojang.blaze3d.pipeline.BlendFunction=dev.sqwat.vela.compat.pipeline.BlendFunction
+class com.mojang.blaze3d.platform.DepthTestFunction=dev.sqwat.vela.compat.pipeline.DepthTestFunction
+class net.minecraft.client.renderer.RenderPipelines=dev.sqwat.vela.compat.pipeline.RenderPipelines
+class com.mojang.blaze3d.textures.GpuTexture=dev.sqwat.vela.compat.gpu.GpuTexture
+class com.mojang.blaze3d.textures.TextureFormat=dev.sqwat.vela.compat.gpu.TextureFormat
+class com.mojang.blaze3d.textures.FilterMode=dev.sqwat.vela.compat.gpu.FilterMode
+class com.mojang.blaze3d.platform.SourceFactor=com.mojang.blaze3d.platform.GlStateManager.SourceFactor
+class com.mojang.blaze3d.platform.DestFactor=com.mojang.blaze3d.platform.GlStateManager.DestFactor
+patchre * (?:com\.mojang\.blaze3d\.systems\.)?RenderSystem\.getDevice\(\) => dev.sqwat.vela.compat.gpu.Gpu.device()
+patchre * extends (?:net\.minecraft\.client\.renderer\.texture\.)?AbstractTexture\b => extends dev.sqwat.vela.compat.gpu.TextureBase
+patchre * TextureSetup\.singleTexture\((\w+)\.getTexture\(\)\) => TextureSetup.singleTexture(dev.sqwat.vela.compat.gpu.Gpu.of(\1))
+patchre * (Minecraft\.getInstance\(\)|\b\w+)\.getMainRenderTarget\(\)\.getColorTexture\(\) => dev.sqwat.vela.compat.gpu.Gpu.color(\1.getMainRenderTarget())
+patchre dev/sqwat/vela/render/shader/TemporalBlur.java import com\.mojang\.blaze3d\.textures\.\*;\n => 
+# 1.21.4's ItemStack.addToTooltip has no TooltipDisplay
+patch dev/sqwat/vela/mixin/screen/ShulkerTooltipMixin.java net.minecraft.world.item.component.TooltipDisplay display, => 
+patch dev/sqwat/vela/ui/render/DissolveBody.java mc().getTextureManager().getTexture(texture).getTexture() => dev.sqwat.vela.compat.gpu.Gpu.of(mc().getTextureManager().getTexture(texture))
+# render types are made by compat.pipeline.RenderPipeline.create, which takes the state builder
+patch dev/sqwat/vela/compat/gizmos/Gizmos.java RenderType.create( => RenderPipeline.create(
+patch dev/sqwat/vela/compat/gizmos/Gizmos.java .createCompositeState(false) => 
+# NBT: 1.21.5's defaulted and Optional getters are compat.Nbt's helpers
+patchre * \.getCompoundOrEmpty\( => .getCompound(
+patchre * \b([a-zA-Z_$][\w$]*)\s*\.(get(?:Int|Long|Float|Double|Byte|Short|Boolean|String)Or|getListOrEmpty)\( => dev.sqwat.vela.compat.Nbt.\2(\1,
+patchre * \b([a-zA-Z_$][\w$]*)\s*\.(getInt|getLong|getString|getCompound|getIntArray|getLongArray|getByteArray)\(("[^"]*")\)(?=\s*\.(?:orElse|orElseGet|orElseThrow|ifPresent|map|flatMap|stream|isPresent|isEmpty)\() => dev.sqwat.vela.compat.Nbt.\2(\1,\3)
+patchre * \b([a-zA-Z_$][\w$]*)\s*\.getList\(("[^"]*")\) => dev.sqwat.vela.compat.Nbt.getList(\1,\2)
+patch * ListTag::compoundStream => dev.sqwat.vela.compat.Nbt::compoundStream
+# chat events are (action, value) pairs
+patchre * new ClickEvent\.RunCommand\( => new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+patchre * new ClickEvent\.CopyToClipboard\( => new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD,
+patchre * new ClickEvent\.OpenUrl\((\w+)\) => new ClickEvent(ClickEvent.Action.OPEN_URL,\1.toString())
+patchre * new HoverEvent\.ShowText\( => new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+# renamed or later additions
+patch * MobEffects.HASTE => MobEffects.DIG_SPEED
+patch * MobEffects.MINING_FATIGUE => MobEffects.DIG_SLOWDOWN
+patch dev/sqwat/vela/module/utility/Trajectories.java ||item.is(Items.BLUE_EGG)||item.is(Items.BROWN_EGG) => 
+patch * .getInventory().getSelectedSlot() => .getInventory().selected
+patch dev/sqwat/vela/module/utility/FakePlayer.java .snapTo( => .moveTo(
+patch dev/sqwat/vela/module/utility/FakePlayer.java SoundEvents.ITEM_BREAK.value() => SoundEvents.ITEM_BREAK
+patch dev/sqwat/vela/module/utility/FakePlayer.java @Override public boolean canSimulateMovement() => public boolean canSimulateMovement()
+patch dev/sqwat/vela/ui/Notifications.java mc.mouseHandler.getScaledXPos(mc.getWindow()) => mc.mouseHandler.xpos()*mc.getWindow().getGuiScaledWidth()/mc.getWindow().getScreenWidth()
+patch dev/sqwat/vela/ui/Notifications.java mc.mouseHandler.getScaledYPos(mc.getWindow()) => mc.mouseHandler.ypos()*mc.getWindow().getGuiScaledHeight()/mc.getWindow().getScreenHeight()
+patchre * new DynamicTexture\(\(\)\s*->\s*"[^"]*",\s* => new DynamicTexture(
+# white glyph masks: ARGB and ABGR are the same bytes
+patch dev/sqwat/vela/ui/render/PngTextRenderer.java image.setPixelABGR( => image.setPixel(
+patch de/johni0702/minecraft/bobby/FakeChunk.java setBlockState(BlockPos pos, BlockState state, int flags) => setBlockState(BlockPos pos, BlockState state, boolean moved)
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java = sectionsTag.getCompound(i); => = dev.sqwat.vela.compat.Nbt.getCompound(sectionsTag,i);
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java = hightmapsTag.getLongArray(key); => = dev.sqwat.vela.compat.Nbt.getLongArray(hightmapsTag,key);
+patchre dev/sqwat/vela/ui/render/StartupLogoTexture.java super\(\(\)->"[^"]*",pixels\) => super(pixels)
+patch dev/sqwat/vela/module/utility/ChatMarkupTest.java style.getClickEvent() instanceof ClickEvent.RunCommand => style.getClickEvent()!=null&&style.getClickEvent().getAction()==ClickEvent.Action.RUN_COMMAND
+# mixin targets that differ in 1.21.4
+patch de/johni0702/minecraft/bobby/mixin/ClientChunkCacheMixin.java FriendlyByteBuf buf, Map<Heightmap.Types, long[]> heightmaps, => FriendlyByteBuf buf, net.minecraft.nbt.CompoundTag heightmaps,
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java playSound(Lnet/minecraft/world/entity/Entity;DDD => playSound(Lnet/minecraft/world/entity/player/Player;DDD
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java (Level level,Entity source, => (Level level,Player source,
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java 1.21.5: Player.attack => 1.21.4: Player.attack
+patch dev/sqwat/vela/mixin/camera/BuiltinCameraMixin.java (Level level,Entity entity,boolean detached, => (net.minecraft.world.level.BlockGetter level,Entity entity,boolean detached,
+patch dev/sqwat/vela/module/utility/FakePlayer.java ((dev.sqwat.vela.mixin.compat.EquipmentAccess)(Object)this).vela$lastEquipment().put(slot,stack.copy()) => dev.sqwat.vela.compat.Equipment.remember((dev.sqwat.vela.mixin.compat.EquipmentAccess)(Object)this,slot,stack.copy())
+# HoverEvent's actions need the registries on 1.21.4
+patchre dev/sqwat/vela/module/utility/ChatMarkupTest.java class ChatMarkupTest \{ => class ChatMarkupTest {\n    @org.junit.jupiter.api.BeforeAll static void bootstrap(){net.minecraft.SharedConstants.tryDetectVersion();net.minecraft.server.Bootstrap.bootStrap();}
+# 1.21.4 finishes the reload in LoadingOverlay.render (later versions do it in tick), which Vela cancels, so the mixin runs that step itself
+patch dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java @Shadow @Final private ReloadInstance reload; => @Shadow @Final private ReloadInstance reload; @Shadow @Final private java.util.function.Consumer<java.util.Optional<Throwable>> onFinish;
+patch dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java vela$clock+=Math.min(seconds,1/30f); => vela$clock+=Math.min(seconds,1/30f); if(fadeOutStart==-1L&&reload.isDone()&&(!fadeIn||now-fadeInStart>=1000L)){try{reload.checkExceptions();onFinish.accept(java.util.Optional.empty());}catch(Throwable error){onFinish.accept(java.util.Optional.of(error));}fadeOutStart=Util.getMillis();if(minecraft.screen!=null)minecraft.screen.init(minecraft,g.guiWidth(),g.guiHeight());}
+# FarLeaves: 1.21.4 small plants are BushBlock (VegetationBlock is 1.21.5+)
+patch dev/sqwat/vela/opt/block/FarLeaves.java VegetationBlock => BushBlock

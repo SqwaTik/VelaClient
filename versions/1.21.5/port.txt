@@ -1,0 +1,75 @@
+# Vela 1.21.11 -> 1.21.5, written by tools/port_mappings.py 1.21.5. Do not edit: fix tools/port/1.21.5.renames and run it again.
+class net.minecraft.client.particle.ParticleGroup=net.minecraft.core.particles.ParticleGroup
+class net.minecraft.client.renderer.entity.player.AvatarRenderer=net.minecraft.client.renderer.entity.player.PlayerRenderer
+class net.minecraft.client.renderer.entity.state.AvatarRenderState=net.minecraft.client.renderer.entity.state.PlayerRenderState
+class net.minecraft.client.renderer.fog.FogRenderer=net.minecraft.client.renderer.FogRenderer
+class net.minecraft.client.renderer.rendertype.RenderSetup=net.minecraft.client.renderer.RenderType
+class net.minecraft.client.renderer.rendertype.RenderType=net.minecraft.client.renderer.RenderType
+class net.minecraft.resources.Identifier=net.minecraft.resources.ResourceLocation
+class net.minecraft.util.Util=net.minecraft.Util
+class net.minecraft.util.Util$OS=net.minecraft.Util$OS
+class net.minecraft.world.entity.player.PlayerSkin=net.minecraft.client.resources.PlayerSkin
+class net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile=net.minecraft.world.entity.projectile.ThrowableItemProjectile
+class net.minecraft.world.entity.vehicle.minecart.MinecartChest=net.minecraft.world.entity.vehicle.MinecartChest
+class net.minecraft.world.level.gamerules.GameRules=net.minecraft.world.level.GameRules
+gone net.minecraft.client.renderer.fog
+gone net.minecraft.client.renderer.rendertype
+gone net.minecraft.world.entity.projectile.throwableitemprojectile
+gone net.minecraft.world.entity.vehicle.minecart
+gone net.minecraft.world.level.gamerules
+member com/terraformersmc/modmenu/gui/ModsScreen.java methods stable=isStable
+member de/johni0702/minecraft/bobby/ChunkSerializer.java methods dataVersion=getDataVersion
+member de/johni0702/minecraft/bobby/ChunkSerializer.java methods version=getVersion
+member de/johni0702/minecraft/bobby/FakeChunkStorage.java methods dataVersion=getDataVersion
+member de/johni0702/minecraft/bobby/FakeChunkStorage.java methods version=getVersion
+member de/johni0702/minecraft/bobby/Worlds.java methods dataVersion=getDataVersion
+member de/johni0702/minecraft/bobby/Worlds.java methods version=getVersion
+member dev/sqwat/vela/friend/FriendPresence.java methods name=getName
+member dev/sqwat/vela/friend/NameSkins.java methods name=getName
+member dev/sqwat/vela/friend/NameSkins.java methods properties=getProperties
+member dev/sqwat/vela/marker/MarkerRuntime.java methods position=getPosition
+member dev/sqwat/vela/mixin/entity/FriendNameTagMixin.java methods name=getName
+member dev/sqwat/vela/mixin/entity/PlayerInfoSkinMixin.java methods id=getId
+member dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java methods renderWithTooltipAndSubtitles=renderWithTooltip
+member dev/sqwat/vela/mixin/hud/TabBadgeMixin.java methods id=getId
+member dev/sqwat/vela/mixin/screen/FriendTabMixin.java methods name=getName
+member dev/sqwat/vela/module/utility/ChatTweaks.java methods name=getName
+member dev/sqwat/vela/module/utility/FakePlayer.java methods name=getName
+member dev/sqwat/vela/module/utility/LootMemory.java methods position=getPosition
+member dev/sqwat/vela/module/utility/StreamerMode.java methods name=getName
+member dev/sqwat/vela/module/utility/Trajectories.java methods getGameTime=dayTime
+member dev/sqwat/vela/module/visual/BrewViewer.java methods getGameTime=dayTime
+member dev/sqwat/vela/module/visual/BrewViewer.java methods position=getPosition
+member dev/sqwat/vela/module/visual/Hitboxes.java methods name=getName
+member dev/sqwat/vela/opt/block/BlockEntityDistance.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/entity/AnimFreeze.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/gl/MainView.java methods position=getPosition
+member dev/sqwat/vela/opt/mixin/block/BlockEntityRenderDispatcherMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/block/BlockEntityRenderStateMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/block/ChestRendererMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/block/SpawnerRendererMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/entity/EntityRendererNameMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/particle/BubbleColumnUpParticleMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/particle/ParticleMixin.java methods getGameTime=dayTime
+member dev/sqwat/vela/opt/mixin/particle/QuadParticleGroupMixin.java methods position=getPosition
+member dev/sqwat/vela/opt/particle/CameraPosition.java methods position=getPosition
+member dev/sqwat/vela/opt/particle/ParallelParticles.java methods position=getPosition
+member dev/sqwat/vela/render/effect/GlassWave.java methods position=getPosition
+member dev/sqwat/vela/render/effect/WorldSprite.java methods position=getPosition
+member dev/sqwat/vela/render/entity/AutomaticVisibility.java methods position=getPosition
+member dev/sqwat/vela/render/entity/EntityOcclusion.java methods position=getPosition
+member dev/sqwat/vela/render/perf/FogCulling.java methods position=getPosition
+member dev/sqwat/vela/render/shader/TemporalBlur.java methods entity=getEntity
+member dev/sqwat/vela/render/shader/TemporalBlur.java methods position=getPosition
+member dev/sqwat/vela/ui/hud/HudLayoutService.java methods id=getId
+member dev/sqwat/vela/ui/hud/HudLayoutService.java methods name=getName
+member dev/sqwat/vela/ui/hud/NearArrowsHud.java methods name=getName
+member dev/sqwat/vela/ui/hud/NearArrowsHud.java methods position=getPosition
+member dev/sqwat/vela/ui/render/DissolveBody.java methods position=getPosition
+member dev/sqwat/vela/ui/screen/DashboardPanels.java methods name=getName
+member dev/sqwat/vela/VelaClient.java methods name=getName
+member dev/sqwat/vela/compat/LegacyCamera.java methods position=getPosition
+member dev/sqwat/vela/mixin/screen/MenuTransitionRenderMixin.java methods renderWithTooltipAndSubtitles=renderWithTooltip
+member dev/sqwat/vela/mixin/world/DistanceFogMixin.java methods entity=getEntity
+member dev/sqwat/vela/module/utility/Gamma.java methods blockPosition=getBlockPosition
+member dev/sqwat/vela/render/shader/ShaderCamera.java methods position=getPosition

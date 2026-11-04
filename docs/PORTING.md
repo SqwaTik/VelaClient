@@ -100,3 +100,141 @@ Manual class renames are trusted as written. A manual member rename is used only
 - Rewriting is text-based: imports, simple names, fully qualified names (`.`, `$`, `/` forms), `name(`, `::name`, `.name` and names inside mixin strings. A new simple name can clash with another import. The compiler catches that.
 - Java language level is not checked. 1.20.5–1.21.11 run on Java 21, 1.18–1.20.4 on Java 17 and 1.16.5 on Java 8. Build with the target's `--release` to find newer language and JDK APIs.
 - Behaviour changes with the same signatures (render order, threading, shaders, resources, data components) are not visible to the script.
+
+## Version modules (`versions/`)
+
+`versions/` is a separate Gradle build with one module per game version (`versions/26.3`). Each module compiles Vela's own `src/`, rewritten for that version, so the shared code is written once:
+
+```bash
+cd versions
+./gradlew :26.3:build       # needs JAVA_HOME at a JDK 25 for 26.x
+./gradlew :26.3:runClient
+```
+
+A module folder holds:
+
+- `gradle.properties`: `minecraft_version`, `minecraft_range` (written into `fabric.mod.json`), `java_release`, `loom` (`fabric-loom` on 26.x, `fabric-loom-remap` on 1.21.11 and older), the loader, Fabric API and optional Sodium/Iris/ImmediatelyFast versions.
+- `port.txt`: the renames the report found (`renames.txt` of `build/port/<target>/`).
+- `manual.txt`: hand-made changes, applied after `port.txt`.
+- `drop.txt` (optional): globs of root files this version does not compile, e.g. `dev/sqwat/vela/render/vk/**`.
+- `src/`: files that replace the root file at the same path (and new files, such as `dev/sqwat/vela/compat/` shims). They are copied as written; renames and patches do not touch them.
+
+`portSources` (`tools/port_mappings.py rewrite`) writes the result to `build/ported/`. Mixin configs keep only the mixins whose class still exists, and the module's own `@Mixin` classes join the `client` list. Tests run in `build/testroot/`, which holds the ported tree under `src/`, so the tests that read source files and mixin lists check this version's sources.
+
+`manual.txt` lines:
+
+```
+# class rename (Java names; `$` for nested classes)
+class org.lwjgl.glfw.GLFW=dev.sqwat.vela.compat.GLFW
+# member rename in one file
+member dev/sqwat/vela/Foo.java methods oldName=newName
+# a package that no longer exists: its `import a.*;` lines go
+gone com.mojang.blaze3d.vulkan
+# text replacement in one file; the build fails when <old> no longer matches
+patch dev/sqwat/vela/opt/hud/HudGpu.java main.useDepth => main.hasDepth()
+# the same as a Python regular expression (re.subn; \1 in the replacement)
+patchre dev/sqwat/vela/Foo.java \.bar\((\w+)\) => .baz(\1)
+# `*` instead of a path: every compiled file; fails only when no file matches
+patch * InputConstants.Type.KEYSYM => InputConstants.Type.KEYBOARD
+# a lower layer's patch with this old text is not applied (`*` for its `patch *` lines); fails when none matches
+unpatch dev/sqwat/vela/Foo.java .bar(x)
+```
+
+An empty replacement (`=> ` at the end of the line) deletes the text. Class renames also cover descriptors in mixin strings (`(ILa/b/Old;)V`), but method names in `method = "..."` change only through `member` or `patch` lines. Tests that check vanilla structure (the `*TargetsTest` and `*ContractTest` classes) catch most mixin targets that are gone, so update those tests together with the mixin.
+
+### Mixin audit
+
+`MixinTargetAuditTest` reads every `*mixins*.json` and checks each mixin against the game classes on the test classpath, so a version module learns about a broken target from `build`, not from a crash at launch:
+
+- the target class, `@Shadow` fields and methods, and `@Accessor`/`@Invoker` targets exist;
+- every `method = "..."` selector matches (with several selectors one match is enough; `*` and `/regex/` selectors are skipped, `require = 0` injectors too);
+- `@At` `INVOKE`/`FIELD`/`NEW` targets are still in the method;
+- an `@Inject` handler takes all target arguments or none, then the `CallbackInfo`. A bare name targets every overload (bridge methods aside), so it has to fit each one; give a descriptor when a version adds an overload;
+- a `@WrapOperation` handler captures only arguments the target method has;
+- a `@ModifyExpressionValue`/`@ModifyReturnValue` handler captures only arguments the target method has, after the value.
+
+Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into other mods stay optional.
+
+### 26.3 notes
+
+- 26.3 compiles shaders to SPIR-V. `compat/SpirvGlsl` (applied by `SpirvGlslMixin` to `velaclient:` and `velaopt:` shaders, files and the custom sky) adds `layout(location = N)` to every stage input and output and turns `gl_VertexID` into `gl_VertexIndex`. Varyings take their location from their name (`texCoord` is 0, as in vanilla `screenquad.vsh`); a new varying name goes into `SpirvGlsl.VARYINGS`.
+- `drop.txt` drops `LevelRendererOutlineMixin`: 26.3 already skips the outline pass when nothing glows.
+
+### 1.21.11
+
+`versions/1.21.11` builds with `fabric-loom-remap` and Mojang's mappings (JDK 25 compiles it with `--release 21`):
+
+```bash
+cd versions
+./gradlew :1.21.11:build
+./gradlew :1.21.11:runClient
+```
+
+- `manual.txt` replaces the unnamed variables (`_`) that Java 21 lacks, renames the 26.x GUI calls (`text`/`centeredText`/`item` to `drawString`/`drawCenteredString`/`renderItem`, `extract*` render methods to `render*`) and fixes mixin handlers whose target signatures differ (`patchre` lines match `method\s*=\s*"..."`). Per-file `patch` lines run before `patch *` lines, so they match the root text.
+- `drop.txt` leaves out the 26.x GPU, Vulkan, HUD cache and input-reload mixins, the velaopt mixins written for the 26.x renderer (frame buffer cache, GUI item atlas, parallel model and HUD cache hooks), `BufferBuilderQuadMixin` (FastCubes falls back to the vanilla vertex path), Bobby's sky fog hooks, `LegacyHeadModelMixin`, and the tests that pin 26.x bytecode names (`MixinTargetAuditTest` checks every target against 1.21.11 instead). The rest of velaopt is built; `GameRendererTimerMixin` marks the lightmap at `LightTexture.updateLightTexture`.
+- The module's `src/` replaces what has a different shape on 1.21.11: the camera, FOV, zoom and aspect ratio mixins (`Camera.setup`, `GameRenderer.getFov`), the menu transition (`Minecraft.setScreen`, `Screen.renderWithTooltipAndSubtitles`), the block outline, the `compat/` accessors, the HUD cache, and Mod Menu's title and pause screen mixins (1.21.11's pause menu has no icon row, so both button styles add the full-width button).
+- The shader sky, fog, hand and hit bubble passes are 1.21.11 versions in `src/.../render/shader` and `src/.../mixin/world`: pipelines come from `RenderPipeline.builder` (`ShaderPipelines.fullscreen`; no bind group layouts or color target states), the textures are `RGBA8` (1.21.11 has no float formats), samplers come from `RenderSystem.getSamplerCache()`, and GL depth runs from -1 to 1. `ShaderCamera` captures the camera at `LevelRenderer.renderLevel`. The fog pass leaves out the wet surface effect. `DistanceFogMixin` reads the `FogData` local before `FogRenderer.updateBuffer` (1.21.11's `setupFog` returns a `Vector4f`).
+- `tools/port_mappings.py` keeps only the mixin configs that are still written, so a dropped config is not listed in `fabric.mod.json`.
+
+### 1.21.5
+
+`versions/1.21.5` builds on the 1.21.11 layer, so its `port.txt` is the 1.21.11 -> 1.21.5 report:
+
+```bash
+python -I tools/port_mappings.py 1.21.5 --from 1.21.11 --classes versions/1.21.11/build/classes/java/main --sources versions/1.21.11/build/ported/main/java --sources versions/1.21.11/src/main/java
+```
+
+The report lists what 1.21.5 lacks: the GUI render state (`GuiRenderState`, `TextureSetup`, `GuiRenderer`; the GUI draws straight away), the submit node collector, the input event records (`MouseButtonEvent`, `KeyEvent`, `CharacterEvent`), `KeyMapping.Category`, the debug screen entries and the GPU texture views, samplers and buffer slices.
+
+- Within a layer the renames run first, then its patches: a 1.21.5 patch sees the 1.21.11 output with 1.21.5's class renames already applied (`Identifier` is `ResourceLocation` by then). Where a name may or may not be renamed, `patchre` with `\w+` matches either.
+- The input records are rebuilt in mixin handlers: a `patchre *` turns a `(MouseButtonEvent event, boolean doubleClick, ...)` handler into `(double x, double y, int button, ...)` and creates the record from those.
+- `src/` replaces the mixins whose targets have another shape: the light texture uniforms (`RenderPass.setUniform`), key and mouse presses (`KeyboardHandler.keyPress`, `MouseHandler.onPress`), the hand FOV, attack sounds (`Level.playSound`), paintings, the shulker preview (`Screen.renderWithTooltip`), hit color on armor (`Model.renderToBuffer` in `EquipmentLayerRenderer`, the state handed over by `HumanoidArmorLayer`), animated chat, chat privacy (`EditBox`'s formatter) and the boss bar position (`BossHealthOverlay.render`; 1.21.5's `Gui` draws it from a lambda layer).
+- `drop.txt` leaves out velaopt's shaders (1.21.5's `ShaderManager` compiles every shader a pack has, and `render_scale.fsh` imports `globals.glsl` from 1.21.6) and the velaopt hooks on 1.21.9+ render states, the submit collector, the debug entry list and Sodium 0.7+ (1.21.5 builds against Sodium 0.6); `Feature.available` checks the mixin is built, so their switches show as unavailable. velaopt helpers that differ (`DebugToggle`, `OptKey`, `ScreenInit`, `BenchWorld`, `Quads`, `AtlasTexture`, `AtlasSprite`, `FrameFence`, `SodiumSections`, `HudGpu`) have 1.21.5 copies in `src/`; 1.21.4 also drops the GL encoder hooks and has its own `GlTargets`, `SkinAtlas`, `Quads` and `HudGpu`. Then the shader sky, fog, hand and hit bubble passes, the bundled Mod Menu and the perf hooks on classes 1.21.5 does not have. The tests that check 26.x structure get 1.21.5 targets in `manual.txt`. `VertexPositionsMixin` overwrites `addVertex(Matrix4f, ...)`: `Matrix4fc` there is 1.21.6+, and the tests do not check `@Overwrite` signatures, only `runClient` shows it.
+
+### 1.21.4
+
+`versions/1.21.4` builds on `1.21.5` (`base.txt`), so the 1.21.5 layer's rules and `src/` come first and the 1.21.4 rules apply to their output. 1.21.4 has no `GpuDevice`, `RenderPipeline` or `GpuTexture`, and its NBT getters return plain values, so the module brings small stand-ins in `src/.../compat` and renames the 1.21.5 classes to them in `manual.txt`:
+
+- `compat/gpu`: `GpuDevice`, `CommandEncoder` (texture copies through framebuffers), `GpuTexture` over a GL texture id, `TextureBase` (an `AbstractTexture` holding a `GpuTexture`) and `Gpu` (`device()`, `color(RenderTarget)`, `of(AbstractTexture)`).
+- `compat/pipeline`: `RenderPipeline` with its builder and snippets, `BlendFunction`, `DepthTestFunction` and the few `RenderPipelines` Vela uses, over 1.21.4's `CoreShaders`. `RenderPipeline.create` turns a pipeline into a `RenderType` (through `RenderType.create`, called reflectively). A pipeline that needs one of Vela's own shaders reports `supported() == false` and its render type writes nothing, so the glass blur, shockwave, motion blur and dissolve effects are skipped (their snapshot copies still run).
+- `compat/gui`: `GuiSubmit` draws a GUI element at once through `GuiGraphics.drawSpecial` with its pipeline's render type and the current GUI z, and `TextureSetup` is the texture for sampler 0.
+- `compat/Nbt`: 1.21.5's `getIntOr`, `getCompoundOrEmpty`, `getListOrEmpty` and the `Optional` getters as static helpers; `patchre` rules turn `tag.getIntOr(k, d)` into `Nbt.getIntOr(tag, k, d)`.
+- `compat/Equipment` and the `EquipmentAccess` accessor: 1.21.4 compares equipment with the last hand, armour and body items, so the fake player updates those. An accessor mixin may hold only accessors and invokers; a static method with a body makes Mixin treat it as an interface mixin, which fails on `LivingEntity` in `runClient`, not in the tests.
+- `src/` replaces the mixins whose targets differ: the light texture boost (`CompiledShaderProgram.safeGetUniform` returns a `BoostedUniform`), the menu frame rate cap (`@ModifyConstant` on 60), item physics (no model bounding box; it is estimated from the item transform's scale), the vanilla hitboxes (`renderHitbox`, `renderServerSideHitbox`) and the equipment accessor.
+- `LoadingOverlay` finishes the reload in `render` on 1.21.4 (`checkExceptions`, `onFinish`, `fadeOutStart`, `screen.init`); later versions do it in `tick`. Vela cancels `render`, so a `manual.txt` patch runs that step at the start of its own `render`. Without it the game stays on the loading screen with nothing in the log.
+- `manual.txt` also covers the smaller API changes: `ClickEvent`/`HoverEvent` constructors, `MobEffects.DIG_SPEED`, `Inventory.selected`, `moveTo`, `DynamicTexture` without a label, `NativeImage.setPixel`, `LevelChunk.setBlockState` with `moved`, and the test bootstrap (`ChatMarkupTest` needs `Bootstrap.bootStrap()` on 1.21.4).
+
+### Layers (`base.txt`)
+
+A module with a `base.txt` builds on the layers it names, one per line, lowest first (e.g. `26.3`, then `neoforge`). A layer is a folder like a module; it needs no `gradle.properties` (`versions/neoforge` has none, so Gradle does not build it on its own). The base layers' `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.
+
+### NeoForge (`versions/26.2-neoforge`, `versions/26.3-neoforge`, `versions/1.21.11-neoforge`, `versions/1.21.5-neoforge`, `versions/1.21.4-neoforge`)
+
+`loom=neoforge` in `gradle.properties` builds the module with ModDevGradle (`moddev_version` in `versions/gradle.properties`) against NeoForge `neoforge_version`. The NeoForge code is the shared layer `versions/neoforge`, written against Vela's own game version (26.2): `26.2-neoforge` builds on it alone, and `26.3-neoforge` builds on `26.3`, then on it. What differs per version sits in the module:
+
+- `26.2-neoforge/manual.txt`: on NeoForge 26.2 Bobby's sky fog hook targets the `addSkyPass` overload with the model-view matrix.
+- `26.3-neoforge/.../accesstransformer.cfg`: 26.3 moved `RenderPipeline` to `com.mojang.renderpearl`.
+- `1.21.11-neoforge` builds on `1.21.11`, then on the shared layer. The shared layer's own sources get only the module's rules, so its `manual.txt` renames `GuiGraphicsExtractor` to `GuiGraphics` and gives the screen shim 1.21.11's `beforeRender`/`afterRender`. `unpatch` lines take out the shared layer's 26.2-text patches, and the 1.21.11 forms follow. Its `accesstransformer.cfg` has the 1.21.11 names. NeoForm's tools need a Java 21 toolchain: `-Porg.gradle.java.installations.paths=<jdk 21>` (with `_JAVA_OPTIONS` set, Gradle cannot probe a JDK). Sodium, Iris and ImmediatelyFast are their `-neoforge` builds (the Fabric jars of an obfuscated version are in intermediary names). Sodium's NeoForge jar carries the mod as a nested jar, and `nestedSodium` unpacks it for the compiler. The NeoForge main pass lambda is `lambda$addMainPass$1` (Fabric: `method_62214`).
+- `1.21.5-neoforge` builds on `1.21.11-neoforge`, then on `1.21.5`. NeoForge 21.5 has no `KeyMapping.Category` (categories are strings), sends payloads with `PacketDistributor.sendToServer`, and FML 7's `FMLLoader` is static (no `getCurrent()`). Its screen events pass plain mouse and key arguments, so the shim's `allowMouseClick`/`allowKeyPress` take them as Fabric API 0.128 does. The HUD layers are `EXPERIENCE_BAR` and `JUMP_METER`, and the mod list is `ModListScreen`. `drop.txt` drops the `HudElementRegistry` and Mod Menu compat files. `accesstransformer.cfg` opens `GuiGraphics.scissorStack` and `RenderPipelines.register`, which Fabric widens. Patches of the `1.21.5` layer for a file that `1.21.11/src` replaces are skipped, so the module repeats the ones still needed (`Camera.setup` takes a `BlockGetter`).
+- `1.21.4-neoforge` builds on `1.21.5-neoforge`, then on `1.21.4`. Patches of lower layers for a file that a layer's `src` replaces are skipped, so its `manual.txt` repeats the 1.21.4 ones still needed (`DissolveBody`, `FakePlayerSoundMixin`, `BuiltinCameraMixin`). `accesstransformer.cfg` opens only `GuiGraphics.scissorStack` (1.21.4 has no `RenderPipelines`). NeoForge draws its own loading overlay (`NeoForgeLoadingOverlay`), which finishes the reload by itself. `drop.txt` drops `ChatMarkupTest`: NeoForge's `FeatureFlags` needs FML's `LoadingModList`, which unit tests do not load (the Fabric module runs the test).
+- A mixin config that `drop.txt` drops also leaves `neoforge.mods.toml` (as it leaves `fabric.mod.json`); a `[[mixins]]` entry for a missing config stops FML.
+- The rewrite caps each mixin config's `compatibilityLevel` at the module's `java_release`. NeoForge runs the game on that Java, and a `JAVA_25` config stops FML without a message.
+
+```bash
+cd versions
+./gradlew :26.2-neoforge:build :26.3-neoforge:build
+./gradlew :26.3-neoforge:runClient
+./gradlew :1.21.11-neoforge:build -Porg.gradle.java.installations.paths=<jdk 21>
+```
+
+Jars are named `vela-client-<version>+<game>-<loader>.jar`.
+
+- Vela's Fabric API calls stay in the shared code. `manual.txt` renames `net.fabricmc.` to `dev.sqwat.vela.neoforge.shim.` everywhere, and the shims there have the same names and signatures. Only the parts Vela uses exist.
+- `neoforge/NeoMod` is the `@Mod` class. It registers the events and the configuration screen for the NeoForge mod list. NeoForge builds mods before the game client exists, so `mixin/neoforge/ClientStartMixin` runs the Fabric entrypoints (Vela, the bundled Bobby and IAS) where Fabric does, right after `Minecraft.instance` is set. That is before the options register keys and before mod loading finishes, where the payloads are registered.
+- `StorageVisibilityMixin` targets the 5-argument `tryExtractRenderState` (with `Frustum`); the 4-argument one only delegates to it on NeoForge.
+- `neoforge/NeoEvents` runs the shims' listeners from NeoForge events: ticks, screens, keys, HUD layers, chat, connection and payloads.
+- `neoforge/ClientCommandBridge` keeps Vela's client commands in a dispatcher of their own. Each top-level name goes into NeoForge's dispatcher as a literal plus the rest of the line.
+- `mixin/neoforge/ClientInteractionMixin` fires the attack, use-block and block-break callbacks where Fabric API fires them, before the packet is sent. NeoForge's `AttackEntityEvent` comes too late for friend protection.
+- `META-INF/accesstransformer.cfg` opens what Fabric API's transitive access wideners open and Vela uses. Copying all of Fabric's list breaks NeoForge's game recompile, because protected methods made public clash with their overrides.
+- NeoForge draws the hotbar group as separate GUI layers. `neoforge/NeoHud` moves each one by the hotbar's Drag Mode offset, and the menu transition wraps `ClientHooks.extractScreen`.
+- Mod Menu, its mixins and `fabric.mod.json` are dropped. `META-INF/neoforge.mods.toml` lists the mixin configs.

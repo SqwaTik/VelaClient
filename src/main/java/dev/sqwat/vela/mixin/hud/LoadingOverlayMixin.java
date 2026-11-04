@@ -91,7 +91,7 @@ abstract class LoadingOverlayMixin extends net.minecraft.client.gui.screens.Over
             int x=view.width()/2-110,y=view.height()/2-20;
             if(vela$departing){
                 VelaDraw.logo(g,view.width()/2-22,y-65,44);
-                VelaDraw.centeredText(g,"Vela 26.2",view.width()/2f,y,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,20);
+                VelaDraw.centeredText(g,"Vela "+net.minecraft.SharedConstants.getCurrentVersion().name(),view.width()/2f,y,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,20);
                 VelaDraw.centeredText(g,vela$farewell,view.width()/2f,y+32,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,9);
                 return;
             }

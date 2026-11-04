@@ -3,7 +3,7 @@
 <h1 align="center">Vela Client</h1>
 
 <p align="center">
-Клиент «всё в одном» для Minecraft 26.2 на Fabric: настраиваемый HUD, визуальные эффекты, помощники для PvP, музыкальный плеер с текстом песен, удобства для выживания и собственные оптимизации рендера. Один мод, одно меню настроек.
+Клиент «всё в одном» для Minecraft 26.3, 26.2, 1.21.11, 1.21.5 и 1.21.4 на Fabric и NeoForge: настраиваемый HUD, визуальные эффекты, помощники для PvP, музыкальный плеер с текстом песен, удобства для выживания и собственные оптимизации рендера. Один мод, одно меню настроек.
 </p>
 
 <p align="center">
@@ -12,18 +12,26 @@
 <a href="CHANGELOG.md">Что нового</a>
 </p>
 
-> **English.** Vela is an all-in-one client mod for Minecraft 26.2 (Fabric): HUD, visuals, PvP helpers, a music HUD with lyrics, quality-of-life tools and its own render optimizations, in one mod with one settings menu. The interface is in English and Russian. Download the jar from [Releases](https://github.com/SqwaTik/VelaClient/releases/latest) and put it in `mods` together with Fabric API.
+> **English.** Vela is an all-in-one client mod for Minecraft 26.3, 26.2, 1.21.11, 1.21.5 and 1.21.4 (Fabric and NeoForge): HUD, visuals, PvP helpers, a music HUD with lyrics, quality-of-life tools and its own render optimizations, in one mod with one settings menu. The interface is in English and Russian. The easiest way to play is [Vela Launcher](https://github.com/SqwaTik/VelaLauncher): pick a version and a loader and it installs everything. By hand, take the jar for your version from [Releases](https://github.com/SqwaTik/VelaClient/releases/latest) and put it in `mods` (with Fabric API on Fabric).
 
 ## Установка
 
-**Через Vela Launcher (проще всего).** [Лаунчер](https://github.com/SqwaTik/VelaLauncher) сам ставит Minecraft 26.2, Fabric, Java 25 и Vela и обновляет их.
+| Minecraft | Fabric | NeoForge | Java |
+|---|---|---|---|
+| 26.3 | да | да | 25 |
+| 26.2 | да | да | 25 |
+| 1.21.11 | да | да | 21 |
+| 1.21.5 | да | да | 21 |
+| 1.21.4 | да | да | 21 |
+
+**Через Vela Launcher (проще всего).** В [лаунчере](https://github.com/SqwaTik/VelaLauncher) при создании экземпляра выбираешь версию и загрузчик, а он сам ставит Minecraft, Fabric или NeoForge, нужную Java и Vela и обновляет их.
 
 **Вручную.**
-1. Поставь [Fabric Loader](https://fabricmc.net/use/) 0.19.2 или новее для Minecraft 26.2.
-2. Положи в папку `mods` [Fabric API](https://modrinth.com/mod/fabric-api) и `vela-client-<версия>.jar` из [Releases](https://github.com/SqwaTik/VelaClient/releases/latest).
+1. Поставь [Fabric Loader](https://fabricmc.net/use/) или [NeoForge](https://neoforged.net/) для своей версии.
+2. Положи в папку `mods` сборку Vela для этой версии и загрузчика из [Releases](https://github.com/SqwaTik/VelaClient/releases/latest). Для Fabric ещё нужен [Fabric API](https://modrinth.com/mod/fabric-api), для NeoForge ничего больше не нужно.
 3. Запусти игру. Меню Vela открывается на **Right Shift**, клавишу можно поменять в настройках.
 
-Нужна Java 25. Отдельно ставить In-Game Account Switcher, Bobby и Mod Menu не нужно: они уже встроены в Vela, и копии из папки `mods` нужно убрать.
+Отдельно ставить In-Game Account Switcher, Bobby и Mod Menu не нужно: они уже встроены в Vela, и копии из папки `mods` нужно убрать.
 
 ## Что внутри
 
@@ -66,6 +74,8 @@
 
 Vela работает на OpenGL и на Vulkan. С VulkanMod части, рассчитанные только на OpenGL, выключаются сами.
 
+На 1.21.x нет хуков Vulkan, кэша HUD, атласа карт, упрощения дальних чанков и быстрых глифов: там эти места остаются ванильными, остальные оптимизации работают.
+
 ## Совместимость
 
 - **Sodium, Iris, ImmediatelyFast:** Vela распознаёт их и подстраивается.
@@ -102,7 +112,7 @@ Vela принимает только сообщения от самого сер
 ./gradlew build
 ```
 
-Нужен JDK 25. Jar появится в `build/libs/`. Проверка с запуском настоящего клиента делается командой `./gradlew verifyClient`. Как устроен проект, как проверять, ставить и выпускать изменения, описано в [docs/HANDOFF.md](docs/HANDOFF.md). Архитектура кода в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), порты на другие версии и NeoForge в [docs/PORTING.md](https://github.com/SqwaTik/VelaClient/blob/port/multiversion/docs/PORTING.md) (ветка `port/multiversion`).
+Нужен JDK 25. Так собирается 26.2 на Fabric, jar появится в `build/libs/`. Остальные версии и NeoForge собираются из `versions/` в ветке `port/multiversion`: `./gradlew -p versions assemble`, каждый jar появится в `versions/<версия>/build/libs/`. Проверка с запуском настоящего клиента делается командой `./gradlew verifyClient`. Как устроен проект, как проверять, ставить и выпускать изменения, описано в [docs/HANDOFF.md](docs/HANDOFF.md). Архитектура кода в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), порты на другие версии и NeoForge в [docs/PORTING.md](https://github.com/SqwaTik/VelaClient/blob/port/multiversion/docs/PORTING.md) (ветка `port/multiversion`).
 
 ## Лицензии
 

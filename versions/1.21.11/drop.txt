@@ -1,0 +1,67 @@
+
+# 26.x GPU/Vulkan, HUD cache and input-reload optimizations: hooks that do not exist on 1.21.11
+dev/sqwat/vela/mixin/perf/VulkanAcquireRingMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMapMixin.java
+dev/sqwat/vela/mixin/perf/DrawGroupLookupMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheGuiMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheRenderMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheTargetMixin.java
+dev/sqwat/vela/mixin/perf/HudLivePartsMixin.java
+dev/sqwat/vela/mixin/perf/ReloadGameInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadGuiInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadKeyboardInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadMouseInputMixin.java
+# the hand projection accessor (hudProjection is 26.x) and the 26.x shader usage test
+dev/sqwat/vela/mixin/entity/HandProjectionAccessor.java
+dev/sqwat/vela/ShaderTextureUsageTest.java
+# Bobby's sky fog clamp hooks 26.x's camera render state
+de/johni0702/minecraft/bobby/mixin/GameRendererMixin.java
+de/johni0702/minecraft/bobby/mixin/LevelRendererMixin.java
+de/johni0702/minecraft/bobby/ext/GameRendererExt.java
+# tests of 26.x render types and the Vulkan shader compiler (shaderc ships with 26.x LWJGL only)
+dev/sqwat/vela/AppendOnlyRenderIndexTest.java
+dev/sqwat/vela/ShaderFogCompilationTest.java
+# the transform moved into item JSON only in 26.2; 1.21.11 skulls need no fallback
+dev/sqwat/vela/mixin/entity/LegacyHeadModelMixin.java
+# 26.x BufferBuilder (entityFormat, primitiveTopology); FastCubes falls back to the vanilla vertex path
+dev/sqwat/vela/mixin/perf/BufferBuilderQuadMixin.java
+# tests pinning 26.x bytecode names; MixinTargetAuditTest checks every mixin target against 1.21.11 instead
+dev/sqwat/vela/FarLifecycleTest.java
+dev/sqwat/vela/ItemHighlightTest.java
+dev/sqwat/vela/LocalCombatRulesTest.java
+dev/sqwat/vela/NativeHudTargetsTest.java
+dev/sqwat/vela/ParticleEventsContractTest.java
+dev/sqwat/vela/RecentMixinTargetsTest.java
+dev/sqwat/vela/TerrainAllocationMapTest.java
+dev/sqwat/vela/TerrainAllocationTest.java
+dev/sqwat/vela/UiIntegrationTargetsTest.java
+# velaopt hooks into 26.x-only classes: the framebuffer cache, GlBuffer.Direct, the GUI item atlas, the feature renderers
+# (submits, FeatureFrameContext) and the item submit LOD; the rest of velaopt runs on 1.21.11 (HudGpu, ScaleGpu, AtlasTexture in src/)
+dev/sqwat/vela/opt/mixin/gl/FrameBufferCacheMixin.java
+dev/sqwat/vela/opt/mixin/gl/GlBufferCloseMixin.java
+dev/sqwat/vela/opt/mixin/hud/GuiItemAtlasAccessor.java
+dev/sqwat/vela/opt/mixin/hud/GuiItemAtlasMixin.java
+dev/sqwat/vela/opt/mixin/hud/ImmediatelyFastAnimatedAtlasMixin.java
+dev/sqwat/vela/opt/mixin/entity/ModelFeatureRendererMixin.java
+dev/sqwat/vela/opt/mixin/entity/ModelFeatureRendererInvoker.java
+dev/sqwat/vela/opt/mixin/entity/RenderTypeFeatureRendererInvoker.java
+dev/sqwat/vela/opt/mixin/entity/ItemFeatureRendererMixin.java
+dev/sqwat/vela/opt/entity/ParallelModelHook.java
+# the velaopt HUD cache wraps 26.x's Hud extraction; GameRendererHudMixin in src/ keeps the benchmark monitor overlay
+dev/sqwat/vela/opt/mixin/hud/GuiHudMixin.java
+dev/sqwat/vela/opt/mixin/hud/HudLiveMixin.java
+dev/sqwat/vela/opt/mixin/hud/HudInvoker.java
+dev/sqwat/vela/opt/mixin/hud/RenderTargetHudMixin.java
+dev/sqwat/vela/opt/mixin/hud/GuiRendererTargetMixin.java
+dev/sqwat/vela/opt/mixin/hud/DeltaTrackerHudMixin.java
+# distant chunk simplification hooks 26.x's LevelExtractor and block model dispatch; the map atlas uses 26.x GpuFormat;
+# the glyph writer targets 26.x BakedSheetGlyph. 1.21.x keeps the vanilla paths for all three
+dev/sqwat/vela/mixin/perf/DistantCompileMixin.java
+dev/sqwat/vela/mixin/perf/DistantLeavesMixin.java
+dev/sqwat/vela/mixin/perf/DistantRecompileMixin.java
+dev/sqwat/vela/mixin/perf/DistantSectionCompilerMixin.java
+dev/sqwat/vela/render/perf/DistantChunks.java
+dev/sqwat/vela/mixin/perf/MapInstanceUploadMixin.java
+dev/sqwat/vela/mixin/perf/MapRendererAtlasMixin.java
+dev/sqwat/vela/render/perf/MapAtlas.java
+dev/sqwat/vela/mixin/perf/GlyphQuadMixin.java

@@ -1,0 +1,87 @@
+# its render scale shader imports globals.glsl (1.21.6+), and 1.21.5's ShaderManager compiles every shader of a pack
+assets/velaopt/shaders/**
+# 1.21.11's shader extras: the hand flame, fog, sky and projection hooks (the shader renderers are stubs in src/)
+dev/sqwat/vela/render/shader/HandFlameRenderer.java
+dev/sqwat/vela/render/shader/ShaderCamera.java
+dev/sqwat/vela/render/shader/ShaderPipelines.java
+dev/sqwat/vela/mixin/world/AtmosphereFogMixin.java
+dev/sqwat/vela/mixin/world/ProceduralSkyMixin.java
+dev/sqwat/vela/mixin/world/HandShaderMixin.java
+dev/sqwat/vela/mixin/world/ShaderProjectionMixin.java
+dev/sqwat/vela/mixin/world/DistanceFogMixin.java
+dev/sqwat/vela/render/effect/HitBubbleRenderer.java
+# the bundled Mod Menu is written against 1.21.9+ widgets; on 1.21.5 the real Mod Menu can be installed (compat.ModsScreens opens it)
+com/terraformersmc/**
+mixins.modmenu.json
+assets/modmenu/**
+dev/sqwat/vela/core/VelaModMenu.java
+dev/sqwat/vela/render/shader/ShaderTextureUsage.java
+# perf hooks on structures 1.21.5 does not have (GuiRenderer's layer index and sort, the terrain section allocator, fog culling)
+dev/sqwat/vela/mixin/perf/GuiLayerIndexMixin.java
+dev/sqwat/vela/mixin/perf/GuiLayerIndexNodeMixin.java
+dev/sqwat/vela/render/perf/IndexedAreaList.java
+dev/sqwat/vela/mixin/perf/GuiSortAllocationMixin.java
+dev/sqwat/vela/render/perf/GuiSortOrder.java
+dev/sqwat/vela/GuiSortOrderTest.java
+dev/sqwat/vela/mixin/perf/EmptyTextSubmissionMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMapMixin.java
+dev/sqwat/vela/render/perf/FogCulling.java
+dev/sqwat/vela/mixin/world/FogCullingMixin.java
+dev/sqwat/vela/mixin/entity/NameTagTextCacheMixin.java
+# tests for the dropped GUI index and for 26.x render state/gizmo classes (1.21.5 draws through compat.gizmos)
+dev/sqwat/vela/render/perf/IndexedAreaListTest.java
+dev/sqwat/vela/ui/render/PngTextBatchTest.java
+dev/sqwat/vela/VisualGeometryTest.java
+# velaopt on 1.21.5: the screen, the switches and the hooks 1.21.5 has. Dropped: hooks on the 1.21.9+ debug screen,
+# block entity and particle render states, the submit collector, the GUI render state, Font.PreparedText and GpuTextureView;
+# their features show as unavailable (Feature.available checks the mixin is built)
+dev/sqwat/vela/opt/mixin/DebugScreenEntriesMixin.java
+dev/sqwat/vela/opt/mixin/DebugScreenEntryListMixin.java
+dev/sqwat/vela/opt/mixin/block/BlockEntityRenderDispatcherCullMixin.java
+dev/sqwat/vela/opt/mixin/block/BlockEntityRenderDispatcherCullWrapMixin.java
+dev/sqwat/vela/opt/mixin/block/BlockEntityRenderDispatcherMixin.java
+dev/sqwat/vela/opt/mixin/block/BlockEntityRenderStateMixin.java
+dev/sqwat/vela/opt/mixin/block/BlockEntityRenderStatePoolMixin.java
+dev/sqwat/vela/opt/mixin/block/ChestRendererMixin.java
+dev/sqwat/vela/opt/mixin/block/SpawnerRendererMixin.java
+dev/sqwat/vela/opt/block/SpawnerReplay.java
+dev/sqwat/vela/opt/mixin/block/SodiumFarLeavesMixin.java
+dev/sqwat/vela/opt/mixin/block/SodiumLeafCullMixin.java
+dev/sqwat/vela/opt/mixin/entity/LevelRendererOutlineMixin.java
+dev/sqwat/vela/opt/mixin/entity/LivingEntityRendererSkinMixin.java
+dev/sqwat/vela/opt/mixin/entity/SubmitPosePoolMixin.java
+dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java
+dev/sqwat/vela/opt/mixin/gl/RenderTargetAccessor.java
+dev/sqwat/vela/opt/mixin/gl/RenderTypesMixin.java
+dev/sqwat/vela/opt/mixin/hud/GameRendererHudMixin.java
+dev/sqwat/vela/opt/mixin/hud/GuiRendererAnimatedMixin.java
+dev/sqwat/vela/opt/mixin/particle/QuadParticleGroupMixin.java
+dev/sqwat/vela/opt/mixin/particle/QuadParticleRenderStateAccessor.java
+dev/sqwat/vela/opt/mixin/text/FontMixin.java
+dev/sqwat/vela/opt/text/PreparedTextCache.java
+# helpers only those hooks call; the Sodium hooks target Sodium 0.7+ (1.21.5 builds against 0.6)
+dev/sqwat/vela/opt/gl/RealFence.java
+dev/sqwat/vela/opt/gl/RenderScale.java
+dev/sqwat/vela/opt/gl/ScaleGpu.java
+dev/sqwat/vela/opt/entity/ParallelModels.java
+dev/sqwat/vela/opt/particle/ParallelParticles.java
+dev/sqwat/vela/opt/mixin/text/FontManagerMixin.java
+dev/sqwat/vela/opt/mixin/entity/SodiumEntityRendererMixin.java
+dev/sqwat/vela/opt/mixin/gl/VertexConsumerUtilsMixin.java
+dev/sqwat/vela/opt/mixin/gl/LunarSodiumMultiDrawMixin.java
+dev/sqwat/vela/opt/mixin/gl/SodiumOcclusionCullMixin.java
+dev/sqwat/vela/opt/mixin/gl/SodiumTerrainTimerMixin.java
+dev/sqwat/vela/opt/mixin/block/SodiumLeafCullOldMixin.java
+# hooks whose targets 1.21.5 lacks (MixinTargetAuditTest): the 1.21.9+ render state extraction, particle extract, the
+# debug entry list, the GL encoder's texture buffer setup; LeafCulling reads Sodium's slice only for the dropped Sodium hook
+dev/sqwat/vela/opt/mixin/entity/AvatarLodMixin.java
+dev/sqwat/vela/opt/mixin/entity/EntityRenderStatePoolMixin.java
+dev/sqwat/vela/opt/mixin/entity/LivingEntityLodMixin.java
+dev/sqwat/vela/opt/mixin/particle/ParticleRotationMixin.java
+dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderTexBufferMixin.java
+dev/sqwat/vela/opt/mixin/block/PistonHeadRendererMixin.java
+dev/sqwat/vela/opt/mixin/entity/ItemStackRenderStateMixin.java
+dev/sqwat/vela/opt/mixin/gl/MinecraftTimerMixin.java
+dev/sqwat/vela/opt/mixin/particle/QuadParticleStorageInvoker.java
+dev/sqwat/vela/opt/block/LeafCulling.java

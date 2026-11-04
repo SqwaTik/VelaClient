@@ -26,7 +26,7 @@ public final class DashboardChrome {
         c.border(x,y,w,h,9,VelaTheme.BORDER);
         c.image("logo",x+11,y+11,16,0xFFFFFFFF);
         c.text("Vela",x+34,y+10,10,VelaTheme.TEXT,SEMIBOLD);
-        c.text("Client 26.2",x+34,y+23,20f/3,VelaTheme.TEXT_MUTED,MEDIUM);
+        c.text("Client "+net.minecraft.SharedConstants.getCurrentVersion().name(),x+34,y+23,20f/3,VelaTheme.TEXT_MUTED,MEDIUM);
         c.line(x,y+40,side,0xFF1A2030);
         for(int i=0;i<SECTIONS.length;i++){
             if(i==SECONDARY)c.line(x+10,l.navigation(i).y()-7,side-20,0xFF1A2030);

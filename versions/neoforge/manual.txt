@@ -1,0 +1,17 @@
+# NeoForge build on top of the 26.3 layer (base.txt). Vela's Fabric API calls go to look-alike classes under
+# dev.sqwat.vela.neoforge.shim (same names and shapes), which NeoForge's events drive; see NeoEvents.
+patch * net.fabricmc. => dev.sqwat.vela.neoforge.shim.
+
+# The title screen's Mods button opens NeoForge's mod list instead of Mod Menu
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this) => net.neoforged.neoforge.client.gui.modlist.ModListScreen.create(this)
+# NeoForge splits the hotbar group into GUI layers: NeoHud moves each of them (Hud.extractHotbarAndDecorations is gone)
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="extractHotbarAndDecorations",at=@At("HEAD")) => /* NeoForge: NeoHud moves the hotbar group */
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java @Inject(method="extractHotbarAndDecorations",at=@At("RETURN")) => /* NeoForge: NeoHud moves the hotbar group */
+patch dev/sqwat/vela/NativeHudTargetsTest.java extractHotbarAndDecorations(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V => extractHotbar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+# NeoForge draws the screen through ClientHooks.extractScreen (GUI layers and ScreenEvent.Render)
+patch dev/sqwat/vela/mixin/screen/MenuTransitionMixin.java Lnet/minecraft/client/gui/screens/Screen;extractRenderStateWithTooltipAndSubtitles(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V => Lnet/neoforged/neoforge/client/ClientHooks;extractScreen(Lnet/minecraft/client/gui/screens/Screen;Ljava/util/Stack;Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+patch dev/sqwat/vela/mixin/screen/MenuTransitionMixin.java vela$render(Screen screen,GuiGraphicsExtractor g, => vela$render(Screen screen,java.util.Stack<Screen> layers,GuiGraphicsExtractor g,
+patch dev/sqwat/vela/mixin/screen/MenuTransitionMixin.java screen.extractRenderStateWithTooltipAndSubtitles(g, => net.neoforged.neoforge.client.ClientHooks.extractScreen(screen,layers,g,
+patch dev/sqwat/vela/UiIntegrationTargetsTest.java "net/minecraft/client/gui/screens/Screen","extractRenderStateWithTooltipAndSubtitles","(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V" => "net/neoforged/neoforge/client/ClientHooks","extractScreen","(Lnet/minecraft/client/gui/screens/Screen;Ljava/util/Stack;Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V"
+# NeoForge: the 4-argument tryExtractRenderState only delegates to its 5-argument overload (+ Frustum), which looks the renderer up
+patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java method="tryExtractRenderState" => method="tryExtractRenderState(Lnet/minecraft/world/level/block/entity/BlockEntity;FLnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;ZLnet/minecraft/client/renderer/culling/Frustum;)Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;"

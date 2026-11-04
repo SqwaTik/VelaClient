@@ -1,0 +1,157 @@
+# Hand-made changes for 26.3, applied after port.txt (same format, plus `patch <path> <old> => <new>`, which replaces
+# every occurrence of <old> in that file and fails the build when it no longer matches).
+
+# 26.3 replaced GLFW with SDL3: Vela's GLFW calls go to a shim with SDL scancodes, SDL modifier masks and 1-based mouse buttons
+class org.lwjgl.glfw.GLFW=dev.sqwat.vela.compat.GLFW
+
+# Vela modifier bits, not SDL event modifiers (see the 26.3 BindInput)
+patch dev/sqwat/vela/core/ClientConfig.java BindInput.combo(searchKey, => BindInput.comboBits(searchKey,
+patch dev/sqwat/vela/module/utility/ContainerTools.java BindInput.combo(dev.sqwat.vela.compat.GLFW.GLFW_KEY_F, => BindInput.comboBits(dev.sqwat.vela.compat.GLFW.GLFW_KEY_F,
+# default search key K: GLFW 75, SDL scancode 14
+patch dev/sqwat/vela/core/ClientConfig.java searchKey = 75; => searchKey = 14;
+patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java c.searchKey=75; => c.searchKey=14;
+# valid key codes: SDL scancodes 4..511 instead of GLFW 32..348; Escape is 41
+patch dev/sqwat/vela/module/setting/KeySetting.java (key<32||key>348) => (key<4||key>511)
+patch dev/sqwat/vela/module/utility/CommandEntries.java e.key()>348 => e.key()>511
+patch dev/sqwat/vela/ui/screen/VelaConfirmScreen.java e.key()==256 => e.key()==41
+
+# mouse buttons: SDL left 1, right 3 (GLFW left 0, right 1)
+patch dev/sqwat/vela/mixin/screen/ChatDragButtonMixin.java event.button()!=0 => event.button()!=1
+patch dev/sqwat/vela/mixin/screen/ItemScrollerMixin.java e.button()==0 => e.button()==1
+patch dev/sqwat/vela/module/utility/ChatThreads.java button==1&&partner => button==3&&partner
+patch dev/sqwat/vela/opt/OptScreen.java button == 0 && x >= fieldX0 => button == 1 && x >= fieldX0
+patch dev/sqwat/vela/opt/Panel.java button != 0) { => button != 1) {
+patch dev/sqwat/vela/ui/Notifications.java if(button!=0)return false; => if(button!=1)return false;
+patch dev/sqwat/vela/ui/screen/CommandEditorScreen.java event.button()!=0 => event.button()!=1
+patch dev/sqwat/vela/ui/screen/DeathRecapScreen.java e.button()==0 => e.button()==1
+patch dev/sqwat/vela/ui/screen/HudPositionScreen.java event.button()==0 => event.button()==1
+patch dev/sqwat/vela/ui/screen/ShaderEditorScreen.java e.button()!=0 => e.button()!=1
+patch dev/sqwat/vela/ui/screen/VelaConfirmScreen.java e.button()!=0 => e.button()!=1
+patch dev/sqwat/vela/ui/screen/VelaDashboardScreen.java event.button()==0 => event.button()==1
+patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java event.button()!=0 => event.button()!=1
+patch dev/sqwat/vela/ui/screen/ViewModelEditorScreen.java e.button()!=0 => e.button()!=1
+patch dev/sqwat/vela/ui/screen/ViewModelEditorScreen.java e.button()==0 => e.button()==1
+
+# authlib 10 (26.3) replaced YggdrasilAuthenticationService with MinecraftServicesDiscoveryService
+class com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService=com.mojang.authlib.services.MinecraftServicesDiscoveryService
+patch ru/vidtu/ias/IASMinecraft.java online ? new MinecraftServicesDiscoveryService(minecraft.getProxy()) : MinecraftServicesDiscoveryService.createOffline(minecraft.getProxy()) => MinecraftServicesDiscoveryService.create(minecraft.getProxy(), online)
+
+# PotionBrewing is gone (brewing is recipes); the stand-in reads the integrated server's recipes
+class net.minecraft.world.item.alchemy.PotionBrewing=dev.sqwat.vela.compat.Brewing
+patch dev/sqwat/vela/module/visual/BrewViewer.java mc.level.potionBrewing() => dev.sqwat.vela.compat.Brewing.current()
+
+# links: Util.getPlatform() is gone, Blaze3D opens URIs and paths
+patchre * (?:net\.minecraft\.util\.)?Util\.getPlatform\(\)\.(openUri|openPath)\( => dev.sqwat.vela.compat.Links.\1(
+# CommonLinks are URIs already; mod websites are strings
+patch com/terraformersmc/modmenu/gui/ModsScreen.java confirmLinkNow(this, url, false) => confirmLinkNow(this, java.net.URI.create(url), false)
+patch com/terraformersmc/modmenu/gui/widget/DescriptionListWidget.java }, link, false)); => }, java.net.URI.create(link), false));
+patch com/terraformersmc/modmenu/gui/widget/DescriptionListWidget.java }, "mailto:" + email, false)); => }, java.net.URI.create("mailto:" + email), false));
+patch * InputConstants.Type.KEYSYM => InputConstants.Type.KEYBOARD
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java new OptionsScreen(this, minecraft.options, false) => new OptionsScreen(this, minecraft.options)
+
+# PoseStack.mulPose takes matrices only; quaternions go through rotate
+patchre * \.mulPose\((Axis\.[XYZ][PN]\.rotation) => .rotate(\1
+
+# renderpearl: samplers are uniforms, passes take compiled pipelines, custom shader sources compile through compat.Gpu
+patchre * \.withSampler\(([^()]*)\) => .withUniform(\1,com.mojang.renderpearl.api.pipeline.UniformType.COMBINED_IMAGE_SAMPLER)
+patch * .bindTexture( => .setUniform(
+patchre * \.setPipeline\(([^()]+)\) => .setPipeline(dev.sqwat.vela.compat.Gpu.compiled(\1))
+patchre * (?:RenderSystem\.getDevice\(\)|device)\.precompilePipeline\( => dev.sqwat.vela.compat.Gpu.precompile(
+patch * device.clearPipelineCache() => dev.sqwat.vela.compat.Gpu.clearCustom()
+patchre * true, ?GpuFormat\.RGBA8_UNORM\) => GpuFormat.RGBA8_UNORM, GpuFormat.D32_FLOAT)
+patch dev/sqwat/vela/opt/hud/HudGpu.java main.useDepth => main.hasDepth()
+# output overrides are gone: the hand targets are handed to the 26.3 HandShaderMixin
+patch dev/sqwat/vela/render/shader/HandShaderRenderer.java RenderSystem.outputColorTextureOverride => dev.sqwat.vela.compat.RenderOutput.color
+patch dev/sqwat/vela/render/shader/HandShaderRenderer.java RenderSystem.outputDepthTextureOverride => dev.sqwat.vela.compat.RenderOutput.depth
+
+# sky color is a Vector3fc
+patch dev/sqwat/vela/mixin/world/AmbienceSkyMixin.java state.skyColor=a.skyColor(state.skyColor) => state.skyColor=dev.sqwat.vela.compat.Colors.vec(a.skyColor(dev.sqwat.vela.compat.Colors.rgb(state.skyColor)))
+patch dev/sqwat/vela/render/shader/WorldShaderRenderer.java int rgb=sky.skyColor; => int rgb=dev.sqwat.vela.compat.Colors.rgb(sky.skyColor);
+
+# refresh rate lives on the monitor's video mode (a float)
+patchre * [\w.()]*getWindow\(\)\.getRefreshRate\(\) => dev.sqwat.vela.compat.Display.refreshRate()
+patch dev/sqwat/vela/opt/hud/MonitorRate.java monitor.currentMode().getRefreshRate() => Math.round(monitor.currentMode().getRefreshRate())
+
+# swings carry their animation; the swing state moved into LivingEntity.SwingState
+patch dev/sqwat/vela/VelaClient.java player.swing(hand); => player.swing(hand,player.getItemInHand(hand).getAttackAnimation(),false);
+patch dev/sqwat/vela/module/utility/ClickPearl.java c.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND) => c.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND,c.player.getMainHandItem().getInteractAnimation(),false)
+patch dev/sqwat/vela/module/visual/Crosshair.java mc.player.getAttackAnim(partial) => mc.player.getSwingAnimation(partial)
+patch dev/sqwat/vela/module/visual/SwingAnimation.java getMainHandItem().getSwingAnimation() => getMainHandItem().getAttackAnimation()
+patch dev/sqwat/vela/module/visual/DeathRecap.java e.attackAnim,e.swinging,e.swingingArm==null?InteractionHand.MAIN_HAND:e.swingingArm,e.swingTime => dev.sqwat.vela.compat.Swings.anim(e),e.isSwinging(),dev.sqwat.vela.compat.Swings.arm(e),dev.sqwat.vela.compat.Swings.ticks(e)
+patch dev/sqwat/vela/module/visual/DeathReplay.java living.attackAnim=living.oAttackAnim=Mth.lerp(f,a.attackAnim(),b.attackAnim()); => dev.sqwat.vela.compat.Swings.restore(living,Mth.lerp(f,a.attackAnim(),b.attackAnim()),a.swinging(),a.arm(),a.swingTime());
+patch dev/sqwat/vela/module/visual/DeathReplay.java living.swinging=a.swinging();living.swingingArm=a.arm();living.swingTime=a.swingTime(); => 
+
+# Entity: movement simulation is a type, invulnerability ticks are private
+patch dev/sqwat/vela/module/utility/FakePlayer.java @Override public boolean canSimulateMovement(){return true;} => @Override public net.minecraft.world.entity.MoveSimulationType getMoveSimulationType(){return net.minecraft.world.entity.MoveSimulationType.SERVER_AND_CLIENT;}
+patch dev/sqwat/vela/module/utility/FakePlayer.java invulnerableTime>10 => getInvulnerableTime()>10
+patch dev/sqwat/vela/module/utility/FakePlayer.java invulnerableTime=20; => setInvulnerableTime(20);
+
+# players have no separate renderer lookup; vertex consumers gained a third UV
+patch dev/sqwat/vela/ui/render/DissolveBody.java dispatcher.getPlayerRenderer(player) => (net.minecraft.client.renderer.entity.EntityRenderer)dispatcher.getRenderer(entity)
+patch dev/sqwat/vela/ui/render/DissolveBody.java public VertexConsumer setLineWidth(float width){return this;} => public VertexConsumer setLineWidth(float width){return this;} public VertexConsumer setUv3(float u,float v){return this;}
+
+# model submits carry a UvMapping (TextureAtlasSprite implements it)
+patch dev/sqwat/vela/opt/entity/ParallelModels.java TextureAtlasSprite sprite => net.minecraft.client.renderer.texture.UvMapping sprite
+patch dev/sqwat/vela/opt/entity/ParallelModelHook.java s.sprite() => s.uvMapping()
+
+# Bobby: light and chunk packets are records
+patch de/johni0702/minecraft/bobby/mixin/ClientPacketListenerMixin.java packet.getX() => packet.x()
+patch de/johni0702/minecraft/bobby/mixin/ClientPacketListenerMixin.java packet.getZ() => packet.z()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getBlockUpdates() => initialLightData.blockUpdates()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getSkyUpdates() => initialLightData.skyUpdates()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getBlockYMask() => initialLightData.blockYMask()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getEmptyBlockYMask() => initialLightData.emptyBlockYMask()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getSkyYMask() => initialLightData.skyYMask()
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java initialLightData.getEmptySkyYMask() => initialLightData.emptySkyYMask()
+
+# tests: PreparedRenderType gained an OIT pipeline set
+patch dev/sqwat/vela/AppendOnlyRenderIndexTest.java PreparedRenderType(null,null,null, => PreparedRenderType(null,null,null,null,
+# tests: GLFW key codes and modifier bits become SDL scancodes and SDL masks (see the 26.3 BindInputTest)
+patch dev/sqwat/vela/ReferenceRegressionTest.java assertEquals("RShift",KeyLabels.of(344,"Правый Shift"));assertEquals("Space",KeyLabels.of(32,"Пробел"));assertEquals("F12",KeyLabels.of(301,""));assertEquals("A",KeyLabels.of(65,"ф")); => assertEquals("RShift",KeyLabels.of(229,"Правый Shift"));assertEquals("Space",KeyLabels.of(44,"Пробел"));assertEquals("F12",KeyLabels.of(69,""));assertEquals("A",KeyLabels.of(4,"ф"));
+patch dev/sqwat/vela/TextInputTest.java TextInput.key(edit,65,2, => TextInput.key(edit,dev.sqwat.vela.compat.GLFW.GLFW_KEY_A,dev.sqwat.vela.compat.GLFW.GLFW_MOD_CONTROL,
+patch dev/sqwat/vela/TextInputTest.java TextInput.key(edit,88,2, => TextInput.key(edit,dev.sqwat.vela.compat.GLFW.GLFW_KEY_X,dev.sqwat.vela.compat.GLFW.GLFW_MOD_CONTROL,
+patch dev/sqwat/vela/TextInputTest.java TextInput.key(edit,86,2, => TextInput.key(edit,dev.sqwat.vela.compat.GLFW.GLFW_KEY_V,dev.sqwat.vela.compat.GLFW.GLFW_MOD_CONTROL,
+patch dev/sqwat/vela/TextInputTest.java TextInput.key(edit,263,1, => TextInput.key(edit,dev.sqwat.vela.compat.GLFW.GLFW_KEY_LEFT,dev.sqwat.vela.compat.GLFW.GLFW_MOD_SHIFT,
+patch dev/sqwat/vela/TextInputTest.java TextInput.key(edit,261,0, => TextInput.key(edit,dev.sqwat.vela.compat.GLFW.GLFW_KEY_DELETE,0,
+
+# KeyboardHandler.preeditCallback became textEditing; prepareChunkRenders reads ChunkSectionLayer.values() once
+patch dev/sqwat/vela/mixin/perf/ReloadKeyboardInputMixin.java "preeditCallback" => "textEditing"
+patch dev/sqwat/vela/NativeHudTargetsTest.java "preeditCallback" => "textEditing"
+patch dev/sqwat/vela/TerrainAllocationTest.java assertEquals(2,calls(prepare,"net/minecraft/client/renderer/chunk/ChunkSectionLayer","values")); => assertEquals(1,calls(prepare,"net/minecraft/client/renderer/chunk/ChunkSectionLayer","values"));
+patch dev/sqwat/vela/TerrainAllocationTest.java assertEquals(1,calls(prepare,"org/joml/Matrix4f","<init>")); => 
+patchre dev/sqwat/vela/TerrainAllocationTest.java assertTrue\(java\.util\.Arrays\.stream\(prepare\.instructions\.toArray\(\)\)\.anyMatch\(i->i instanceof MethodInsnNode m\s*&&m\.owner\.equals\("org/joml/Matrix4f"\)[^\n]*\n => 
+patchre dev/sqwat/vela/TerrainAllocationTest.java var uniform=read\("net/minecraft/client/renderer/DynamicUniforms\$ChunkSectionInfo"\);\s*assertTrue\(uniform[^\n]*\n => 
+# the clock time moved from ClientClockManager.getTotalTicks to ClientClockInstance.totalTicks (26.3 AmbienceClockMixin)
+patch dev/sqwat/vela/ParticleEventsContractTest.java read("net/minecraft/client/ClientClockManager").methods.stream().anyMatch(m->m.name.equals("getTotalTicks")&&m.desc.equals("(Lnet/minecraft/core/Holder;)J")) => read("net/minecraft/client/ClientClockManager$ClientClockInstance").methods.stream().anyMatch(m->m.name.equals("totalTicks")&&m.desc.equals("()J"))
+# name tags are text submits (26.3 NameTagTextCacheMixin)
+patch dev/sqwat/vela/NativeHudTargetsTest.java assertTrue(methods("net/minecraft/client/renderer/feature/NameTagFeatureRenderer").contains("prepareText(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer$Submit;)Lnet/minecraft/client/gui/Font$PreparedText;")); => assertTrue(methods("net/minecraft/client/renderer/feature/TextFeatureRenderer").stream().anyMatch(m->m.startsWith("renderText(")));
+# mixin handler arguments that grew in 26.3 (found by MixinTargetAuditTest)
+patch dev/sqwat/vela/mixin/entity/EntityOcclusionMixin.java double z,CallbackInfoReturnable<Boolean> cir => double z,float partial,long nanos,CallbackInfoReturnable<Boolean> cir
+patch dev/sqwat/vela/mixin/entity/PlayerVisibilityMixin.java double z,CallbackInfoReturnable<Boolean> ci => double z,float partial,CallbackInfoReturnable<Boolean> ci
+patch dev/sqwat/vela/mixin/world/AtmosphereFogMixin.java GraphicsResourceAllocator allocator,DeltaTracker delta,boolean outline,CameraRenderState camera,Matrix4fc matrix,GpuBufferSlice fog,Vector4f color,boolean sky,CallbackInfo ci => GraphicsResourceAllocator allocator,boolean outline,CameraRenderState camera,GpuBufferSlice fog,Vector4f color,boolean sky,boolean shadows,CallbackInfo ci
+# model submits take a UvMapping and no crumbling overlay
+patch * Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;ILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V => Lnet/minecraft/client/renderer/texture/UvMapping;I)V
+patch dev/sqwat/vela/opt/mixin/entity/LivingEntityRendererSkinMixin.java TextureAtlasSprite sprite, int outline, ModelFeatureRenderer.CrumblingOverlay crumbling, => net.minecraft.client.renderer.texture.UvMapping sprite, int outline,
+patch dev/sqwat/vela/opt/mixin/entity/LivingEntityRendererSkinMixin.java , outline, crumbling) => , outline)
+# GameRenderer.render: the globals take the partial tick, renderLevel takes nothing
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V => update(IIDJFILnet/minecraft/world/phys/Vec3;Z)V
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java DeltaTracker deltaTracker, int menuBlurRadius => float partial, int menuBlurRadius
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java deltaTracker, menuBlurRadius => partial, menuBlurRadius
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java renderLevel(Lnet/minecraft/client/DeltaTracker;)V => renderLevel()V
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java GameRenderer renderer, DeltaTracker deltaTracker, Operation<Void> original => GameRenderer renderer, Operation<Void> original
+patch dev/sqwat/vela/opt/mixin/gl/GameRendererScaleMixin.java original.call(renderer, deltaTracker) => original.call(renderer)
+# the per-draw texture setup moved to setupDraw
+patch dev/sqwat/vela/opt/mixin/gl/GlCommandEncoderTexBufferMixin.java method = "trySetup" => method = "setupDraw"
+# Bobby: chunk packets carry one ClientboundLevelChunkPacketData; the light is queued after replaceWithPacketData
+patch de/johni0702/minecraft/bobby/mixin/ClientChunkCacheMixin.java int x, int z, FriendlyByteBuf buf, Map<Heightmap.Types, long[]> heightmaps, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer, CallbackInfoReturnable<LevelChunk> cir => int x, int z, ClientboundLevelChunkPacketData data, CallbackInfoReturnable<LevelChunk> cir
+patch de/johni0702/minecraft/bobby/mixin/ClientPacketListenerMixin.java Lnet/minecraft/client/multiplayer/ClientPacketListener;updateLevelChunk(IILnet/minecraft/network/protocol/game/ClientboundLevelChunkPacketData;)V => Lnet/minecraft/client/multiplayer/ClientChunkCache;replaceWithPacketData(IILnet/minecraft/network/protocol/game/ClientboundLevelChunkPacketData;)Lnet/minecraft/world/level/chunk/LevelChunk;
+# 26.3: every addToTooltip call ends in the overload that takes a TooltipProvider.Getter
+patch dev/sqwat/vela/mixin/screen/ShulkerTooltipMixin.java @Inject(method="addToTooltip", => @Inject(method="addToTooltip(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/component/TooltipProvider$Getter;Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/item/component/TooltipDisplay;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V",
+patch dev/sqwat/vela/mixin/screen/ShulkerTooltipMixin.java DataComponentType<?> type,net.minecraft.world.item.Item.TooltipContext => DataComponentType<?> type,net.minecraft.world.item.component.TooltipProvider.Getter<?> getter,net.minecraft.world.item.Item.TooltipContext
+# 26.3: getFbo gained a layer overload; the old one just passes layer 0, so hook the real one
+patch dev/sqwat/vela/opt/mixin/gl/FrameBufferCacheMixin.java @Inject(method = "getFbo", => @Inject(method = "getFbo(Lcom/mojang/renderpearl/backend/opengl/DirectStateAccess;Ljava/util/List;Lcom/mojang/renderpearl/backend/opengl/FrameBufferAttachment;I)I",
+patch dev/sqwat/vela/opt/mixin/gl/FrameBufferCacheMixin.java FrameBufferAttachment depth, CallbackInfoReturnable => FrameBufferAttachment depth, int layer, CallbackInfoReturnable
+patch dev/sqwat/vela/opt/mixin/gl/FrameBufferCacheMixin.java depth.fboMipLevel() == 0) => depth.fboMipLevel() == 0 && layer == 0)
+# 26.3: GameRenderer.render() takes no arguments; the frame's delta comes from Minecraft
+patch dev/sqwat/vela/mixin/perf/HudCacheRenderMixin.java Operation<Void> original,DeltaTracker delta,boolean advanceGameTime){ => Operation<Void> original){DeltaTracker delta=minecraft.getDeltaTracker();
+patch dev/sqwat/vela/opt/mixin/hud/GameRendererHudMixin.java Operation<Void> original, DeltaTracker deltaTracker, boolean advanceGameTime) { => Operation<Void> original) { DeltaTracker deltaTracker = minecraft.getDeltaTracker();

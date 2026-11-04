@@ -1,0 +1,3 @@
+# ChatMarkupTest needs Bootstrap.bootStrap() on 1.21.4, and NeoForge's FeatureFlags read the FML mod list, which tests do not
+# load; the Fabric 1.21.4 module runs it
+dev/sqwat/vela/module/utility/ChatMarkupTest.java

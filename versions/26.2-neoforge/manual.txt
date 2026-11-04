@@ -1,0 +1,6 @@
+# NeoForge 26.2: render calls the addSkyPass overload that also takes the model-view matrix
+patch de/johni0702/minecraft/bobby/mixin/LevelRendererMixin.java addSkyPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V => addSkyPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4fc;)V
+# NeoForge's CompileTask calls the SectionCompiler.compile overload with the AddSectionGeometryEvent renderers
+patch dev/sqwat/vela/mixin/perf/DistantCompileMixin.java Lnet/minecraft/client/renderer/SectionBufferBuilderPack;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results; => Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;
+patch dev/sqwat/vela/mixin/perf/DistantCompileMixin.java SectionBufferBuilderPack buffers, Operation<SectionCompiler.Results> original => SectionBufferBuilderPack buffers, java.util.List<?> renderers, Operation<SectionCompiler.Results> original
+patch dev/sqwat/vela/mixin/perf/DistantCompileMixin.java original.call(compiler, pos, region, sorting, buffers) => original.call(compiler, pos, region, sorting, buffers, renderers)

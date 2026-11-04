@@ -1,0 +1,45 @@
+# Vela's render optimizations (the velaopt stack) are written against the 26.x renderer (render states, GPU buffers, Vulkan)
+dev/sqwat/vela/opt/**
+vela-opt.mixins.json
+# 26.x GPU/Vulkan, HUD cache and input-reload optimizations: hooks that do not exist on 1.21.11
+dev/sqwat/vela/mixin/perf/VulkanAcquireRingMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMapMixin.java
+dev/sqwat/vela/mixin/perf/DrawGroupLookupMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheGuiMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheRenderMixin.java
+dev/sqwat/vela/mixin/perf/HudCacheTargetMixin.java
+dev/sqwat/vela/mixin/perf/HudLivePartsMixin.java
+dev/sqwat/vela/mixin/perf/ReloadGameInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadGuiInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadKeyboardInputMixin.java
+dev/sqwat/vela/mixin/perf/ReloadMouseInputMixin.java
+# shader world/sky/hand passes and their hooks (the renderers are stubs in this module's src)
+dev/sqwat/vela/render/shader/HandFlameRenderer.java
+dev/sqwat/vela/render/effect/HitBubbleRenderer.java
+dev/sqwat/vela/mixin/world/AtmosphereFogMixin.java
+dev/sqwat/vela/mixin/world/ProceduralSkyMixin.java
+dev/sqwat/vela/mixin/world/HandShaderMixin.java
+dev/sqwat/vela/mixin/world/ShaderProjectionMixin.java
+dev/sqwat/vela/mixin/entity/HandProjectionAccessor.java
+dev/sqwat/vela/ShaderTextureUsageTest.java
+# Bobby's sky fog clamp hooks 26.x's camera render state
+de/johni0702/minecraft/bobby/mixin/GameRendererMixin.java
+de/johni0702/minecraft/bobby/mixin/LevelRendererMixin.java
+de/johni0702/minecraft/bobby/ext/GameRendererExt.java
+# tests of 26.x render types and the Vulkan shader compiler (shaderc ships with 26.x LWJGL only)
+dev/sqwat/vela/AppendOnlyRenderIndexTest.java
+dev/sqwat/vela/ShaderFogCompilationTest.java
+# the transform moved into item JSON only in 26.2; 1.21.11 skulls need no fallback
+dev/sqwat/vela/mixin/entity/LegacyHeadModelMixin.java
+# 26.x BufferBuilder (entityFormat, primitiveTopology); FastCubes falls back to the vanilla vertex path
+dev/sqwat/vela/mixin/perf/BufferBuilderQuadMixin.java
+# tests pinning 26.x bytecode names; MixinTargetAuditTest checks every mixin target against 1.21.11 instead
+dev/sqwat/vela/FarLifecycleTest.java
+dev/sqwat/vela/ItemHighlightTest.java
+dev/sqwat/vela/LocalCombatRulesTest.java
+dev/sqwat/vela/NativeHudTargetsTest.java
+dev/sqwat/vela/ParticleEventsContractTest.java
+dev/sqwat/vela/RecentMixinTargetsTest.java
+dev/sqwat/vela/TerrainAllocationMapTest.java
+dev/sqwat/vela/TerrainAllocationTest.java
+dev/sqwat/vela/UiIntegrationTargetsTest.java

@@ -1,3 +1,168 @@
 # Java 21: no unnamed variables
-patch com/terraformersmc/modmenu/mixin/MixinPauseScreen.java _ -> => button ->
-patch com/terraformersmc/modmenu/mixin/MixinTitleScreen.java _ -> => button ->
+# no render optimization screen (opt/** is dropped)
+patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java             Rect opt=new Rect(content.x(),cy+6,content.width(),27);button(g,opt,"Оптимизация рендера",false);controls.add(new Control("render-opt",opt));cy+=43; => 
+patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java                 case "render-opt"->{UiSounds.play(services,true);minecraft.gui.setScreen(new dev.sqwat.vela.opt.OptScreen(this));return true;} => 
+# 26.x split the HUD (Hud) from the screen holder (Gui, minecraft.gui); on 1.21.11 Gui is the HUD and Minecraft holds the screen
+class net.minecraft.client.gui.Hud=net.minecraft.client.gui.Gui
+patchre * \.gui\.hud\b => .gui
+patch * .gui.screen() => .screen
+patch * .gui.setScreen( => .setScreen(
+patch * .gui.overlay() => .getOverlay()
+patch * .gui.setOverlay( => .setOverlay(
+patch * .gui.toastManager() => .getToastManager()
+patch * gameRenderer.mainRenderTarget() => getMainRenderTarget()
+# ChunkPos is a class again: pack/unpack are asLong/new ChunkPos(long)
+patch * ChunkPos.pack( => ChunkPos.asLong(
+patch * ChunkPos.unpack( => new ChunkPos(
+# member renames by receiver type (GuiGraphics drawString/renderItem, ChunkPos fields, GuiRenderState.submitGuiElement)
+patch com/terraformersmc/modmenu/gui/ModsScreen.java drawContext.centeredText( => drawContext.drawCenteredString(
+patch com/terraformersmc/modmenu/gui/ModsScreen.java drawContext.text( => drawContext.drawString(
+patch com/terraformersmc/modmenu/gui/widget/entries/ModListEntry.java drawContext.text( => drawContext.drawString(
+patch com/terraformersmc/modmenu/gui/widget/DescriptionListWidget.java drawContext.text( => drawContext.drawString(
+patch com/terraformersmc/modmenu/gui/widget/entries/ParentEntry.java drawContext.text( => drawContext.drawString(
+patch com/terraformersmc/modmenu/util/DrawingUtil.java drawContext.text( => drawContext.drawString(
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java chunkPos.x() => chunkPos.x
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java chunkPos.z() => chunkPos.z
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java pos.x() => pos.x
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java pos.z() => pos.z
+patch de/johni0702/minecraft/bobby/FakeChunkManager.java playerChunkPos.x() => playerChunkPos.x
+patch de/johni0702/minecraft/bobby/FakeChunkManager.java playerChunkPos.z() => playerChunkPos.z
+patch de/johni0702/minecraft/bobby/Worlds.java chunkPos.pack() => chunkPos.toLong()
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java chunkPos.x() => chunkPos.x
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java chunkPos.z() => chunkPos.z
+patch de/johni0702/minecraft/bobby/mixin/ClientChunkCacheMixin.java pos.pack() => pos.toLong()
+patch de/johni0702/minecraft/bobby/mixin/ClientChunkCacheMixin.java pos.x() => pos.x
+patch de/johni0702/minecraft/bobby/mixin/ClientChunkCacheMixin.java pos.z() => pos.z
+patch dev/sqwat/vela/ui/hud/HudLayoutService.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/hud/PickupsHud.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/render/VelaDraw.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/ui/render/QuadBatch.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/module/utility/Far.java p.x() => p.x
+patch dev/sqwat/vela/module/utility/Far.java p.z() => p.z
+patch dev/sqwat/vela/mixin/hud/TabPingMixin.java g.text( => g.drawString(
+patch dev/sqwat/vela/module/visual/BrewViewer.java g.item( => g.renderItem(
+patch dev/sqwat/vela/module/visual/Crosshair.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/ui/render/DissolveBody.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/render/effect/WorldSprite.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/ui/Notifications.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/render/GlassSurface.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/ui/render/PngTextRenderer.java guiRenderState.addGuiElement( => guiRenderState.submitGuiElement(
+patch dev/sqwat/vela/ui/render/PngTextRenderer.java g.text( => g.drawString(
+patch dev/sqwat/vela/ui/render/ShulkerTooltip.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/render/StorageMarkerChrome.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/screen/MarkerPanel.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/screen/ItemHighlightScreen.java g.item( => g.renderItem(
+patch dev/sqwat/vela/ui/screen/StorageIndexScreen.java g.item( => g.renderItem(
+# 26.x renamed the GUI render methods to extract*: back to render* (GuiGraphics overloads, calls and mixin targets)
+patch * PlayerFaceRenderer.extractRenderState( => PlayerFaceRenderer.draw(
+patchre * \bextractRenderState\((?=(final )?GuiGraphics\b|Lnet/minecraft/client/gui/GuiGraphics;|drawContext\b|g\b|graphics\b) => render(
+patch * extractRenderStateWithTooltipAndSubtitles => renderWithTooltipAndSubtitles
+patchre * \bextract(Content|Background|Crosshair|Contents|CameraOverlays|ListItems|Effects|SavingIndicator|Image|DeferredSubtitles|DebugOverlay|SlotHighlightFront|EntityInInventoryFollowsMouse|DeferredElements)\b => render\1
+# Fabric API names on 1.21.11
+class net.fabricmc.fabric.api.client.command.v2.ClientCommands=net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+class net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper=net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+patch * KeyBindingHelper.registerKeyMapping( => KeyBindingHelper.registerKeyBinding(
+patch * .addClientSystemMessage( => .addMessage(
+patch * clientboundPlay() => playS2C()
+patch * Screens.getWidgets( => Screens.getButtons(
+patch * ScreenEvents.afterExtract( => ScreenEvents.afterRender(
+patch * ScreenEvents.beforeExtract( => ScreenEvents.beforeRender(
+patch * .nonEmptyItemCopyStream().forEach( => .nonEmptyItemsCopy().forEach(
+patch * levelExtractor => levelRenderer
+patchre * \b(\w+)\.gui\.isHidden\(\) => \1.options.hideGui
+patch de/johni0702/minecraft/bobby/Worlds.java source.getLevel() => source.getWorld()
+# camera matrices and frustums: 26.x keeps them on Camera, 1.21.11 passes them through renderLevel (LegacyCamera captures them)
+patchre * \b(\w+)\.getViewRotationProjectionMatrix\( => dev.sqwat.vela.compat.LegacyCamera.viewRotationProjection(\1,
+patchre * \b[\w.]+\.isPanoramicMode\(\) => dev.sqwat.vela.compat.LegacyCamera.panoramic()
+patchre * \b[\w.]+\.getCapturedFrustum\(\) => dev.sqwat.vela.compat.LegacyCamera.captured()
+patchre * \b(\w+)\.getCullFrustum\(\) => dev.sqwat.vela.compat.LegacyCamera.cull(\1)
+patch dev/sqwat/vela/ui/screen/ViewModelEditorScreen.java ((dev.sqwat.vela.mixin.entity.HandProjectionAccessor)minecraft.gameRenderer).vela$handProjection().getMatrix(new org.joml.Matrix4f()) => dev.sqwat.vela.compat.LegacyCamera.handProjection(new org.joml.Matrix4f())
+patch dev/sqwat/vela/render/shader/TemporalBlur.java float fov=camera.getFov(); => float fov=net.minecraft.client.Minecraft.getInstance().options.fov().get();
+# chat: 26.x's DisplayMode is 1.21.11's foreground boolean
+patch * Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode; => Z
+patch * ChatComponent.DisplayMode mode => boolean mode
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java net.minecraft.client.gui.components.ChatComponent.DisplayMode vela$chatPreview(net.minecraft.client.gui.components.ChatComponent.DisplayMode mode) => boolean vela$chatPreview(boolean mode)
+patch dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java net.minecraft.client.gui.components.ChatComponent.DisplayMode.FOREGROUND:mode => true:mode
+patch dev/sqwat/vela/mixin/screen/ChatPositionMixin.java extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess; => render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;
+patch dev/sqwat/vela/module/utility/ChatThreads.java chat.setVisibleMessageFilter( => ((dev.sqwat.vela.compat.ChatFilterAccess)chat).vela$setVisibleMessageFilter(
+patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java ScreenKeyboardEvents.allowCharType( => dev.sqwat.vela.compat.CharEvents.allowCharType(
+# single-file API differences
+patch dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java public boolean isPausing() => public boolean isPauseScreen()
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java new OptionsScreen(this, minecraft.options, false) => new OptionsScreen(this, minecraft.options)
+patch dev/sqwat/vela/ui/render/PngTextRenderer.java com.mojang.blaze3d.GpuFormat.RGBA8_UNORM => com.mojang.blaze3d.textures.TextureFormat.RGBA8
+patch dev/sqwat/vela/render/effect/WorldSprite.java import com.mojang.blaze3d.platform.BlendFactor; => import com.mojang.blaze3d.platform.SourceFactor;
+patch dev/sqwat/vela/render/effect/WorldSprite.java .withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.SRC_ALPHA,BlendFactor.ONE,BlendFactor.ZERO,BlendFactor.ONE))) => .withBlend(new BlendFunction(SourceFactor.SRC_ALPHA,com.mojang.blaze3d.platform.DestFactor.ONE,SourceFactor.ZERO,com.mojang.blaze3d.platform.DestFactor.ONE))
+patch dev/sqwat/vela/ui/render/DissolveBody.java type.prepare().textures().stream().filter(t->t.name().equals("Sampler0")).findFirst().orElse(null) => ((dev.sqwat.vela.mixin.compat.RenderTypeAccessor)type).vela$state().getTextures().get("Sampler0")
+# fake player: 1.21.11 collects equipment changes against lastEquipmentItems and has the 3-argument knockback
+patch dev/sqwat/vela/module/utility/FakePlayer.java var changed=collectEquipmentChanges(appliedEquipment); => var changed=((dev.sqwat.vela.mixin.compat.EquipmentAccess)(Object)this).vela$collectEquipmentChanges();
+patch dev/sqwat/vela/module/utility/FakePlayer.java changed.forEach((slot,stack)->appliedEquipment.put(slot,stack.copy())); => changed.forEach((slot,stack)->{appliedEquipment.put(slot,stack.copy());((dev.sqwat.vela.mixin.compat.EquipmentAccess)(Object)this).vela$lastEquipment().put(slot,stack.copy());});
+patch dev/sqwat/vela/module/utility/FakePlayer.java public void knockback(double strength,double x,double z,net.minecraft.world.damagesource.DamageSource source,float damage,boolean force) => public void knockback(double strength,double x,double z)
+patch dev/sqwat/vela/module/utility/FakePlayer.java super.knockback(strength,x,z,source,damage,force) => super.knockback(strength,x,z)
+patch dev/sqwat/vela/module/utility/FakePlayer.java dealDefaultKnockback(source,damage,false); => {double dx=0,dz=0;if(source.getSourcePosition()!=null){dx=source.getSourcePosition().x()-getX();dz=source.getSourcePosition().z()-getZ();}knockback(0.4F,dx,dz);}
+# IAS: keep the stonecutter branches below 26.2 (no remote friend list)
+patchre ru/vidtu/ias/IASMinecraft.java (?s)[ \t]*//\? if >= ?26\.2 \{\n(?:(?!//\?).)*?//\?\} else \{\n([ \t]*)/\*((?:(?!//\?).)*?)\*///\?\}\n => \1\2\n
+patchre ru/vidtu/ias/IASMinecraft.java (?s)[ \t]*//\? if >= ?26\.2 \{\n(?:(?!//\?).)*?//\?\}\n => 
+patchre ru/vidtu/ias/mixins/MinecraftAccessor.java (?s)[ \t]*//\? if >= ?26\.2 \{\n(?:(?!//\?).)*?//\?\} else \{\n([ \t]*)/\*((?:(?!//\?).)*?)\*///\?\}\n => \1\2\n
+patchre ru/vidtu/ias/mixins/MinecraftAccessor.java (?s)[ \t]*//\? if >= ?26\.2 \{\n(?:(?!//\?).)*?//\?\}\n => 
+# Bobby: ChunkPos is a class; ClientChunkCache keeps one set of loaded empty sections
+patch de/johni0702/minecraft/bobby/FakeChunk.java getPos().x() => getPos().x
+patch de/johni0702/minecraft/bobby/FakeChunk.java getPos().z() => getPos().z
+patch de/johni0702/minecraft/bobby/mixin/sodium06/SodiumClientLevelMixin.java getPos().x() => getPos().x
+patch de/johni0702/minecraft/bobby/mixin/sodium06/SodiumClientLevelMixin.java getPos().z() => getPos().z
+patch de/johni0702/minecraft/bobby/mixin/sodium06/SodiumClientPacketListenerMixin.java packet.pos().x() => packet.pos().x
+patch de/johni0702/minecraft/bobby/mixin/sodium06/SodiumClientPacketListenerMixin.java packet.pos().z() => packet.pos().z
+patch de/johni0702/minecraft/bobby/FakeChunkManager.java chunk.getPos().pack() => chunk.getPos().toLong()
+patchre de/johni0702/minecraft/bobby/FakeChunkManager.java [ \t]*clientChunkManager\.(added|removed)LoadedChunks\(\)\.\w+\(new ChunkPos\(x, z\)\.pack\(\)\);\n => 
+patch de/johni0702/minecraft/bobby/FakeChunkManager.java clientChunkManager.addedEmptySections() => clientChunkManager.getLoadedEmptySections()
+patch de/johni0702/minecraft/bobby/FakeChunkManager.java clientChunkManager.removedEmptySections() => new LongOpenHashSet()
+patchre de/johni0702/minecraft/bobby/FakeChunkStorage.java Optional<Identifier> generatorKey =\s*BuiltInRegistries\.CHUNK_GENERATOR\.getResourceKey\(FlatLevelSource\.CODEC\)\.map\(ResourceKey::identifier\); => var generatorKey = BuiltInRegistries.CHUNK_GENERATOR.getResourceKey(FlatLevelSource.CODEC);
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java nbt = upgradeChunkTag(nbt, -1, contextNbt, SharedConstants.getCurrentVersion().dataVersion().version()); => nbt = upgradeChunkTag(nbt, -1, contextNbt);
+# Mod Menu: 1.21.11's sprite button builder takes the message as its tooltip, and CenteredIcon has no sprite offsets
+patch com/terraformersmc/modmenu/gui/ModsScreen.java .tooltip(ModMenuScreenTexts.TOGGLE_FILTER_OPTIONS) => .withTootip()
+patch com/terraformersmc/modmenu/gui/widget/SmallModMenuButtonWidget.java super(width, height, message, spriteWidth, spriteHeight, spriteOffsetX, spriteOffsetY, sprite, onPress, tooltip, narration, switchToLoadingAfterPress) => super(width, height, message, spriteWidth, spriteHeight, sprite, onPress, tooltip, narration)
+# mixin targets: 1.21.11 draws (render*) where 26.x extracts render state (extract*/submit*)
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractHotbarAndDecorations" => method="renderHotbarAndDecorations"
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractChat" => method="renderChat"
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractBossOverlay" => method="renderBossOverlay"
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractScoreboardSidebar" => method="renderScoreboardSidebar"
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java method\s*=\s*"extractTabList" => method="renderTabList"
+patchre dev/sqwat/vela/mixin/hud/AnimatedHudMixin.java method\s*=\s*"extractItemHotbar" => method="renderItemHotbar"
+patchre dev/sqwat/vela/mixin/hud/AnimatedHudMixin.java method\s*=\s*"extractTabList" => method="renderTabList"
+patchre dev/sqwat/vela/mixin/hud/TabPingMixin.java method\s*=\s*"extractPingIcon" => method="renderPingIcon"
+patchre dev/sqwat/vela/mixin/screen/ChatPrivacyMixin.java method\s*=\s*"extractWidgetRenderState" => method="renderWidget"
+patchre dev/sqwat/vela/mixin/screen/ShulkerContainerMixin.java method\s*=\s*"extractTooltip" => method="renderTooltip"
+patchre dev/sqwat/vela/mixin/screen/ShulkerScreenMixin.java \w+DeferredElements\(IIF\)V => renderDeferredElements()V
+patchre dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/hud/TutorialToastMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/screen/AnimatedChatScreenMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/screen/AnimatedContainerMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/screen/ChatDragButtonMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/screen/FriendTabMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/screen/WastedDeathScreenStyleMixin.java method\s*=\s*"extractRenderState" => method="render"
+patchre dev/sqwat/vela/mixin/world/RenderFireMixin.java method\s*=\s*"submitFire" => method="renderFire"
+patchre dev/sqwat/vela/mixin/entity/ViewModelMixin.java method\s*=\s*"submitHandsWithItems" => method="renderHandsWithItems"
+patch dev/sqwat/vela/mixin/hud/NativeHudBoundsMixin.java method="text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/util/FormattedCharSequence;IIIZ)V" => method="drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/util/FormattedCharSequence;IIIZ)V"
+# the screen holder: Minecraft.setScreen; the HUD pass: GameRenderer.render (26.x: Gui)
+patch dev/sqwat/vela/mixin/screen/WastedHoldScreenMixin.java @Mixin(Gui.class) => @Mixin(net.minecraft.client.Minecraft.class)
+patch dev/sqwat/vela/mixin/screen/WastedDeathScreenMixin.java Lnet/minecraft/client/gui/Gui;setScreen => Lnet/minecraft/client/Minecraft;setScreen
+patch dev/sqwat/vela/mixin/screen/WastedDeathScreenMixin.java (Gui gui,Screen screen => (net.minecraft.client.Minecraft gui,Screen screen
+patch dev/sqwat/vela/mixin/hud/DeathRecapHudMixin.java @Mixin(Gui.class) => @Mixin(net.minecraft.client.renderer.GameRenderer.class)
+patchre dev/sqwat/vela/mixin/hud/DeathRecapHudMixin.java method\s*=\s*"extractRenderState" => method="render(Lnet/minecraft/client/DeltaTracker;Z)V"
+# camera: Camera.setup places the camera (26.x: alignWithEntity)
+patchre dev/sqwat/vela/mixin/camera/FreelookCameraMixin.java method\s*=\s*"alignWithEntity" => method="setup"
+patchre dev/sqwat/vela/mixin/camera/DeathRecapCameraMixin.java method\s*=\s*"alignWithEntity" => method="setup"
+patch dev/sqwat/vela/mixin/camera/DeathRecapCameraMixin.java vela$replay(float partial,CallbackInfo ci) => vela$replay(net.minecraft.world.level.Level level,net.minecraft.world.entity.Entity entity,boolean detachedArg,boolean mirror,float partial,CallbackInfo ci)
+patch dev/sqwat/vela/mixin/hud/SteadyHandsMixin.java bobView(Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V => bobView(Lcom/mojang/blaze3d/vertex/PoseStack;F)V
+patch dev/sqwat/vela/mixin/hud/SteadyHandsMixin.java (GameRenderer renderer,CameraRenderState camera,PoseStack pose,Operation<Void> original) => (GameRenderer renderer,PoseStack pose,float partial,Operation<Void> original)
+patch dev/sqwat/vela/mixin/hud/SteadyHandsMixin.java original.call(renderer,camera,pose) => original.call(renderer,pose,partial)
+# 1.21.11 command suggestions keep no parse-kind flags
+patch dev/sqwat/vela/mixin/screen/LocalCommandSuggestionsMixin.java @Shadow private boolean keepSuggestions,currentParseIsCommand,currentParseIsMessage; => @Shadow private boolean keepSuggestions;
+patch dev/sqwat/vela/mixin/screen/LocalCommandSuggestionsMixin.java currentParseIsCommand=currentParseIsMessage=false; => 
+# BrewViewer: 1.21.11 ItemStack needs a bootstrapped registry, so the empty snapshot is built on first use
+patch dev/sqwat/vela/module/visual/BrewViewer.java private static final Snapshot EMPTY= => private static final class Empty{static final Snapshot EMPTY=
+patch dev/sqwat/vela/module/visual/BrewViewer.java ItemStack.EMPTY,ItemStack.EMPTY,0,0,0,false); => ItemStack.EMPTY,ItemStack.EMPTY,0,0,0,false);}
+patch dev/sqwat/vela/module/visual/BrewViewer.java if(s==null)return EMPTY; => if(s==null)return Empty.EMPTY;
+# 1.21.11 tryExtractRenderState has no `global` flag (26.x passes it for block entities drawn regardless of the frustum)
+patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java ,ModelFeatureRenderer.CrumblingOverlay breaking,boolean global){ => ,ModelFeatureRenderer.CrumblingOverlay breaking){
+patch dev/sqwat/vela/mixin/entity/StorageVisibilityMixin.java AutomaticVisibility.outsideView(entity,global) => AutomaticVisibility.outsideView(entity,false)

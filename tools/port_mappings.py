@@ -564,8 +564,9 @@ def locate(files, token):
 
 def class_forms(old, new):
     """Spellings of a class in Java source and in mixin strings: a.b.Outer.Inner, a.b.Outer$Inner, a/b/Outer$Inner."""
-    return [(old.replace('/', '.').replace('$', '.'), new.replace('/', '.').replace('$', '.')),
-            (old.replace('/', '.'), new.replace('/', '.')), (old, new)]
+    java = (old.replace('/', '.').replace('$', '.'), new.replace('/', '.').replace('$', '.'))
+    # a top-level class that became a nested one keeps the Java spelling (a.b.Outer.Inner) in source
+    return [java] + ([(old.replace('/', '.'), new.replace('/', '.'))] if '$' in old else []) + [(old, new)]
 
 def rewrite(text, class_renames, member_renames, gone=()):
     """class_renames: [(old, new)] internal names; member_renames: [(kind, old_name, new_name)] for this file;
@@ -822,6 +823,7 @@ def rewrite_main(argv):
         res = into / sset / 'resources'
         for cfg in res.glob('*.json') if res.is_dir() else ():
             if not cfg.name.endswith('mixins.json'): continue
+            if cfg not in written: continue  # left over from an earlier run and dropped since
             d = json.loads(cfg.read_text('utf-8'))
             pkg = d.get('package', '').replace('.', '/')
             # written this run, not merely left over from an earlier one (a file dropped since is deleted only at the end)
@@ -836,6 +838,14 @@ def rewrite_main(argv):
                     e = f.relative_to(own_pkg).with_suffix('').as_posix().replace('/', '.')
                     if e not in listed and has(e) and '@Mixin(' in f.read_text('utf-8'): d.setdefault('client', []).append(e); listed.add(e)
             put(cfg, (json.dumps(d, indent=2, ensure_ascii=False) + '\n').encode('utf-8'))
+    # fabric.mod.json lists only the mixin configs this module still has (drop.txt may drop one, e.g. vela-opt.mixins.json)
+    fmj = into / 'main' / 'resources' / 'fabric.mod.json'
+    if fmj in written:
+        text = fmj.read_text('utf-8')
+        gone_cfgs = [n for n in re.findall(r'"([\w.-]+mixins[\w.-]*\.json)"', text)
+                     if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
+        for n in gone_cfgs: text = re.sub(r',\s*"' + re.escape(n) + '"|"' + re.escape(n) + r'",\s*', '', text)
+        if gone_cfgs: put(fmj, text.encode('utf-8'))
     for layer in layers:
         if layer['patches']: sys.exit(f'{layer["module"].name}: patches for files that are not compiled: {", ".join(layer["patches"])}')
         for (o, _), h in zip(layer['everywhere'], layer['hits']):

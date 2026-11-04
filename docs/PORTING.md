@@ -148,7 +148,8 @@ An empty replacement (`=> ` at the end of the line) deletes the text. Class rena
 - every `method = "..."` selector matches (with several selectors one match is enough; `*` and `/regex/` selectors are skipped, `require = 0` injectors too);
 - `@At` `INVOKE`/`FIELD`/`NEW` targets are still in the method;
 - an `@Inject` handler takes all target arguments or none, then the `CallbackInfo`. A bare name targets every overload (bridge methods aside), so it has to fit each one; give a descriptor when a version adds an overload;
-- a `@WrapOperation` handler captures only arguments the target method has.
+- a `@WrapOperation` handler captures only arguments the target method has;
+- a `@ModifyExpressionValue`/`@ModifyReturnValue` handler captures only arguments the target method has, after the value.
 
 Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into other mods stay optional.
 
@@ -157,22 +158,20 @@ Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into 
 - 26.3 compiles shaders to SPIR-V. `compat/SpirvGlsl` (applied by `SpirvGlslMixin` to `velaclient:` and `velaopt:` shaders, files and the custom sky) adds `layout(location = N)` to every stage input and output and turns `gl_VertexID` into `gl_VertexIndex`. Varyings take their location from their name (`texCoord` is 0, as in vanilla `screenquad.vsh`); a new varying name goes into `SpirvGlsl.VARYINGS`.
 - `drop.txt` drops `LevelRendererOutlineMixin`: 26.3 already skips the outline pass when nothing glows.
 
-### 1.21.11 (work in progress)
+### 1.21.11
 
-`versions/1.21.11` holds `wip.txt`, so the build leaves it out unless `-Pwip` is given:
+`versions/1.21.11` builds with `fabric-loom-remap` and Mojang's mappings (JDK 25 compiles it with `--release 21`):
 
 ```bash
 cd versions
-./gradlew -Pwip :1.21.11:compileJava   # JDK 25 compiles it with --release 21
+./gradlew :1.21.11:build
+./gradlew :1.21.11:runClient
 ```
 
-It builds with `fabric-loom-remap` and Mojang's mappings, and `manual.txt` already replaces the unnamed variables (`_`) that Java 21 lacks. The first full compile gives about 1080 errors. Most come from APIs that 26.x added:
-
-- the GUI: `minecraft.gui.screen()`/`setScreen` (1.21.11: `minecraft.screen`/`minecraft.setScreen`), the `Hud` class, `GuiGraphics` `text`/`centeredText`/`item` (1.21.11: `drawString`/`drawCenteredString`/`renderItem`) and the `extractRenderState`/`extractBackground` screen methods (1.21.11: `render`/`renderBackground`);
-- rendering: render states (`LightmapRenderState`, `gameRenderState()`), `ModelFeatureRenderer$Submit`, `BlendFactor`, `GpuFormat`, `ColorTargetState`, bind groups, the Vulkan classes, `GuiItemAtlas`, `Projection`, `FeatureFrameContext`;
-- the friends service (`FriendsService`, `RemoteFriendListUpdateHandler`).
-
-Files with the most errors: `opt/bench/Bench`, `opt/gl/OcclusionCull`, Mod Menu's `ModsScreen`, `opt/cpu/CorePin`, `opt/OptScreen`, the shader renderers and the HUD caches. Next steps: `patch *` lines for the GUI calls, `compat/` classes for the rest, and `drop.txt` for the GPU optimizations that need 26.x (frame buffer cache, Vulkan rings, GPU scale, HUD GPU cache).
+- `manual.txt` replaces the unnamed variables (`_`) that Java 21 lacks, renames the 26.x GUI calls (`text`/`centeredText`/`item` to `drawString`/`drawCenteredString`/`renderItem`, `extract*` render methods to `render*`) and fixes mixin handlers whose target signatures differ (`patchre` lines match `method\s*=\s*"..."`). Per-file `patch` lines run before `patch *` lines, so they match the root text.
+- `drop.txt` leaves out the velaopt stack (`dev/sqwat/vela/opt/**`, `vela-opt.mixins.json`), the 26.x GPU, Vulkan, HUD cache and input-reload mixins, `BufferBuilderQuadMixin` (FastCubes falls back to the vanilla vertex path), the shader sky, fog and hand passes, Bobby's sky fog hooks, `LegacyHeadModelMixin`, and the tests that pin 26.x bytecode names (`MixinTargetAuditTest` checks every target against 1.21.11 instead).
+- The module's `src/` replaces what has a different shape on 1.21.11: the camera, FOV, zoom and aspect ratio mixins (`Camera.setup`, `GameRenderer.getFov`), the menu transition (`Minecraft.setScreen`, `Screen.renderWithTooltipAndSubtitles`), the block outline, the `compat/` accessors, stub shader renderers and the HUD cache, and Mod Menu's title and pause screen mixins (1.21.11's pause menu has no icon row, so both button styles add the full-width button).
+- `tools/port_mappings.py` keeps only the mixin configs that are still written, so a dropped config is not listed in `fabric.mod.json`.
 
 ### Layers (`base.txt`)
 

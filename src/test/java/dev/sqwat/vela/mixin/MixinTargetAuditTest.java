@@ -41,6 +41,9 @@ class MixinTargetAuditTest {
     private static final String INVOKER = "Lorg/spongepowered/asm/mixin/gen/Invoker;";
     private static final String INJECT = "Lorg/spongepowered/asm/mixin/injection/Inject;";
     private static final String WRAP_OPERATION = "Lcom/llamalad7/mixinextras/injector/wrapoperation/WrapOperation;";
+    private static final Set<String> MODIFY_VALUE = Set.of(
+        "Lcom/llamalad7/mixinextras/injector/ModifyExpressionValue;",
+        "Lcom/llamalad7/mixinextras/injector/ModifyReturnValue;");
 
     private final Map<String, Optional<ClassNode>> classes = new HashMap<>();
 
@@ -146,6 +149,9 @@ class MixinTargetAuditTest {
                 if (a.desc.equals(WRAP_OPERATION))
                     for (var m : candidates) if (!wrapArgsFit(m, handler))
                         problems.add(where + ": @WrapOperation handler " + handler.desc + " captures arguments " + target.name + "." + m.name + m.desc + " does not have");
+                if (MODIFY_VALUE.contains(a.desc))
+                    for (var m : candidates) if (!capturedArgsFit(m, handler, 1))
+                        problems.add(where + ": value modifier " + handler.desc + " captures arguments " + target.name + "." + m.name + m.desc + " does not have");
             }
             if (!matched) problems.add(where + ": method " + String.join(" / ", missing) + " is gone from " + target.name);
         }
@@ -164,15 +170,20 @@ class MixinTargetAuditTest {
         return true;
     }
 
-    /** After the Operation a wrapper may capture the target's first arguments; @Local/@Share ones are skipped. */
+    /** After the Operation a wrapper may capture the target's first arguments. */
     private static boolean wrapArgsFit(MethodNode target, MethodNode handler) {
-        var targetArgs = Type.getArgumentTypes(target.desc);
         var handlerArgs = Type.getArgumentTypes(handler.desc);
         int op = -1;
         for (int i = 0; i < handlerArgs.length; i++) if (handlerArgs[i].getInternalName().equals("com/llamalad7/mixinextras/injector/wrapoperation/Operation")) { op = i; break; }
-        if (op < 0) return true;
+        return op < 0 || capturedArgsFit(target, handler, op + 1);
+    }
+
+    /** From handler argument {@code from} on, the handler may capture the target's first arguments; @Local/@Share ones are skipped. */
+    private static boolean capturedArgsFit(MethodNode target, MethodNode handler, int from) {
+        var targetArgs = Type.getArgumentTypes(target.desc);
+        var handlerArgs = Type.getArgumentTypes(handler.desc);
         int captured = 0;
-        for (int i = op + 1; i < handlerArgs.length; i++) {
+        for (int i = from; i < handlerArgs.length; i++) {
             if (annotated(handler.visibleParameterAnnotations, i) || annotated(handler.invisibleParameterAnnotations, i)) continue;
             if (captured >= targetArgs.length || !handlerArgs[i].equals(targetArgs[captured])) return false;
             captured++;

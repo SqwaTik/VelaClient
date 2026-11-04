@@ -1,2 +1,0 @@
-Work in progress: the first full compile against 1.21.11 gives about 1080 errors (see docs/PORTING.md).
-Build it with: ./gradlew -p versions -Pwip :1.21.11:compileJava

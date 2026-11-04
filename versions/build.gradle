@@ -125,7 +125,8 @@ subprojects {
         filesMatching('fabric.mod.json') {
             expand 'version': props.version
             filter { String line ->
-                line.replaceFirst(/("minecraft":\s*)"[^"]*"/, "\$1\"${props.minecraft}\"").replaceFirst(/("java":\s*)"[^"]*"/, "\$1\"${props.java}\"")
+                line.replaceFirst(/Minecraft 26\.2\b/, "Minecraft ${project.minecraft_version}")
+                    .replaceFirst(/("minecraft":\s*)"[^"]*"/, "\$1\"${props.minecraft}\"").replaceFirst(/("java":\s*)"[^"]*"/, "\$1\"${props.java}\"")
             }
         }
         duplicatesStrategy = DuplicatesStrategy.FAIL

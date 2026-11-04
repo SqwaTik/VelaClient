@@ -11,9 +11,11 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Fast model building: mob and player models are written into the vertex buffer a whole cube at a time instead of vertex by vertex, which takes noticeable load off the render thread on Vulkan. It can be turned off in the optimization settings.
 - Minecraft 26.3 build: the same Vela for 26.3, built from this code by a port layer (versions/26.3). Shaders, the first-person hands, the sky and the HUD cache are adapted to the new renderer; a test checks every mixin target against the game before it starts.
 - NeoForge builds for Minecraft 26.2 and 26.3 (versions/26.2-neoforge, versions/26.3-neoforge, sharing versions/neoforge): the same Vela, its Fabric API calls answered by NeoForge events, with a configuration screen in the NeoForge mod list. The hotbar's Drag Mode offset and the menu transition follow NeoForge's GUI layers.
+- Minecraft 1.21.11 build (Fabric, versions/1.21.11): the same Vela on 1.21.11, ported by the port layer. The HUD, screens, camera, zoom, Freelook, Death Recap, Wasted and the bundled Mod Menu, Bobby and IAS work. The render optimizations written for the 26.x renderer (the velaopt set, Vulkan and GPU caches, HUD cache) and the shader-based sky, fog and hand effects are left out of this build. The Mod Menu button in the pause menu is always the full-width one.
 
 ### Fixed
 - Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.
+- The loading screen, the menu header and the farewell screen show the Minecraft version that is running instead of always 26.2, and the mod description in the mod list names the right version.
 
 ## 0.2.0 — 2026-10-27
 

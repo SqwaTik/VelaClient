@@ -881,6 +881,14 @@ def rewrite_main(argv):
                      if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
         for n in gone_cfgs: text = re.sub(r',\s*"' + re.escape(n) + '"|"' + re.escape(n) + r'",\s*', '', text)
         if gone_cfgs: put(fmj, text.encode('utf-8'))
+    # neoforge.mods.toml too: a [[mixins]] entry for a dropped config stops FML
+    toml = into / 'main' / 'resources' / 'META-INF' / 'neoforge.mods.toml'
+    if toml in written:
+        text = toml.read_text('utf-8')
+        gone = [n for n in re.findall(r'config\s*=\s*"([\w.-]+\.json)"', text)
+                if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
+        for n in gone: text = re.sub(r'\[\[mixins\]\]\s*config\s*=\s*"' + re.escape(n) + r'"[ \t]*\n(\s*\n)?', '', text)
+        if gone: put(toml, text.encode('utf-8'))
     for layer in layers:
         if layer['patches']: sys.exit(f'{layer["module"].name}: patches for files that are not compiled: {", ".join(layer["patches"])}')
         # a lower layer's `patch *` may only have matched files an upper layer drops (checked when that layer is built)

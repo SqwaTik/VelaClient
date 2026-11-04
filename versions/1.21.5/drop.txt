@@ -1,6 +1,8 @@
 # velaopt (the render optimization screen and its mixins) is written against 1.21.11's and 26.x's renderer
 dev/sqwat/vela/opt/**
 vela-opt.mixins.json
+# its render scale shader imports globals.glsl (1.21.6+), and 1.21.5's ShaderManager compiles every shader of a pack
+assets/velaopt/shaders/**
 # 1.21.11's shader extras: the hand flame, fog, sky and projection hooks (the shader renderers are stubs in src/)
 dev/sqwat/vela/render/shader/HandFlameRenderer.java
 dev/sqwat/vela/render/shader/ShaderCamera.java

@@ -161,3 +161,6 @@ patchre dev/sqwat/vela/SelfTagTest.java /net/minecraft/client/renderer/entity/pl
 patchre dev/sqwat/vela/SelfTagTest.java \(Lnet/minecraft/world/entity/[\w/]+;D\)Z => (Lnet/minecraft/world/entity/LivingEntity;D)Z
 patch dev/sqwat/vela/UtilitiesTest.java "entity.NameTagTextCacheMixin", => 
 patch dev/sqwat/vela/UtilitiesTest.java "world.DistanceFogMixin", => 
+
+# 1.21.5 VertexConsumer.addVertex takes a Matrix4f (Matrix4fc came in 1.21.6)
+patch dev/sqwat/vela/mixin/perf/VertexPositionsMixin.java addVertex(Matrix4fc pose, => addVertex(org.joml.Matrix4f pose,

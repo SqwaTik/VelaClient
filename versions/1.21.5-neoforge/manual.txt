@@ -1,0 +1,31 @@
+# NeoForge 1.21.5: the 1.21.11 NeoForge build (base.txt: 1.21.11, the shared neoforge layer, 1.21.11-neoforge) with the
+# 1.21.5 layer on top, so the 1.21.5 renames, patches and replacements also reach the NeoForge sources.
+
+# 1.21.5 patches for Fabric API calls: NeoForge has its own (the shim's HUD element registry, NeoForge's mod list)
+unpatch dev/sqwat/vela/VelaClient.java import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+unpatch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this)
+
+# NeoForge 21.5: key categories are plain strings (no KeyMapping.Category, no registerCategory)
+patchre dev/sqwat/vela/neoforge/NeoEvents.java \n    private static final List<KeyMapping\.Category> VANILLA_CATEGORIES = [^;]*; => 
+patchre dev/sqwat/vela/neoforge/NeoEvents.java (?s)var categories = new HashSet<KeyMapping\.Category>\(\);\n(\s*)for \(var mapping : KeyMappingHelper\.PENDING\) \{.*?e\.register\(mapping\);\n\s*\} => for (var mapping : KeyMappingHelper.PENDING) e.register(mapping);
+# client packets go through PacketDistributor (ClientPacketDistributor came later)
+patch dev/sqwat/vela/neoforge/shim/fabric/api/networking/v1/PacketSender.java net.neoforged.neoforge.client.network.ClientPacketDistributor => net.neoforged.neoforge.network.PacketDistributor
+patch dev/sqwat/vela/neoforge/shim/fabric/api/networking/v1/PacketSender.java ClientPacketDistributor.sendToServer(payload) => PacketDistributor.sendToServer(payload)
+# FML 7: FMLLoader's methods are static; opt/platform (NeoPlatform) is dropped with velaopt
+patch dev/sqwat/vela/neoforge/shim/loader/api/FabricLoader.java import dev.sqwat.vela.opt.platform.NeoPlatform; => 
+patch * FMLLoader.getCurrent(). => FMLLoader.
+patch dev/sqwat/vela/neoforge/shim/loader/api/FabricLoader.java NeoPlatform.mod(id) => FMLLoader.getLoadingModList().getMods().stream().filter(mod -> mod.getModId().equals(id)).findFirst()
+# the 1.21.5 layer gives Vela Fabric 0.128's mouse click and key press callbacks (plain arguments); typed characters go through compat.CharEvents
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenMouseEvents.java boolean allowMouseClick(Screen screen, MouseButtonEvent event); => boolean allowMouseClick(Screen screen, double mouseX, double mouseY, int button);
+patch dev/sqwat/vela/neoforge/shim/fabric/api/client/screen/v1/ScreenKeyboardEvents.java boolean allowKeyPress(Screen screen, KeyEvent event); => boolean allowKeyPress(Screen screen, int key, int scancode, int modifiers);
+patch dev/sqwat/vela/neoforge/NeoEvents.java l.allowMouseClick(e.getScreen(), e.getMouseButtonEvent()) => l.allowMouseClick(e.getScreen(), e.getMouseX(), e.getMouseY(), e.getButton())
+patch dev/sqwat/vela/neoforge/NeoEvents.java l.allowKeyPress(e.getScreen(), e.getKeyEvent()) => l.allowKeyPress(e.getScreen(), e.getKeyCode(), e.getScanCode(), e.getModifiers())
+patch dev/sqwat/vela/neoforge/NeoEvents.java l.allowCharType(e.getScreen(), e.getCharacterEvent()) => l.allowCharType(e.getScreen(), new dev.sqwat.vela.compat.input.CharacterEvent(e.getCodePoint(), e.getModifiers()))
+# 1.21.5's hotbar group layers: the experience bar and the jump meter (1.21.6 merged them into the contextual info bar)
+patch dev/sqwat/vela/neoforge/NeoHud.java VanillaGuiLayers.CONTEXTUAL_INFO_BAR_BACKGROUND, VanillaGuiLayers.EXPERIENCE_LEVEL, VanillaGuiLayers.CONTEXTUAL_INFO_BAR, => VanillaGuiLayers.EXPERIENCE_BAR, VanillaGuiLayers.JUMP_METER, VanillaGuiLayers.EXPERIENCE_LEVEL,
+patch dev/sqwat/vela/neoforge/NeoHud.java e.getGuiGraphics().pose().popMatrix() => dev.sqwat.vela.compat.gui.Pose2D.of(e.getGuiGraphics()).popMatrix()
+# the title screen's Mods button (the unpatch above also took out 1.21.11-neoforge's form of it)
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this) => new net.neoforged.neoforge.client.gui.ModListScreen(this)
+
+# 1.21.5 Camera.setup takes a BlockGetter (the 1.21.5 layer patch is skipped since 1.21.11/src replaces the file)
+patch dev/sqwat/vela/mixin/camera/BuiltinCameraMixin.java (Level level, => (net.minecraft.world.level.BlockGetter level,

@@ -1,6 +1,3 @@
-# no render optimization screen (opt/** is dropped)
-patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java             Rect opt=new Rect(content.x(),cy+6,content.width(),27);button(g,opt,"Оптимизация рендера",false);controls.add(new Control("render-opt",opt));cy+=43; => 
-patchre dev/sqwat/vela/ui/screen/VelaSettingsScreen.java [ \t]*case "render-opt"->\{[^\n]*OptScreen\(this\)\);return true;\} => 
 # 1.21.5 has no input event records: Vela's screens take the old (x, y, button) and (key, scancode, modifiers) arguments
 class net.minecraft.client.input.MouseButtonEvent=dev.sqwat.vela.compat.input.MouseButtonEvent
 class net.minecraft.client.input.MouseButtonInfo=dev.sqwat.vela.compat.input.MouseButtonInfo
@@ -167,3 +164,9 @@ patch dev/sqwat/vela/UtilitiesTest.java "world.DistanceFogMixin", =>
 
 # 1.21.5 VertexConsumer.addVertex takes a Matrix4f (Matrix4fc came in 1.21.6)
 patch dev/sqwat/vela/mixin/perf/VertexPositionsMixin.java addVertex(Matrix4fc pose, => addVertex(org.joml.Matrix4f pose,
+# FarLeaves: 1.21.5 sorts terrain by RenderType (ChunkSectionLayer is 1.21.6+)
+patch dev/sqwat/vela/opt/block/FarLeaves.java import net.minecraft.client.renderer.chunk.ChunkSectionLayer; => import net.minecraft.client.renderer.RenderType;
+patch dev/sqwat/vela/opt/block/FarLeaves.java ChunkSectionLayer.SOLID => RenderType.solid()
+patch dev/sqwat/vela/opt/block/FarLeaves.java ChunkSectionLayer => RenderType
+# PoseStack.Pose.set is package-private on 1.21.5: the two matrices copied instead
+patch dev/sqwat/vela/opt/entity/PosePool.java pooled.set(pose); => pooled.pose().set(pose.pose()); pooled.normal().set(pose.normal());

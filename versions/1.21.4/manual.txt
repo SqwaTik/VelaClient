@@ -61,3 +61,5 @@ patchre dev/sqwat/vela/module/utility/ChatMarkupTest.java class ChatMarkupTest \
 # 1.21.4 finishes the reload in LoadingOverlay.render (later versions do it in tick), which Vela cancels, so the mixin runs that step itself
 patch dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java @Shadow @Final private ReloadInstance reload; => @Shadow @Final private ReloadInstance reload; @Shadow @Final private java.util.function.Consumer<java.util.Optional<Throwable>> onFinish;
 patch dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java vela$clock+=Math.min(seconds,1/30f); => vela$clock+=Math.min(seconds,1/30f); if(fadeOutStart==-1L&&reload.isDone()&&(!fadeIn||now-fadeInStart>=1000L)){try{reload.checkExceptions();onFinish.accept(java.util.Optional.empty());}catch(Throwable error){onFinish.accept(java.util.Optional.of(error));}fadeOutStart=Util.getMillis();if(minecraft.screen!=null)minecraft.screen.init(minecraft,g.guiWidth(),g.guiHeight());}
+# FarLeaves: 1.21.4 small plants are BushBlock (VegetationBlock is 1.21.5+)
+patch dev/sqwat/vela/opt/block/FarLeaves.java VegetationBlock => BushBlock

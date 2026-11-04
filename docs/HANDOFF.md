@@ -11,6 +11,7 @@ Vela — клиентский мод для Minecraft 26.2 на Fabric: свой
 | Мод (этот репозиторий) | https://github.com/SqwaTik/VelaClient, ветка по умолчанию `main` |
 | Лаунчер | https://github.com/SqwaTik/VelaLauncher, папка `../vela-launcher` |
 | Порты на другие версии и NeoForge | ветка `port/multiversion`, рабочая копия `../vela-ports` |
+| Серверный плагин Vela Rules | `server-plugin/`, своя сборка: `../gradlew -p server-plugin build` |
 
 Версии зафиксированы в `gradle.properties`: Minecraft 26.2, Fabric Loader 0.20.1, Fabric API 0.159.0+26.2, Loom 1.17.20, мод `mod_version=0.2.1`.
 
@@ -137,7 +138,7 @@ md5sum build/libs/vela-client-0.2.1.jar "$R" "$S" "$L"
 
 **Выпущено:** 0.2.0 опубликован на GitHub. 0.2.1 закоммичен (`b376843`), но релиза на GitHub ещё нет.
 
-**Сделано после 0.2.1, лежит в рабочей копии ветки `fix/framegen-upscaler-shaders-sounds` и не закоммичено:**
+**Сделано после 0.2.1, в `main`, но ещё не выпущено:**
 - **Быстрая сборка моделей.** Кубы мобов и игроков пишутся в буфер целиком, буквы — целыми глифами (`CubeLayout`, `FastCubes`, `QuadSink`, `GlyphQuadMixin`). Сильно разгружает поток рендера на Vulkan.
 - **Атлас карт.** Карты в рамках рисуются из общих текстур 2048x2048 (`MapAtlas`, `MapRendererAtlasMixin`, `MapInstanceUploadMixin`). Одинаковая карта повторно не загружается.
 - **Толпы игроков.** Поиск скина по нику больше не гоняет regex на каждом кадре (`NameSkins`).
@@ -151,7 +152,11 @@ md5sum build/libs/vela-client-0.2.1.jar "$R" "$S" "$L"
   - Сцена `-PcrowdScene`.
 - **Инструмент портов** `tools/port_mappings.py` и описание к нему `docs/PORTING.md`.
 
-Эти изменения стоит закоммитить и, по решению владельца, выпустить как 0.2.1 или следующую версию.
+- **Отключение функций сервером.**
+  - Без плагина: сервер отправляет системное сообщение `velaclient:disable <id> ...`, например через `/tellraw`. Код в `ServerOptOut.chatRequest`.
+  - Через плагин Vela Rules (`server-plugin/`) для Paper и Spigot: в его `config.yml` перечислены все модули Vela. Тест `ServerRulesTest` следит, чтобы список совпадал с модулями.
+
+Выпустить это нужно релизом 0.2.1 или следующей версии, по решению владельца. В релиз приложить ещё и jar плагина: `../gradlew -p server-plugin build`, файл появится в `server-plugin/build/libs/`.
 
 **Порты, ветка `port/multiversion`** (`../vela-ports`, последний коммит `7d76ff0`, PR пока не открыт). Отдельная сборка `versions/`, по модулю на версию, общий код из `src/` переписывается под каждую:
 
@@ -169,7 +174,7 @@ md5sum build/libs/vela-client-0.2.1.jar "$R" "$S" "$L"
 
 ## Что осталось
 
-1. Закоммитить текущую работу (см. выше) и решить, когда выпускать.
+1. Решить, когда выпускать сделанное после 0.2.1, и выпустить вместе с jar плагина Vela Rules.
 2. Порты:
    - доделать 1.21.5: в нём нет GUI render state, submit node collector, записей событий ввода, `KeyMapping.Category` и представлений GPU-текстур, всё это описано в PORTING.md;
    - дальше идут 1.21.4, 1.20.1, 1.19.4 и 1.16.5. Им нужен Java 21, 17 или 8, а значит, понадобится отдельный слой без новых возможностей языка;

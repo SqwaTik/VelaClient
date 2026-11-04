@@ -26,6 +26,10 @@ public final class VelaClientGameTest implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context){
         // 1. Every mixin target loads and every injection applies; a broken hook fails here, not in a match.
         context.runOnClient(mc->org.spongepowered.asm.mixin.MixinEnvironment.getCurrentEnvironment().audit());
+        // The window is opened at the monitor's size (--width/--height from build.gradle, -PbenchSize=WxH), not the
+        // gametest's 854x480: at a fifth of the pixels the GPU's share of a frame would barely show.
+        windowSize=context.computeOnClient(mc->mc.getWindow().getWidth()+"x"+mc.getWindow().getHeight());
+        System.out.println("[Vela gametest] window "+windowSize);
 
         // 2. Vela screens render without errors.
         // Every dashboard section renders (module cards, markers, friends, configs).
@@ -145,6 +149,64 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                     int a=withOpt.get(withOpt.size()/2),b=withoutOpt.get(withoutOpt.size()/2);
                     System.out.println("[Vela gametest] Optimization "+opt.id()+": on "+a+" FPS, off "+b+" FPS ("+(a>=b?"+":"")+Math.round(100f*(a-b)/Math.max(1,b))+"%)");
                     if(opt.id().equals("hud_cache"))context.takeScreenshot("vela-hud-cache");
+                }
+            }
+            // 6b. Optional (-PcrowdScene): a crowd of armoured players and a wall of map art, the scenes that cost the most
+            //     on servers, then each optimization against itself switched off.
+            if(Boolean.getBoolean("vela.crowdScene")){
+                var origin=context.computeOnClient(mc->mc.player.blockPosition());
+                int ox=origin.getX(),oy=origin.getY(),oz=origin.getZ();
+                world.getServer().runCommand("kill @e[type=!player]");
+                // Map art: 16 x 8 framed maps on a wall, each filled with a pattern so every pixel differs.
+                world.getServer().runCommand("fill "+(ox-8)+" "+oy+" "+(oz+22)+" "+(ox+7)+" "+(oy+7)+" "+(oz+22)+" minecraft:stone");
+                var mapIds=world.getServer().computeOnServer(server->{
+                    var level=server.overworld();var ids=new ArrayList<Integer>();
+                    for(int i=0;i<128;i++){
+                        var id=level.getFreeMapId();
+                        var data=net.minecraft.world.level.saveddata.maps.MapItemSavedData.createFresh(0,0,(byte)0,false,false,level.dimension()).locked();
+                        for(int x=0;x<128;x++)for(int y=0;y<128;y++)data.setColor(x,y,(byte)(4+((x*7+y*13+i*31)%240)));
+                        level.setMapData(id,data);ids.add(id.id());
+                    }
+                    return ids;
+                });
+                for(int i=0;i<mapIds.size();i++){
+                    int x=ox-8+i%16,y=oy+7-i/16;
+                    world.getServer().runCommand("summon item_frame "+x+" "+y+" "+(oz+21)+" {Facing:2b,Fixed:1b,Invisible:1b,Item:{id:\"minecraft:filled_map\",count:1,components:{\"minecraft:map_id\":"+mapIds.get(i)+"}}}");
+                }
+                // Players: client-side copies (like other players on a server), armoured and holding swords.
+                context.runOnClient(mc->{
+                    for(int i=0;i<48;i++){
+                        var p=new net.minecraft.client.player.RemotePlayer(mc.level,new com.mojang.authlib.GameProfile(java.util.UUID.nameUUIDFromBytes(("vela-crowd-"+i).getBytes()),"VelaCrowd"+i));
+                        p.snapTo(ox+.5-6+(i%8)*1.6,oy,oz+6+(i/8)*2.2,180,0);
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_HELMET));
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_CHESTPLATE));
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_LEGGINGS));
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_SWORD));
+                        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.TOTEM_OF_UNDYING));
+                        p.setId(-1000-i); // server ids are positive, so these never collide
+                        mc.level.addEntity(p);
+                    }
+                    mc.player.setYRot(0);mc.player.setXRot(5);
+                });
+                context.waitTicks(200);
+                context.takeScreenshot("vela-crowd");
+                var crowd=new ArrayList<Integer>();
+                for(int i=0;i<10;i++){context.waitTicks(20);crowd.add(context.computeOnClient(Minecraft::getFps));}
+                Collections.sort(crowd);
+                System.out.println("[Vela gametest] Crowd scene: median "+crowd.get(crowd.size()/2)+" FPS "+crowd);
+                for(var opt:context.computeOnClient(mc->List.copyOf(VelaClient.services().optimization().settings()))){
+                    if(!Boolean.TRUE.equals(opt.value()))continue;
+                    var withOpt=new ArrayList<Integer>();var withoutOpt=new ArrayList<Integer>();
+                    for(int round=0;round<4;round++){
+                        context.runOnClient(mc->setBoolean(opt,false));
+                        context.waitTicks(20);for(int i=0;i<2;i++){context.waitTicks(20);withoutOpt.add(context.computeOnClient(Minecraft::getFps));}
+                        context.runOnClient(mc->setBoolean(opt,true));
+                        context.waitTicks(20);for(int i=0;i<2;i++){context.waitTicks(20);withOpt.add(context.computeOnClient(Minecraft::getFps));}
+                    }
+                    Collections.sort(withOpt);Collections.sort(withoutOpt);
+                    int a=withOpt.get(withOpt.size()/2),b=withoutOpt.get(withoutOpt.size()/2);
+                    System.out.println("[Vela gametest] Crowd "+opt.id()+": on "+a+" FPS, off "+b+" FPS ("+(a>=b?"+":"")+Math.round(100f*(a-b)/Math.max(1,b))+"%)");
                 }
             }
             // 7. Optional (-PvisualChecks): hand shader modes, then the Nether with the profile's modules on and off.
@@ -276,6 +338,74 @@ public final class VelaClientGameTest implements FabricClientGameTest {
             }
             check(samples);
         }
+        // 8. Optional (-PfarScene): real terrain to the horizon at render distance 24, for distant-chunk work.
+        if(Boolean.getBoolean("vela.farScene"))farScene(context);
+    }
+
+    private static void farScene(ClientGameTestContext context){
+        var builder=context.worldBuilder().adjustSettings(s->{
+            var normal=s.getSettings().worldgenLoadContext().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)
+                .getOrThrow(net.minecraft.world.level.levelgen.presets.WorldPresets.NORMAL);
+            s.setWorldType(new net.minecraft.client.gui.screens.worldselection.WorldCreationUiState.WorldTypeEntry(normal));
+            s.setSeed("vela-far-scene");
+        });
+        try(var world=builder.create()){
+            world.getServer().runCommand("gamerule advance_time false");
+            world.getServer().runCommand("gamerule advance_weather false");
+            world.getServer().runCommand("gamerule spawn_mobs false");
+            world.getServer().runCommand("time set noon");
+            world.getServer().runCommand("weather clear");
+            // Spectator: nothing to land on, so the camera stays high above the canopy while chunks generate.
+            world.getServer().runCommand("gamemode spectator @a");
+            int top=world.getServer().computeOnServer(server->server.overworld().getChunk(0,0)
+                .getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,0,0));
+            context.runOnClient(mc->{mc.options.renderDistance().set(24);mc.options.broadcastOptions();});
+            context.waitTicks(20);
+            world.getServer().runCommand("tp @a 0.5 "+(top+60)+" 0.5 30 12");
+            // Generating 24 chunks around takes the integrated server minutes, and a chunk reaches the client only once fully
+            // generated: wait until the client holds most of the circle, or nothing new arrived for 30 seconds.
+            int last=-1,steady=0;
+            for(int waited=0;waited<12000&&steady<10;waited+=60){
+                context.waitTicks(60);
+                int chunks=context.computeOnClient(mc->mc.level.getChunkSource().getLoadedChunksCount());
+                if(chunks>=1700)break;
+                steady=chunks==last?steady+1:0;last=chunks;
+                if(waited%1200==0)System.out.println("[Vela gametest] far loading: client chunks "+chunks);
+            }
+            try{world.getConnection().waitForChunksRender(true,6000);}
+            catch(AssertionError slow){System.out.println("[Vela gametest] far chunks still rendering");}
+            world.getServer().runCommand("tp @a 0.5 "+(top+60)+" 0.5 30 12");
+            context.waitTicks(100);
+            context.takeScreenshot("vela-far");
+            System.out.println("[Vela gametest] Far scene camera at "+context.computeOnClient(mc->mc.player.blockPosition().toShortString()));
+            var fps=new ArrayList<Integer>();
+            for(int i=0;i<10;i++){context.waitTicks(20);fps.add(context.computeOnClient(Minecraft::getFps));}
+            Collections.sort(fps);
+            System.out.println("[Vela gametest] Far scene: median "+fps.get(fps.size()/2)+" FPS "+fps+"; sections drawn "
+                +context.computeOnClient(mc->mc.levelRenderer.visibleSections().size())+", top "+top);
+            for(var opt:context.computeOnClient(mc->List.copyOf(VelaClient.services().optimization().settings()))){
+                if(!Boolean.TRUE.equals(opt.value()))continue;
+                var withOpt=new ArrayList<Integer>();var withoutOpt=new ArrayList<Integer>();
+                for(int round=0;round<3;round++){
+                    context.runOnClient(mc->setBoolean(opt,false));
+                    context.waitTicks(100);for(int i=0;i<2;i++){context.waitTicks(20);withoutOpt.add(context.computeOnClient(Minecraft::getFps));}
+                    context.runOnClient(mc->setBoolean(opt,true));
+                    context.waitTicks(100);for(int i=0;i<2;i++){context.waitTicks(20);withOpt.add(context.computeOnClient(Minecraft::getFps));}
+                }
+                Collections.sort(withOpt);Collections.sort(withoutOpt);
+                int a=withOpt.get(withOpt.size()/2),b=withoutOpt.get(withoutOpt.size()/2);
+                System.out.println("[Vela gametest] Far "+opt.id()+": on "+a+" FPS, off "+b+" FPS ("+(a>=b?"+":"")+Math.round(100f*(a-b)/Math.max(1,b))+"%)");
+            }
+            // How much the distance itself costs: the same view at 8 and 16 chunks.
+            for(int distance:new int[]{8,16}){
+                context.runOnClient(mc->{mc.options.renderDistance().set(distance);mc.options.broadcastOptions();});
+                context.waitTicks(100);
+                var at=new ArrayList<Integer>();
+                for(int i=0;i<6;i++){context.waitTicks(20);at.add(context.computeOnClient(Minecraft::getFps));}
+                Collections.sort(at);
+                System.out.println("[Vela gametest] Far scene at "+distance+" chunks: median "+at.get(at.size()/2)+" FPS");
+            }
+        }
     }
 
     /**
@@ -292,6 +422,9 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         try{return java.util.Arrays.stream(Files.readString(Path.of(file)).split(",")).map(String::strip).filter(id->!id.isEmpty()).toList();}
         catch(java.io.IOException missing){return List.of();}
     }
+    /** Window size of this run; FPS histories are kept per size, those of different sizes are not comparable. */
+    private static String windowSize="854x480";
+    private static String historyKey(){return "history."+windowSize;}
     /** Median of the stored history, or null without one. */
     private static Integer baseline(){
         Path file=Path.of(System.getProperty("vela.fpsBaseline","../../perf/fps-baseline.properties")).toAbsolutePath().normalize();
@@ -299,7 +432,7 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         var props=new Properties();
         try(var in=Files.newInputStream(file)){props.load(in);}catch(java.io.IOException error){return null;}
         var history=new ArrayList<Integer>();
-        for(String part:props.getProperty("history","").split(","))if(!part.isBlank())history.add(Integer.parseInt(part.strip()));
+        for(String part:props.getProperty(historyKey(),"").split(","))if(!part.isBlank())history.add(Integer.parseInt(part.strip()));
         if(history.isEmpty())return null;
         Collections.sort(history);return history.get(history.size()/2);
     }
@@ -311,7 +444,7 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         try{
             if(Files.exists(file))try(var in=Files.newInputStream(file)){props.load(in);}
             var history=new ArrayList<Integer>();
-            for(String part:props.getProperty("history",props.getProperty("median","")).split(","))if(!part.isBlank())history.add(Integer.parseInt(part.strip()));
+            for(String part:props.getProperty(historyKey(),"").split(","))if(!part.isBlank())history.add(Integer.parseInt(part.strip()));
             boolean rebaseline=Boolean.getBoolean("vela.fpsRebaseline");
             if(rebaseline)history.clear();
             var sorted=new ArrayList<>(history);Collections.sort(sorted);
@@ -322,7 +455,7 @@ public final class VelaClientGameTest implements FabricClientGameTest {
             history.add(median);
             while(history.size()>5)history.removeFirst();
             props.remove("median");
-            props.setProperty("history",String.join(",",history.stream().map(String::valueOf).toList()));
+            props.setProperty(historyKey(),String.join(",",history.stream().map(String::valueOf).toList()));
             Files.createDirectories(file.getParent());
             try(var out=Files.newOutputStream(file)){props.store(out,"Vela FPS history of the fixed gametest scene (last 5 passing medians). Run with -Prebaseline to start over.");}
         }catch(java.io.IOException error){throw new AssertionError("Cannot read or write the FPS baseline "+file,error);}

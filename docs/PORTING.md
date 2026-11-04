@@ -176,7 +176,7 @@ cd versions
 - The shader sky, fog, hand and hit bubble passes are 1.21.11 versions in `src/.../render/shader` and `src/.../mixin/world`: pipelines come from `RenderPipeline.builder` (`ShaderPipelines.fullscreen`; no bind group layouts or color target states), the textures are `RGBA8` (1.21.11 has no float formats), samplers come from `RenderSystem.getSamplerCache()`, and GL depth runs from -1 to 1. `ShaderCamera` captures the camera at `LevelRenderer.renderLevel`. The fog pass leaves out the wet surface effect. `DistanceFogMixin` reads the `FogData` local before `FogRenderer.updateBuffer` (1.21.11's `setupFog` returns a `Vector4f`).
 - `tools/port_mappings.py` keeps only the mixin configs that are still written, so a dropped config is not listed in `fabric.mod.json`.
 
-### 1.21.5 (in progress)
+### 1.21.5
 
 `versions/1.21.5` builds on the 1.21.11 layer, so its `port.txt` is the 1.21.11 -> 1.21.5 report:
 
@@ -184,7 +184,12 @@ cd versions
 python -I tools/port_mappings.py 1.21.5 --from 1.21.11 --classes versions/1.21.11/build/classes/java/main --sources versions/1.21.11/build/ported/main/java --sources versions/1.21.11/src/main/java
 ```
 
-It has a `wip.txt`, so Gradle builds it only with `-Pwip`. The report lists what 1.21.5 lacks: the GUI render state (`GuiRenderState`, `TextureSetup`, `GuiRenderer`; the GUI draws straight away), the submit node collector, the input event records (`MouseButtonEvent`, `KeyEvent`, `CharacterEvent`), `KeyMapping.Category`, the debug screen entries and the GPU texture views, samplers and buffer slices.
+The report lists what 1.21.5 lacks: the GUI render state (`GuiRenderState`, `TextureSetup`, `GuiRenderer`; the GUI draws straight away), the submit node collector, the input event records (`MouseButtonEvent`, `KeyEvent`, `CharacterEvent`), `KeyMapping.Category`, the debug screen entries and the GPU texture views, samplers and buffer slices.
+
+- Within a layer the renames run first, then its patches: a 1.21.5 patch sees the 1.21.11 output with 1.21.5's class renames already applied (`Identifier` is `ResourceLocation` by then). Where a name may or may not be renamed, `patchre` with `\w+` matches either.
+- The input records are rebuilt in mixin handlers: a `patchre *` turns a `(MouseButtonEvent event, boolean doubleClick, ...)` handler into `(double x, double y, int button, ...)` and creates the record from those.
+- `src/` replaces the mixins whose targets have another shape: the light texture uniforms (`RenderPass.setUniform`), key and mouse presses (`KeyboardHandler.keyPress`, `MouseHandler.onPress`), the hand FOV, attack sounds (`Level.playSound`), paintings, the shulker preview (`Screen.renderWithTooltip`), hit color on armor (`Model.renderToBuffer` in `EquipmentLayerRenderer`, the state handed over by `HumanoidArmorLayer`), animated chat, chat privacy (`EditBox`'s formatter) and the boss bar position (`BossHealthOverlay.render`; 1.21.5's `Gui` draws it from a lambda layer).
+- `drop.txt` leaves out velaopt, the shader sky, fog, hand and hit bubble passes, the bundled Mod Menu and the perf hooks on classes 1.21.5 does not have. The tests that check 26.x structure get 1.21.5 targets in `manual.txt`.
 
 ### Layers (`base.txt`)
 

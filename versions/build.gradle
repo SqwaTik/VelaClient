@@ -94,6 +94,8 @@ subprojects {
             if (project.hasProperty('immediatelyfast_version')) compileOnly "maven.modrinth:immediatelyfast:${project.immediatelyfast_version}"
         }
         compileOnly 'de.maxhenkel.voicechat:voicechat-api:2.6.0'
+        // the game ships jspecify only from 1.21.6 on; older modules compile its annotations from here
+        compileOnly 'org.jspecify:jspecify:1.0.0'
 
         testImplementation platform('org.junit:junit-bom:5.13.4')
         testImplementation 'org.junit.jupiter:junit-jupiter'

@@ -1,7 +1,4 @@
 # Java 21: no unnamed variables
-# no render optimization screen (opt/** is dropped)
-patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java             Rect opt=new Rect(content.x(),cy+6,content.width(),27);button(g,opt,"Оптимизация рендера",false);controls.add(new Control("render-opt",opt));cy+=43; => 
-patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java                 case "render-opt"->{UiSounds.play(services,true);minecraft.gui.setScreen(new dev.sqwat.vela.opt.OptScreen(this));return true;} => 
 # 26.x split the HUD (Hud) from the screen holder (Gui, minecraft.gui); on 1.21.11 Gui is the HUD and Minecraft holds the screen
 class net.minecraft.client.gui.Hud=net.minecraft.client.gui.Gui
 patchre * \.gui\.hud\b => .gui

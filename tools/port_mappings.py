@@ -761,6 +761,10 @@ def read_layer(module):
             o, n = line[6:].split('=', 1); classes.append((o.replace('.', '/'), n.replace('.', '/')))
         elif line.startswith('member '):
             _, path, kind, on = line.split(' ', 3); o, n = on.split('=', 1); members[path].append((kind, o, n))
+        elif line.startswith('unmember '):  # unmember <path> <kind> <old>=<new>: a generated member rename that hits Vela's own names
+            _, path, kind, on = line.split(' ', 3); o, n = on.split('=', 1)
+            if (kind, o, n) not in members[path]: sys.exit(f'{module.name}: unmember matches no member rule: {line}')
+            members[path].remove((kind, o, n))
     drops = module / 'drop.txt'
     globs = [l.strip() for l in drops.read_text('utf-8').splitlines() if l.strip() and not l.startswith('#')] if drops.exists() else []
     everywhere = patches.pop('*', [])
@@ -835,6 +839,14 @@ def rewrite_main(argv):
                         for i, (o, n) in enumerate(layer['everywhere']):  # `patch * ...`: every compiled file
                             text, hit = substitute(text, o, n); layer['hits'][i] += hit
                     data = text.encode('utf-8')
+                elif any(rel in layer['patches'] for layer in rules):
+                    # a resource (fabric.mod.json ...) gets its own patches, not the renames
+                    text = data.decode('utf-8').replace('\r\n', '\n')
+                    for layer in rules:
+                        for o, n in layer['patches'].pop(rel, ()):
+                            text, hit = substitute(text, o, n)
+                            if not hit: sys.exit(f'{layer["module"].name}: patch for {rel} does not match: {getattr(o, "pattern", o)}')
+                    data = text.encode('utf-8')
                 put(into / sset / kind / rel, data)
     # root mixin configs: keep the mixins whose class this module still compiles
     props = module / 'gradle.properties'
@@ -865,13 +877,14 @@ def rewrite_main(argv):
     fmj = into / 'main' / 'resources' / 'fabric.mod.json'
     if fmj in written:
         text = fmj.read_text('utf-8')
-        gone_cfgs = [n for n in re.findall(r'"([\w.-]+mixins[\w.-]*\.json)"', text)
+        gone_cfgs = [n for n in re.findall(r'"([\w.-]*mixins[\w.-]*\.json)"', text)
                      if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
         for n in gone_cfgs: text = re.sub(r',\s*"' + re.escape(n) + '"|"' + re.escape(n) + r'",\s*', '', text)
         if gone_cfgs: put(fmj, text.encode('utf-8'))
     for layer in layers:
         if layer['patches']: sys.exit(f'{layer["module"].name}: patches for files that are not compiled: {", ".join(layer["patches"])}')
-        for (o, _), h in zip(layer['everywhere'], layer['hits']):
+        # a lower layer's `patch *` may only have matched files an upper layer drops (checked when that layer is built)
+        for (o, _), h in zip(layer['everywhere'], layer['hits']) if layer is layers[-1] else ():
             if not h: sys.exit(f'{layer["module"].name}: patch for * matches no file: {getattr(o, "pattern", o)}')
     for f in into.rglob('*') if into.is_dir() else ():
         if f.is_file() and f not in written: f.unlink()

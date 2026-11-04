@@ -1,0 +1,163 @@
+# no render optimization screen (opt/** is dropped)
+patch dev/sqwat/vela/ui/screen/VelaSettingsScreen.java             Rect opt=new Rect(content.x(),cy+6,content.width(),27);button(g,opt,"Оптимизация рендера",false);controls.add(new Control("render-opt",opt));cy+=43; => 
+patchre dev/sqwat/vela/ui/screen/VelaSettingsScreen.java [ \t]*case "render-opt"->\{[^\n]*OptScreen\(this\)\);return true;\} => 
+# 1.21.5 has no input event records: Vela's screens take the old (x, y, button) and (key, scancode, modifiers) arguments
+class net.minecraft.client.input.MouseButtonEvent=dev.sqwat.vela.compat.input.MouseButtonEvent
+class net.minecraft.client.input.MouseButtonInfo=dev.sqwat.vela.compat.input.MouseButtonInfo
+class net.minecraft.client.input.KeyEvent=dev.sqwat.vela.compat.input.KeyEvent
+class net.minecraft.client.input.CharacterEvent=dev.sqwat.vela.compat.input.CharacterEvent
+# no GUI render state: elements are drawn right away (compat.gui.GuiSubmit)
+class net.minecraft.client.gui.render.state.GuiElementRenderState=dev.sqwat.vela.compat.gui.GuiElementRenderState
+class net.minecraft.client.gui.render.TextureSetup=dev.sqwat.vela.compat.gui.TextureSetup
+# no gizmos: compat.gizmos collects and draws them (VisualGizmosMixin in src/)
+class net.minecraft.gizmos.Gizmos=dev.sqwat.vela.compat.gizmos.Gizmos
+class net.minecraft.gizmos.GizmoStyle=dev.sqwat.vela.compat.gizmos.GizmoStyle
+class net.minecraft.gizmos.GizmoProperties=dev.sqwat.vela.compat.gizmos.GizmoProperties
+# GuiGraphics.pose() is a PoseStack: a 2D view of it
+patchre * \b(g|graphics)\.pose\(\) => dev.sqwat.vela.compat.gui.Pose2D.of(\1)
+patchre * (\w+)\.addVertexWith2DPose\( => dev.sqwat.vela.compat.gui.GuiSubmit.vertex(\1,
+patchre * (new ScreenRectangle\([^;]*?\))\.transformMaxBounds\(([\w.]+)\) => dev.sqwat.vela.compat.gui.GuiSubmit.bounds(\1,\2)
+patchre * (\w+)\.guiRenderState\.(?:add|submit)GuiElement\( => dev.sqwat.vela.compat.gui.GuiSubmit.submit(\1,
+patchre * (\w+)\.getTextureView\(\),\s*\1\.getSampler\(\) => \1.getTexture()
+patchre * \b(\w+)\.scissorStack\.peek\(\) => null
+# no bundled Mod Menu: the title screen's Mods button opens the installed one, and Mod Menu is no longer listed as broken
+patch dev/sqwat/vela/ui/screen/VelaTitleScreen.java com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(this) => dev.sqwat.vela.compat.ModsScreens.create(this)
+patch fabric.mod.json , "com.terraformersmc.modmenu.ModMenu"] => ]
+patchre fabric.mod.json ,\s*"modmenu": \["dev.sqwat.vela.core.VelaModMenu"\] => 
+patchre fabric.mod.json \s*"modmenu": "\*",\n => \n
+# port.txt renames every name()/id() in these files to GameProfile's getName()/getId(), Vela's own records included:
+# only the profile calls are renamed
+unmember dev/sqwat/vela/ui/hud/HudLayoutService.java methods id=getId
+unmember dev/sqwat/vela/ui/hud/HudLayoutService.java methods name=getName
+unmember dev/sqwat/vela/friend/FriendPresence.java methods name=getName
+unmember dev/sqwat/vela/ui/screen/DashboardPanels.java methods name=getName
+unmember dev/sqwat/vela/VelaClient.java methods name=getName
+patchre * \b(get(?:Game)?Profile\(\))\.name\(\) => \1.getName()
+patchre * \b(get(?:Game)?Profile\(\))\.id\(\) => \1.getId()
+patch * import net.minecraft.client.input.*; => import dev.sqwat.vela.compat.input.*;
+# input methods take the old arguments; the event record is rebuilt at the top of the method
+patchre * boolean mouseClicked\(((?:[\w.]+\.)?MouseButtonEvent) (\w+),\s*boolean (\w+)\)\s*\{ => boolean mouseClicked(double vela$x,double vela$y,int vela$button){\1 \2=new \1(vela$x,vela$y,vela$button);boolean \3=false;
+patchre * boolean mouseReleased\(((?:[\w.]+\.)?MouseButtonEvent) (\w+)\)\s*\{ => boolean mouseReleased(double vela$x,double vela$y,int vela$button){\1 \2=new \1(vela$x,vela$y,vela$button);
+patchre * boolean mouseDragged\(((?:[\w.]+\.)?MouseButtonEvent) (\w+),\s*double (\w+),\s*double (\w+)\)\s*\{ => boolean mouseDragged(double vela$x,double vela$y,int vela$button,double \3,double \4){\1 \2=new \1(vela$x,vela$y,vela$button);
+patchre * boolean keyPressed\(((?:[\w.]+\.)?KeyEvent) (\w+)\)\s*\{ => boolean keyPressed(int vela$key,int vela$scancode,int vela$modifiers){\1 \2=new \1(vela$key,vela$scancode,vela$modifiers);
+patchre * boolean keyReleased\(((?:[\w.]+\.)?KeyEvent) (\w+)\)\s*\{ => boolean keyReleased(int vela$key,int vela$scancode,int vela$modifiers){\1 \2=new \1(vela$key,vela$scancode,vela$modifiers);
+patchre * boolean charTyped\(((?:[\w.]+\.)?CharacterEvent) (\w+)\)\s*\{ => boolean charTyped(char vela$char,int vela$modifiers){\1 \2=new \1(vela$char,vela$modifiers);
+# mixin handlers on those screen methods get the same unpacking
+patchre * void (vela\$\w+)\(((?:[\w.]+\.)?MouseButtonEvent) (\w+),\s*boolean \w+,\s*(CallbackInfoReturnable<Boolean> \w+)\)\s*\{ => void \1(double vela$x,double vela$y,int vela$button,\4){\2 \3=new \2(vela$x,vela$y,vela$button);
+patchre * void (vela\$\w+)\(((?:[\w.]+\.)?MouseButtonEvent) (\w+),\s*(CallbackInfoReturnable<Boolean> \w+)\)\s*\{ => void \1(double vela$x,double vela$y,int vela$button,\4){\2 \3=new \2(vela$x,vela$y,vela$button);
+patchre * void (vela\$\w+)\(((?:[\w.]+\.)?MouseButtonEvent) (\w+),\s*double (\w+),\s*double (\w+),\s*(CallbackInfoReturnable<Boolean> \w+)\)\s*\{ => void \1(double vela$x,double vela$y,int vela$button,double \4,double \5,\6){\2 \3=new \2(vela$x,vela$y,vela$button);
+patchre * \.mouseClicked\((\w+),\s*\w+\) => .mouseClicked(\1.x(),\1.y(),\1.button())
+patchre * \.mouseReleased\((\w+)\) => .mouseReleased(\1.x(),\1.y(),\1.button())
+patchre * \.mouseDragged\((\w+), => .mouseDragged(\1.x(),\1.y(),\1.button(),
+patchre * \.keyPressed\((\w+)\) => .keyPressed(\1.key(),\1.scancode(),\1.modifiers())
+patchre * \.keyReleased\((\w+)\) => .keyReleased(\1.key(),\1.scancode(),\1.modifiers())
+patchre * \.charTyped\((\w+)\) => .charTyped((char)\1.codepoint(),\1.modifiers())
+# 1.21.5's gui scale is a double; the int one is what the window computes from the option
+patchre * \.getWindow\(\)\.getGuiScale\(\) => .getWindow().calculateScale(net.minecraft.client.Minecraft.getInstance().options.guiScale().get(),net.minecraft.client.Minecraft.getInstance().isEnforceUnicode())
+# Camera, Window, ResourceKey and WorldVersion getters before 1.21.9
+patchre * getMainCamera\(\)\.position\(\) => getMainCamera().getPosition()
+patchre * \b(camera|cam|mainCamera)\.position\(\) => \1.getPosition()
+patchre * \b(camera|cam|mainCamera)\.yRot\(\) => \1.getYRot()
+patchre * \b(camera|cam|mainCamera)\.xRot\(\) => \1.getXRot()
+patchre * \.getWindow\(\)\.handle\(\) => .getWindow().getWindow()
+patchre * getCurrentVersion\(\)\.name\(\) => getCurrentVersion().getName()
+patchre * \.identifier\(\) => .location()
+# no GUI strata: later elements already draw on top
+patchre * \b\w+\.nextStratum\(\);\s* => 
+# textures carry their own filter and address mode before 1.21.6 (no samplers or texture views)
+patchre * \bsampler=(?:com\.mojang\.blaze3d\.systems\.)?RenderSystem\.getSamplerCache\(\)\.getClampToEdge\(FilterMode\.LINEAR\); => setClamp(true);setFilter(true,false);
+patchre dev/sqwat/vela/ui/render/PngTextRenderer.java createTexture\(\(\)->label,5,([\w.]+),baked\.width\(\),baked\.height\(\),1,1\) => createTexture(()->label,\1,baked.width(),baked.height(),1)
+patchre dev/sqwat/vela/ui/render/PngTextRenderer.java \s*textureView=device\.createTextureView\(texture\);\s*sampler=[^;]*; => setClamp(true);setFilter(true,false);
+# fonts are plain resource locations before 1.21.9; no Style shadow toggle, a transparent shadow colour instead
+class net.minecraft.world.entity.Avatar=net.minecraft.world.entity.player.Player
+patchre * import net\.minecraft\.network\.chat\.FontDescription;\n => 
+patchre * new FontDescription\.Resource\(((?:[^()]|\([^()]*\))*)\) => \1
+patchre * \bFontDescription\.Resource\b => net.minecraft.resources.ResourceLocation
+patchre * \)\.withoutShadow\(\) => ).withStyle(s->s.withShadowColor(0))
+# skins: PlayerSkin holds texture ids and PlayerSkin.Model before 1.21.9
+patchre dev/sqwat/vela/friend/LocalAppearanceService.java import net\.minecraft\.(?:core\.ClientAsset|world\.entity\.player\.PlayerModelType);\n => 
+patch dev/sqwat/vela/friend/LocalAppearanceService.java PlayerModelType => PlayerSkin.Model
+patch dev/sqwat/vela/friend/LocalAppearanceService.java ClientAsset.Texture => ResourceLocation
+patch dev/sqwat/vela/friend/LocalAppearanceService.java return new ClientAsset.ResourceTexture(id, id); => return id;
+patch dev/sqwat/vela/friend/LocalAppearanceService.java new PlayerSkin(skin!=null?skin:original.body(),capeHidden?null:cape!=null?cape:original.cape(),original.elytra(), => new PlayerSkin(skin!=null?skin:original.texture(),skin!=null?null:original.textureUrl(),capeHidden?null:cape!=null?cape:original.capeTexture(),original.elytraTexture(),
+patch dev/sqwat/vela/friend/NameSkins.java client.services().sessionService() => client.getMinecraftSessionService()
+patch dev/sqwat/vela/friend/NameSkins.java client.getSkinManager().get( => client.getSkinManager().getOrLoad(
+# GUI: tooltips draw at once, no cursor requests, blit takes a render type per texture
+patchre * \.setTooltipForNextFrame\((\w+(?:\.font)?),(\w+),(\w+),(\w+)\) => .renderTooltip(\1,\2,\3,\4)
+patchre * \bg\.requestCursor\([^;]*\); => {}
+patchre * \.blit(Sprite)?\(net\.minecraft\.client\.renderer\.RenderPipelines\.GUI_TEXTURED, => .blit\1(net.minecraft.client.renderer.RenderType::guiTextured,
+patchre * \.blitSprite\(net\.minecraft\.client\.renderer\.RenderPipelines\.CROSSHAIR, => .blitSprite(net.minecraft.client.renderer.RenderType::crosshair,
+patchre * \bg\.blit\(PIPELINE, => g.blit(dev.sqwat.vela.compat.gui.GuiSubmit.textured(PIPELINE),
+patch dev/sqwat/vela/ui/hud/HudLayoutService.java net.minecraft.client.gui.Gui.getMobEffectSprite(effect.getEffect()) => net.minecraft.client.Minecraft.getInstance().getMobEffectTextures().get(effect.getEffect())
+# motion blur history texture
+patchre dev/sqwat/vela/render/shader/TemporalBlur.java createTexture\("Vela motion history",[^,]*,source\.getFormat\(\),source\.getWidth\(0\),source\.getHeight\(0\),1,1\);textureView=RenderSystem\.getDevice\(\)\.createTextureView\(texture\); => createTexture("Vela motion history",source.getFormat(),source.getWidth(0),source.getHeight(0),1);
+# Fabric 0.128 (1.21.5): HUD layers, string key categories, screen events with plain arguments
+patch dev/sqwat/vela/VelaClient.java import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry; => import dev.sqwat.vela.compat.HudElementRegistry;
+patch dev/sqwat/vela/VelaClient.java KeyMapping.Category category = KeyMapping.Category.register(id("controls")); => String category = "key.category.velaclient.controls";
+patch dev/sqwat/vela/module/utility/ChatThreads.java register((s,event)->!click(event.x(),event.y(),event.button())) => register((s,x,y,b)->!click(x,y,b))
+patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java register((s,event)->click(event.x(),event.y(),event.button(),event.modifiers())) => register((s,x,y,b)->click(x,y,b,dev.sqwat.vela.compat.input.Modifiers.current()))
+patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java register((s,event)->key(event)) => register((s,k,sc,m)->key(new KeyEvent(k,sc,m)))
+patch dev/sqwat/vela/ui/screen/ContainerSearchBox.java key(new KeyEvent(k,sc,m)) => key(new dev.sqwat.vela.compat.input.KeyEvent(k,sc,m))
+patch dev/sqwat/vela/render/perf/FastCubes.java vertex.worldX(), vertex.worldY(), vertex.worldZ() => vertex.pos().x()/16f, vertex.pos().y()/16f, vertex.pos().z()/16f
+patchre * createTexture\("([^"]*)",[^,]*,source\.getFormat\(\),source\.getWidth\(0\),source\.getHeight\(0\),1,1\);\s*textureView=RenderSystem\.getDevice\(\)\.createTextureView\(texture\); => createTexture("\1",source.getFormat(),source.getWidth(0),source.getHeight(0),1);
+patch dev/sqwat/vela/module/visual/Hitboxes.java mc.debugEntries.isCurrentlyEnabled(net.minecraft.client.gui.components.debug.DebugScreenEntries.ENTITY_HITBOXES) => mc.getEntityRenderDispatcher().shouldRenderHitBoxes()
+patch dev/sqwat/vela/module/visual/SwingAnimation.java player.getMainHandItem().getSwingAnimation().duration() => 6
+patchre dev/sqwat/vela/mixin/input/CrystalInputMixin.java @Redirect\(method="startAttack"[\s\S]*?return player\.cannotAttackWithItem\(heldItem,tolerance\);\s*\} => 
+patch dev/sqwat/vela/mixin/hud/SteadyHandsMixin.java import net.minecraft.client.renderer.state.CameraRenderState; => 
+patch dev/sqwat/vela/mixin/entity/ViewModelMixin.java import net.minecraft.client.renderer.SubmitNodeCollector; => 
+patchre dev/sqwat/vela/mixin/entity/ViewModelMixin.java SubmitNodeCollector collector,(\s*\n) => net.minecraft.client.renderer.MultiBufferSource.BufferSource collector,\1
+patch dev/sqwat/vela/mixin/entity/ViewModelMixin.java SubmitNodeCollector collector,int light => net.minecraft.client.renderer.MultiBufferSource collector,int light
+class net.minecraft.client.renderer.state.BlockOutlineRenderState=dev.sqwat.vela.compat.BlockOutlineRenderState
+patch dev/sqwat/vela/module/utility/BlockOverlay.java import net.minecraft.gizmos.*; => import dev.sqwat.vela.compat.gizmos.*;
+# Bobby: 1.21.5's palettes take the id map and a fixed strategy; SimpleRegionStorage reads, writes and upgrades itself (no context tag)
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java import net.minecraft.world.level.chunk.Strategy; => 
+patchre de/johni0702/minecraft/bobby/ChunkSerializer.java PalettedContainer\.codec(R[WO])\(\s*BlockState\.CODEC,\s*Strategy\.createForBlockStates\(Block\.BLOCK_STATE_REGISTRY\), => PalettedContainer.codec\1(Block.BLOCK_STATE_REGISTRY, BlockState.CODEC, PalettedContainer.Strategy.SECTION_STATES,
+patchre de/johni0702/minecraft/bobby/ChunkSerializer.java PalettedContainer\.codec(R[WO])\(\s*biomeRegistry\.holderByNameCodec\(\),\s*Strategy\.createForBiomes\(biomeRegistry\.asHolderIdMap\(\)\), => PalettedContainer.codec\1(biomeRegistry.asHolderIdMap(), biomeRegistry.holderByNameCodec(), PalettedContainer.Strategy.SECTION_BIOMES,
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java new PalettedContainer<>(Blocks.AIR.defaultBlockState(), Strategy.createForBlockStates(Block.BLOCK_STATE_REGISTRY)) => new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES)
+patch de/johni0702/minecraft/bobby/ChunkSerializer.java new PalettedContainer<>(biomeRegistry.get(Biomes.PLAINS.identifier()).orElseThrow(), Strategy.createForBiomes(biomeRegistry.asHolderIdMap())) => new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.get(Biomes.PLAINS.location()).orElseThrow(), PalettedContainer.Strategy.SECTION_BIOMES)
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java CompoundTag contextNbt = ChunkMap.getChunkDataFixContextTag(worldKey, generatorKey); => 
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java IOWorker io = (IOWorker) chunkScanner(); => 
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java io.loadAsync(chunkPos) => read(chunkPos)
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java nbt = upgradeChunkTag(nbt, -1, contextNbt); => nbt = upgradeChunkTag(nbt, -1);
+patch de/johni0702/minecraft/bobby/FakeChunkStorage.java io.store(chunkPos, nbt) => write(chunkPos, nbt)
+patch de/johni0702/minecraft/bobby/Worlds.java ((IOWorker) target.storage.chunkScanner()).synchronize(false).join(); => target.storage.synchronize(false).join();
+
+# IAS: 1.21.5 takes the pre-1.21.10 Stonecutter branches.
+patch ru/vidtu/ias/IASMinecraft.java User user = new User(data.name(), data.uuid(), data.token(), Optional.empty(), Optional.empty()); => User user = new User(data.name(), data.uuid(), data.token(), Optional.empty(), Optional.empty(), online ? User.Type.MSA : User.Type.LEGACY);
+patch ru/vidtu/ias/IASMinecraft.java YggdrasilAuthenticationService service = online ? new YggdrasilAuthenticationService(minecraft.getProxy()) : YggdrasilAuthenticationService.createOffline(minecraft.getProxy()); => YggdrasilAuthenticationService service = new YggdrasilAuthenticationService(minecraft.getProxy());
+patch ru/vidtu/ias/IASMinecraft.java Services services = Services.create(service, minecraft.gameDirectory); => 
+patch ru/vidtu/ias/IASMinecraft.java CompletableFuture.completedFuture(online ? services.sessionService().fetchProfile( => CompletableFuture.completedFuture(online ? minecraft.getMinecraftSessionService().fetchProfile(
+patch ru/vidtu/ias/IASMinecraft.java new GameConfig.UserData(user, minecraft.getProxy()) => new GameConfig.UserData(user, originalConfig.user.userProperties, originalConfig.user.profileProperties, minecraft.getProxy())
+patch ru/vidtu/ias/platform/IStonecutter.java label.visitLines(net.minecraft.client.gui.TextAlignment.CENTER, x, y, 9, graphics.textRenderer()); => label.renderCentered(graphics, x, y);
+patch ru/vidtu/ias/IASMinecraft.java accessor.ias$services(services); => 
+patchre ru/vidtu/ias/mixins/MinecraftAccessor.java @Accessor\("services"\)[^;]*; => 
+
+# Camera.setup takes a BlockGetter before 1.21.6
+patch dev/sqwat/vela/mixin/camera/BuiltinCameraMixin.java (Level level, => (net.minecraft.world.level.BlockGetter level,
+patch dev/sqwat/vela/mixin/camera/DeathRecapCameraMixin.java (net.minecraft.world.level.Level level, => (net.minecraft.world.level.BlockGetter level,
+
+# mixin targets that are named or shaped differently in 1.21.5 (found by MixinTargetAuditTest)
+patch dev/sqwat/vela/mixin/screen/ContainerSearchMixin.java method="renderContents" => method="render"
+patch dev/sqwat/vela/mixin/perf/SignTextWidthMixin.java method="submitSignText" => method="renderSignText"
+patch dev/sqwat/vela/mixin/world/RenderParticlesMixin.java method="extract" => method="render"
+patch dev/sqwat/vela/mixin/hud/NativeHudBoundsMixin.java IIIZ)V",at=@At("HEAD")) => IIIZ)I",at=@At("HEAD"))
+patch dev/sqwat/vela/mixin/hud/NativeHudBoundsMixin.java boolean shadow,CallbackInfo ci){ => boolean shadow,org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Integer> ci){
+patch dev/sqwat/vela/mixin/hud/AnimatedHudMixin.java Lcom/mojang/blaze3d/pipeline/RenderPipeline; => Ljava/util/function/Function;
+patch dev/sqwat/vela/mixin/hud/AnimatedHudMixin.java com.mojang.blaze3d.pipeline.RenderPipeline pipeline => java.util.function.Function pipeline
+patch dev/sqwat/vela/mixin/entity/SwingAnimationMixin.java LocalPlayer;getItemSwapScale(F)F => LocalPlayer;getAttackStrengthScale(F)F
+patch dev/sqwat/vela/mixin/entity/SwingAnimationMixin.java vela$swing(float progress,PoseStack pose => vela$swing(float progress,float equip,PoseStack pose
+# 1.21.5's loading overlay has no artificial wait to skip
+patchre dev/sqwat/vela/mixin/hud/LoadingOverlayMixin.java @Inject\(method="isReadyToFadeOut"[^\n]*\n[^\n]*\n => 
+# chat: render(graphics, ticks, mouseX, mouseY, focused); the boss bar is a lambda layer, positioned by BossbarPositionMixin
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java ChatComponent;render\([^)]*\)V"\),index=5 => ChatComponent;render(Lnet/minecraft/client/gui/GuiGraphics;IIIZ)V"),index=4
+patchre dev/sqwat/vela/mixin/hud/VanillaHudPositionMixin.java (?s)    @Inject\(method="renderBossOverlay".*?\n    \}\n => 
+# tests: 1.21.5 structure (armor tint goes through Model.renderToBuffer, Font has no prepareText, the name check is on LivingEntityRenderer)
+patchre dev/sqwat/vela/HitColorTest.java m\.desc\.contains\("ILnet/minecraft/resources/\w+;II\)V"\) => m.desc.contains("ILnet/minecraft/resources/ResourceLocation;)V")
+patch dev/sqwat/vela/HitColorTest.java call.name.equals("submitModel")){ => call.name.equals("renderToBuffer")&&org.objectweb.asm.Type.getArgumentTypes(call.desc).length==5){
+patch dev/sqwat/vela/HitColorTest.java getArgumentTypes(call.desc)[6] => getArgumentTypes(call.desc)[4]
+patch dev/sqwat/vela/HitColorTest.java assertEquals(3,calls); => assertEquals(1,calls);
+patch dev/sqwat/vela/NameMaskTest.java "prepareText(Ljava/lang/String;FFIZI)Lnet/minecraft/client/gui/Font$PreparedText;","prepareText(Lnet/minecraft/util/FormattedCharSequence;FFIZZI)Lnet/minecraft/client/gui/Font$PreparedText;" => "drawInternal(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;IIZ)I","drawInternal(Lnet/minecraft/util/FormattedCharSequence;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;IIZ)I"
+patchre dev/sqwat/vela/SelfTagTest.java /net/minecraft/client/renderer/entity/player/\w+\.class => /net/minecraft/client/renderer/entity/LivingEntityRenderer.class
+patchre dev/sqwat/vela/SelfTagTest.java \(Lnet/minecraft/world/entity/[\w/]+;D\)Z => (Lnet/minecraft/world/entity/LivingEntity;D)Z
+patch dev/sqwat/vela/UtilitiesTest.java "entity.NameTagTextCacheMixin", => 
+patch dev/sqwat/vela/UtilitiesTest.java "world.DistanceFogMixin", => 

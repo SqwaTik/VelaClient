@@ -1,0 +1,36 @@
+# velaopt (the render optimization screen and its mixins) is written against 1.21.11's and 26.x's renderer
+dev/sqwat/vela/opt/**
+vela-opt.mixins.json
+# 1.21.11's shader extras: the hand flame, fog, sky and projection hooks (the shader renderers are stubs in src/)
+dev/sqwat/vela/render/shader/HandFlameRenderer.java
+dev/sqwat/vela/render/shader/ShaderCamera.java
+dev/sqwat/vela/render/shader/ShaderPipelines.java
+dev/sqwat/vela/mixin/world/AtmosphereFogMixin.java
+dev/sqwat/vela/mixin/world/ProceduralSkyMixin.java
+dev/sqwat/vela/mixin/world/HandShaderMixin.java
+dev/sqwat/vela/mixin/world/ShaderProjectionMixin.java
+dev/sqwat/vela/mixin/world/DistanceFogMixin.java
+dev/sqwat/vela/render/effect/HitBubbleRenderer.java
+# the bundled Mod Menu is written against 1.21.9+ widgets; on 1.21.5 the real Mod Menu can be installed (compat.ModsScreens opens it)
+com/terraformersmc/**
+mixins.modmenu.json
+assets/modmenu/**
+dev/sqwat/vela/core/VelaModMenu.java
+dev/sqwat/vela/render/shader/ShaderTextureUsage.java
+# perf hooks on structures 1.21.5 does not have (GuiRenderer's layer index and sort, the terrain section allocator, fog culling)
+dev/sqwat/vela/mixin/perf/GuiLayerIndexMixin.java
+dev/sqwat/vela/mixin/perf/GuiLayerIndexNodeMixin.java
+dev/sqwat/vela/render/perf/IndexedAreaList.java
+dev/sqwat/vela/mixin/perf/GuiSortAllocationMixin.java
+dev/sqwat/vela/render/perf/GuiSortOrder.java
+dev/sqwat/vela/GuiSortOrderTest.java
+dev/sqwat/vela/mixin/perf/EmptyTextSubmissionMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMixin.java
+dev/sqwat/vela/mixin/perf/TerrainAllocationMapMixin.java
+dev/sqwat/vela/render/perf/FogCulling.java
+dev/sqwat/vela/mixin/world/FogCullingMixin.java
+dev/sqwat/vela/mixin/entity/NameTagTextCacheMixin.java
+# tests for the dropped GUI index and for 26.x render state/gizmo classes (1.21.5 draws through compat.gizmos)
+dev/sqwat/vela/render/perf/IndexedAreaListTest.java
+dev/sqwat/vela/ui/render/PngTextBatchTest.java
+dev/sqwat/vela/VisualGeometryTest.java

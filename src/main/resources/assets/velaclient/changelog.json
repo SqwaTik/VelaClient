@@ -42,6 +42,10 @@
             {
               "en": "Update notice: when a newer Vela is out on GitHub, the main menu shows a card with the new version (click it to open the download page), and every world or server join posts a chat line with a Download link. It follows the language set in Vela, and works in every Vela build (26.2, 26.3, 1.21.11, 1.21.5, 1.21.4, Fabric and NeoForge).",
               "ru": "Уведомление об обновлении: когда на GitHub выходит новая Vela, в главном меню появляется карточка с новой версией (по клику открывается страница загрузки), а при каждом заходе в мир или на сервер в чат приходит строка со ссылкой «Скачать». Язык берётся из настроек Vela, работает во всех сборках Vela (26.2, 26.3, 1.21.11, 1.21.5, 1.21.4, Fabric и NeoForge)."
+            },
+            {
+              "en": "Vela Launcher installs every build: when you create an instance you pick Fabric or NeoForge and a Minecraft version (26.3, 26.2, 1.21.11, 1.21.5, 1.21.4). The launcher installs the right loader and Java, puts the matching Vela build in, and every screen (home, mods, settings) shows that instance's version and loader. Modrinth search and modpack import and export follow the instance too.",
+              "ru": "Vela Launcher ставит любую сборку: при создании экземпляра выбираются Fabric или NeoForge и версия Minecraft (26.3, 26.2, 1.21.11, 1.21.5, 1.21.4). Лаунчер ставит нужный загрузчик и Java, кладёт подходящую сборку Vela, и все экраны (главная, моды, настройки) показывают версию и загрузчик этого экземпляра. Поиск на Modrinth, импорт и экспорт сборок тоже работают под экземпляр."
             }
           ]
         },

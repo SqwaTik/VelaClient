@@ -1,6 +1,7 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+    id 'net.neoforged.moddev' version "${moddev_version}" apply false
 }
 
 // Vela's own version and dependencies come from the main build
@@ -9,11 +10,14 @@ def velaProps = new Properties()
 vela.toPath().resolve('gradle.properties').withInputStream { velaProps.load(it) }
 
 subprojects {
-    // loom=fabric-loom on 26.x (the game ships in Mojang names), fabric-loom-remap on 1.21.11 and older (obfuscated)
-    apply plugin: "net.fabricmc.${project.loom}"
+    // loom=fabric-loom on 26.x (the game ships in Mojang names), fabric-loom-remap on 1.21.11 and older (obfuscated),
+    // loom=neoforge for a NeoForge module (ModDevGradle; its base.txt names the Fabric module it builds on)
+    def neo = project.loom == 'neoforge'
+    apply plugin: neo ? 'net.neoforged.moddev' : "net.fabricmc.${project.loom}"
     def remap = project.loom == 'fabric-loom-remap'
 
-    version = "${velaProps.mod_version}+${project.minecraft_version}"
+    // vela-client-<version>+<game version>-<loader>.jar
+    version = "${velaProps.mod_version}+${project.minecraft_version}-${neo ? 'neoforge' : 'fabric'}"
     group = velaProps.maven_group
     base.archivesName = velaProps.archives_base_name
 
@@ -30,7 +34,14 @@ subprojects {
         description = 'Writes Vela\'s sources renamed for this game version to build/ported'
         inputs.dir(new File(vela, 'src'))
         inputs.files(file('port.txt'), file('manual.txt'), file('drop.txt'), new File(vela, 'tools/port_mappings.py'))
-        inputs.files(fileTree('src'))
+        inputs.files(fileTree('src'), file('base.txt'))
+        // the layers this module builds on (base.txt, then that module's base.txt ...)
+        def below = file('base.txt')
+        while (below.exists()) {
+            def module = new File(projectDir.parentFile, below.text.trim())
+            inputs.files(new File(module, 'port.txt'), new File(module, 'manual.txt'), new File(module, 'drop.txt'), fileTree(new File(module, 'src')))
+            below = new File(module, 'base.txt')
+        }
         outputs.dir(ported)
         commandLine 'python', '-I', new File(vela, 'tools/port_mappings.py').absolutePath, 'rewrite', projectDir.absolutePath, ported.get().asFile.absolutePath
     }
@@ -45,8 +56,14 @@ subprojects {
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.18.42'
         annotationProcessor 'org.projectlombok:lombok:1.18.42'
-        minecraft "com.mojang:minecraft:${project.minecraft_version}"
-        if (remap) {
+        if (neo) {
+            // Vela's Fabric-built optional integrations: only their API classes are compiled against
+            if (project.hasProperty('sodium_version')) compileOnly "maven.modrinth:sodium:${project.sodium_version}"
+            if (project.hasProperty('iris_version')) compileOnly "maven.modrinth:iris:${project.iris_version}"
+            if (project.hasProperty('immediatelyfast_version')) compileOnly "maven.modrinth:immediatelyfast:${project.immediatelyfast_version}"
+        } else minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        if (neo) {
+        } else if (remap) {
             mappings loom.officialMojangMappings()
             modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
             modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
@@ -68,12 +85,36 @@ subprojects {
         if (project.hasProperty('sodium_version')) testRuntimeOnly "maven.modrinth:sodium:${project.sodium_version}"
     }
 
+    if (neo) {
+        // the game and NeoForm's tools run on this version's Java (the tools ask for a Java 21 toolchain otherwise)
+        java.toolchain.languageVersion = JavaLanguageVersion.of(project.java_release as int)
+        def launcher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(project.java_release as int) }
+        tasks.withType(net.neoforged.nfrtgradle.NeoFormRuntimeTask).configureEach {
+            javaExecutable = launcher.map { it.executablePath.asFile.absolutePath }
+        }
+        neoForge {
+            version = project.neoforge_version
+            runs {
+                client { client() }
+            }
+            mods {
+                velaclient { sourceSet sourceSets.main }
+            }
+        }
+        // the tests compile against the game too (as with Loom)
+        neoForge.addModdingDependenciesTo(sourceSets.test)
+    }
+
     processResources {
         filesMatching(['assets/**/INTER_LICENSE.txt', 'assets/**/Kenney-License.txt']) {
             name = name.toLowerCase(java.util.Locale.ROOT)
         }
-        def props = [version: project.version, minecraft: project.minecraft_range, java: ">=${project.java_release}"]
+        def props = [version: project.version, minecraft: project.minecraft_range, java: ">=${project.java_release}",
+                     neoforge: project.findProperty('neoforge_version') ?: '']
         inputs.properties props
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand props
+        }
         filesMatching('fabric.mod.json') {
             expand 'version': props.version
             filter { String line ->

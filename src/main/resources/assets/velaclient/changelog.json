@@ -22,6 +22,10 @@
             {
               "en": "Minecraft 26.3 build: the same Vela for 26.3, built from this code by a port layer (versions/26.3). Shaders, the first-person hands, the sky and the HUD cache are adapted to the new renderer; a test checks every mixin target against the game before it starts.",
               "ru": "Сборка для Minecraft 26.3: та же Vela для 26.3, собирается из этого же кода слоем портирования (versions/26.3). Шейдеры, руки от первого лица, небо и кэш HUD переведены на новый рендер; тест проверяет каждую цель миксинов по игре ещё до запуска."
+            },
+            {
+              "en": "NeoForge build for Minecraft 26.3 (versions/26.3-neoforge): the same Vela, its Fabric API calls answered by NeoForge events, with a configuration screen in the NeoForge mod list. The hotbar's Drag Mode offset and the menu transition follow NeoForge's GUI layers.",
+              "ru": "Сборка для NeoForge на Minecraft 26.3 (versions/26.3-neoforge): та же Vela, её вызовы Fabric API обслуживают события NeoForge, а экран настроек открывается из списка модов NeoForge. Сдвиг хотбара в режиме перетаскивания и анимация меню работают со слоями интерфейса NeoForge."
             }
           ]
         },

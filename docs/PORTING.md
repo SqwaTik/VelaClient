@@ -156,3 +156,29 @@ Only `net/minecraft` and `com/mojang` targets are reported missing; mixins into 
 
 - 26.3 compiles shaders to SPIR-V. `compat/SpirvGlsl` (applied by `SpirvGlslMixin` to `velaclient:` and `velaopt:` shaders, files and the custom sky) adds `layout(location = N)` to every stage input and output and turns `gl_VertexID` into `gl_VertexIndex`. Varyings take their location from their name (`texCoord` is 0, as in vanilla `screenquad.vsh`); a new varying name goes into `SpirvGlsl.VARYINGS`.
 - `drop.txt` drops `LevelRendererOutlineMixin`: 26.3 already skips the outline pass when nothing glows.
+
+### Layers (`base.txt`)
+
+A module with a `base.txt` builds on the module it names (one line, e.g. `26.3`). The base module's `port.txt`, `manual.txt` and `drop.txt` apply first, then the module's own. The base module's `src/` files are copied in with the upper layer's rules applied. A file in a higher layer's `src/` replaces the same path below, and a higher `drop.txt` drops files of either. Patches of a lower layer for a file that a higher layer replaces or drops are skipped. Every layer's own `@Mixin` classes join the mixin config of their package.
+
+### NeoForge (`versions/26.3-neoforge`)
+
+`loom=neoforge` in `gradle.properties` builds the module with ModDevGradle (`moddev_version` in `versions/gradle.properties`) against NeoForge `neoforge_version`, on top of `versions/26.3`:
+
+```bash
+cd versions
+./gradlew :26.3-neoforge:build
+./gradlew :26.3-neoforge:runClient
+```
+
+Jars are named `vela-client-<version>+<game>-<loader>.jar`.
+
+- Vela's Fabric API calls stay in the shared code. `manual.txt` renames `net.fabricmc.` to `dev.sqwat.vela.neoforge.shim.` everywhere, and the shims there have the same names and signatures. Only the parts Vela uses exist.
+- `neoforge/NeoMod` is the `@Mod` class. It registers the events and the configuration screen for the NeoForge mod list. NeoForge builds mods before the game client exists, so `mixin/neoforge/ClientStartMixin` runs the Fabric entrypoints (Vela, the bundled Bobby and IAS) where Fabric does, right after `Minecraft.instance` is set. That is before the options register keys and before mod loading finishes, where the payloads are registered.
+- `StorageVisibilityMixin` targets the 5-argument `tryExtractRenderState` (with `Frustum`); the 4-argument one only delegates to it on NeoForge.
+- `neoforge/NeoEvents` runs the shims' listeners from NeoForge events: ticks, screens, keys, HUD layers, chat, connection and payloads.
+- `neoforge/ClientCommandBridge` keeps Vela's client commands in a dispatcher of their own. Each top-level name goes into NeoForge's dispatcher as a literal plus the rest of the line.
+- `mixin/neoforge/ClientInteractionMixin` fires the attack, use-block and block-break callbacks where Fabric API fires them, before the packet is sent. NeoForge's `AttackEntityEvent` comes too late for friend protection.
+- `META-INF/accesstransformer.cfg` opens what Fabric API's transitive access wideners open and Vela uses. Copying all of Fabric's list breaks NeoForge's game recompile, because protected methods made public clash with their overrides.
+- NeoForge draws the hotbar group as separate GUI layers. `neoforge/NeoHud` moves each one by the hotbar's Drag Mode offset, and the menu transition wraps `ClientHooks.extractScreen`.
+- Mod Menu, its mixins and `fabric.mod.json` are dropped. `META-INF/neoforge.mods.toml` lists the mixin configs.

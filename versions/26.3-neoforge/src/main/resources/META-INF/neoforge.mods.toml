@@ -1,0 +1,60 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT AND LGPL-3.0-or-later"
+
+[[mods]]
+modId = "velaclient"
+version = "${version}"
+displayName = "Vela Client"
+description = "An all-in-one client: a configurable HUD, visual effects, PvP helpers, a music player with lyrics and quality-of-life tools, in one mod with one settings menu."
+authors = "sqwat"
+iconFile = "assets/velaclient/icon.png"
+
+[[accessTransformers]]
+file = "META-INF/accesstransformer.cfg"
+
+[[mixins]]
+config = "velaclient.mixins.json"
+
+[[mixins]]
+config = "bobby.mixins.json"
+
+[[mixins]]
+config = "ias.mixins.json"
+
+[[mixins]]
+config = "vela-opt.mixins.json"
+
+[[dependencies.velaclient]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+side = "CLIENT"
+
+[[dependencies.velaclient]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge},)"
+side = "CLIENT"
+
+# Vela bundles these; a separate copy would apply the same mixins twice
+[[dependencies.velaclient]]
+modId = "bobby"
+type = "incompatible"
+reason = "Vela Client already includes Bobby"
+versionRange = "*"
+side = "CLIENT"
+
+[[dependencies.velaclient]]
+modId = "ias"
+type = "incompatible"
+reason = "Vela Client already includes In-Game Account Switcher"
+versionRange = "*"
+side = "CLIENT"
+
+[[dependencies.velaclient]]
+modId = "zakoopt"
+type = "incompatible"
+reason = "Vela Client already includes its optimizations"
+versionRange = "*"
+side = "CLIENT"

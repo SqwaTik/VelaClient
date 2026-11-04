@@ -82,9 +82,10 @@ public final class VelaTitleScreen extends VelaScreen {
             VelaDraw.text(g,labels[i],pill.x()+35,pill.y()+(pill.height()-9)/2f,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,h),VelaDraw.Weight.MEDIUM,9);
             hits.add(new MenuHit(rect,actions[i]));
         }
-        dev.sqwat.vela.ui.render.UiCursor.hand(hits.stream().anyMatch(hit->hit.rect.contains(mouseX,mouseY))||changelogHit.contains(mouseX,mouseY)||launcherHit.contains(mouseX,mouseY));
+        dev.sqwat.vela.ui.render.UiCursor.hand(hits.stream().anyMatch(hit->hit.rect.contains(mouseX,mouseY))||changelogHit.contains(mouseX,mouseY)||launcherHit.contains(mouseX,mouseY)||updateHit.contains(mouseX,mouseY));
         drawChangelogPill(g,mouseX,mouseY,dt);
         drawLauncherLink(g,mouseX,mouseY,dt);
+        drawUpdateCard(g,mouseX,mouseY,dt);
     }
     private static final String LAUNCHER_RELEASE="https://github.com/SqwaTik/VelaLauncher/releases/latest";
     private Rect launcherHit=new Rect(0,0,0,0);
@@ -134,6 +135,28 @@ public final class VelaTitleScreen extends VelaScreen {
         int ax=x+w-30,ay=y+(h-22)/2;
         VelaDraw.roundedRect(g,ax,ay,22,22,11,VelaTheme.mix(0xFF1A2130,accent,hover*.85f));
         dev.sqwat.vela.ui.render.VelaIcons.draw(g,"download",ax+5,ay+5,12,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,0xFFFFFFFF,hover));
+    }
+    private Rect updateHit=new Rect(0,0,0,0);
+    private float updateHover;
+    /** Top-left card when GitHub has a newer Vela release: "New version 0.2.2" and a download arrow (opens the release). */
+    private void drawUpdateCard(GuiGraphicsExtractor g,int mouseX,int mouseY,float dt){
+        var release=dev.sqwat.vela.core.UpdateCheck.newer();
+        if(release==null){updateHit=new Rect(0,0,0,0);return;}
+        String title=dev.sqwat.vela.ui.Lang.pick("New version ","Новая версия ")+release.version();
+        String sub=dev.sqwat.vela.ui.Lang.pick("Download from GitHub","Скачать с GitHub");
+        float titleW=VelaDraw.textWidth(title,VelaDraw.Weight.SEMIBOLD,9),subW=VelaDraw.textWidth(sub,VelaDraw.Weight.MEDIUM,7.5f);
+        int w=(int)Math.ceil(Math.max(titleW,subW))+46,h=30,x=12,y=12;
+        updateHit=new Rect(x,y,w,h);
+        float hover=updateHover=Motion.approach(updateHover,updateHit.contains(mouseX,mouseY)?1:0,services.configs().current().reducedMotion?60:13,dt);
+        int accent=VelaTheme.PRIMARY;
+        float pulse=services.configs().current().reducedMotion?1:.6f+.4f*(float)Math.sin(System.currentTimeMillis()/1000.0*Math.PI*1.2);
+        VelaDraw.roundedRect(g,x-3,y-3,w+6,h+6,11,(Math.round((18+hover*22)*pulse)<<24)|(accent&0xFFFFFF));
+        VelaDraw.roundedOutline(g,x,y,w,h,8,VelaTheme.mix(0xFF262E3F,accent,.55f+hover*.45f),VelaTheme.mix(0xE8121722,VelaTheme.mix(0xFF121722,accent,.16f),hover));
+        VelaDraw.text(g,title,x+10,y+6,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,9);
+        VelaDraw.text(g,sub,x+10,y+18,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,VelaTheme.TEXT,hover*.6f),VelaDraw.Weight.MEDIUM,7.5f);
+        int ax=x+w-26,ay=y+(h-18)/2;
+        VelaDraw.roundedRect(g,ax,ay,18,18,9,VelaTheme.mix(0xFF1A2130,accent,.35f+hover*.6f));
+        dev.sqwat.vela.ui.render.VelaIcons.draw(g,"download",ax+4,ay+4,10,VelaTheme.mix(VelaTheme.TEXT_SECONDARY,0xFFFFFFFF,.5f+hover*.5f));
     }
     private Rect changelogHit=new Rect(0,0,0,0);
     private float changelogHover;
@@ -187,6 +210,8 @@ public final class VelaTitleScreen extends VelaScreen {
         if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return super.clickVela(event, doubled);
         if(changelogHit.contains(event.x(),event.y())){minecraft.gui.setScreen(new ChangelogScreen(this));return true;}
         if(launcherHit.contains(event.x(),event.y())){net.minecraft.util.Util.getPlatform().openUri(LAUNCHER_RELEASE);return true;}
+        var release=dev.sqwat.vela.core.UpdateCheck.newer();
+        if(release!=null&&updateHit.contains(event.x(),event.y())){net.minecraft.util.Util.getPlatform().openUri(release.url());return true;}
         for (MenuHit hit : hits) {
             if (!hit.rect().contains(event.x(), event.y())) continue;
             switch (hit.action()) {

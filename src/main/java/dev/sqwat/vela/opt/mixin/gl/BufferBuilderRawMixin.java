@@ -35,12 +35,26 @@ public class BufferBuilderRawMixin implements RawBuffer {
 
 	@Override
 	public void velaopt$push(long src, int count) {
+		MemoryUtil.memCopy(src, velaopt$reserve(count), (long) count * vertexSize);
+	}
+
+	@Override
+	public long velaopt$reserve(int count) {
+		if (count == 0) {
+			return 0L;
+		}
 		int length = count * vertexSize;
 		long dst = buffer.reserve(length);
-		MemoryUtil.memCopy(src, dst, length);
 		vertices += count;
-		// the pushed vertices are complete: the next addVertex must not see a half-filled one
+		// the reserved vertices count as complete: the next addVertex must not see a half-filled one
 		vertexPointer = dst + length - vertexSize;
 		elementsToFill = 0;
+		return dst;
+	}
+
+	@Override
+	public void velaopt$ensureFree(long bytes) {
+		ByteBufferBuilderAccessor access = (ByteBufferBuilderAccessor) buffer;
+		access.velaopt$ensureCapacity(access.velaopt$writeOffset() + bytes);
 	}
 }

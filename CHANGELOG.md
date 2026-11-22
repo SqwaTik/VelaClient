@@ -20,6 +20,8 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Explosion Wave has been removed.
 - Music covers: QQ Music joins the cover search, and a song missing from every catalogue now gets the cover from its YouTube upload. One source being down no longer leaves the song without a picture.
 - 1.21.4 and 1.21.5: distant mobs and players are drawn without armour, held items and skin layers (entity LOD), as on 26.x.
+- Herds of mobs: with multithreaded models on, the worker threads write mob vertices straight into the frame's vertex buffer, without an extra copy through the render thread. With thousands of mobs in view that is tens of megabytes less copying per frame.
+- Collisions with crowds: when you move, the game no longer checks every mob nearby to see whether you can stand on it. It checks only entities you really collide with: boats, shulkers and happy ghasts.
 
 ### Fixed
 - Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.

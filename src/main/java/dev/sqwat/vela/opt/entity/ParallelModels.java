@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import dev.sqwat.vela.opt.gl.RawBuffer;
 import dev.sqwat.vela.opt.gl.RawVertices;
 import dev.sqwat.vela.opt.mixin.entity.ModelPartAccessor;
 import dev.sqwat.vela.opt.particle.Workers;
@@ -70,11 +71,29 @@ public class ParallelModels {
 	}
 
 	public Job add(Model model, Object state, PoseStack.Pose pose, int light, int overlay, int color, TextureAtlasSprite sprite) {
-		return add(model, state, pose, light, overlay, color, sprite, FORMAT);
+		return add(model, state, pose, light, overlay, color, sprite, FORMAT, null);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public Job add(Model model, Object state, PoseStack.Pose pose, int light, int overlay, int color, TextureAtlasSprite sprite, VertexFormat format) {
+		return add(model, state, pose, light, overlay, color, sprite, format, null);
+	}
+
+	// the most bytes add can reserve for this model in FORMAT: every part shown
+	@SuppressWarnings("rawtypes")
+	public long maxBytes(Model model) {
+		Flat flat = FLATS.computeIfAbsent(model.root(), Flat::new);
+		long vertices = 0;
+		for (int v : flat.vertices) {
+			vertices += v;
+		}
+		return vertices * FORMAT.getVertexSize();
+	}
+
+	// direct: the worker writes the vertices straight into this buffer's reserved room instead of a page that emit copies
+	// from later, one copy of every vertex less; the buffer must not move until end() (see RawBuffer.velaopt$ensureFree)
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public Job add(Model model, Object state, PoseStack.Pose pose, int light, int overlay, int color, TextureAtlasSprite sprite, VertexFormat format,
+				   RawBuffer direct) {
 		model.setupAnim(state);
 		ModelPart root = model.root();
 		Flat flat = FLATS.computeIfAbsent(root, Flat::new);
@@ -131,7 +150,8 @@ public class ParallelModels {
 			i++;
 		}
 		job.vertices = vertices;
-		job.address = reserve(vertices * job.stride);
+		job.direct = direct != null;
+		job.address = direct != null ? direct.velaopt$reserve(vertices) : reserve(vertices * job.stride);
 		BUILT.add(job);
 		stream.publish(BUILT.size());
 		return job;
@@ -148,7 +168,7 @@ public class ParallelModels {
 
 	// false: the consumer cannot take raw vertices, the caller renders this model the vanilla way
 	public boolean emit(Job job, VertexConsumer consumer, MemoryStack stack) {
-		if (job.vertices == 0) {
+		if (job.vertices == 0 || job.direct) {
 			return true;
 		}
 		if (!RawVertices.accepts(consumer, job.format)) {
@@ -300,6 +320,7 @@ public class ParallelModels {
 		byte[] flags = new byte[0];
 		int vertices;
 		long address;
+		boolean direct;
 	}
 
 	// per thread: part() recurses, but each level is done with these before it descends

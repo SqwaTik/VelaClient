@@ -59,6 +59,14 @@
             {
               "en": "1.21.4 and 1.21.5: distant mobs and players are drawn without armour, held items and skin layers (entity LOD), as on 26.x.",
               "ru": "1.21.4 и 1.21.5: дальние мобы и игроки рисуются без брони, предметов в руках и слоёв скина (LOD сущностей), как на 26.x."
+            },
+            {
+              "en": "Herds of mobs: with multithreaded models on, the worker threads write mob vertices straight into the frame's vertex buffer, without an extra copy through the render thread. With thousands of mobs in view that is tens of megabytes less copying per frame.",
+              "ru": "Стада мобов: при включённых многопоточных моделях рабочие потоки пишут вершины мобов сразу в буфер кадра, без лишней копии через поток рендера. Когда в кадре тысячи мобов, это десятки мегабайт копирования за кадр меньше."
+            },
+            {
+              "en": "Collisions with crowds: when you move, the game no longer checks every mob nearby to see whether you can stand on it. It checks only entities you really collide with: boats, shulkers and happy ghasts.",
+              "ru": "Столкновения в толпе: когда ты двигаешься, игра больше не проверяет каждого моба рядом, можно ли на нём стоять. Проверяются только те, с кем правда сталкиваешься: лодки, шалкеры и счастливые гасты."
             }
           ]
         },

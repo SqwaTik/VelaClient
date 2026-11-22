@@ -1,0 +1,3 @@
+# the 1.21.5 layer's Fabric API helpers (NeoForge: the shim and the mod list)
+dev/sqwat/vela/compat/HudElementRegistry.java
+dev/sqwat/vela/compat/ModsScreens.java

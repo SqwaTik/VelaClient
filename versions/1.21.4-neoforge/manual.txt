@@ -1,0 +1,9 @@
+# NeoForge 1.21.4: the NeoForge 1.21.5 build (base.txt: 1.21.5-neoforge) with the 1.21.4 layer on top
+
+# the 1.21.4 patches for Vela files that 1.21.5/src replaces: a replaced file loses the patches of every layer below the
+# module itself, so the NeoForge module repeats them (the 1.21.4 module is the top layer there and keeps them)
+patch dev/sqwat/vela/ui/render/DissolveBody.java mc().getTextureManager().getTexture(texture).getTexture() => dev.sqwat.vela.compat.gpu.Gpu.of(mc().getTextureManager().getTexture(texture))
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java playSound(Lnet/minecraft/world/entity/Entity;DDD => playSound(Lnet/minecraft/world/entity/player/Player;DDD
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java (Level level,Entity source, => (Level level,Player source,
+patch dev/sqwat/vela/mixin/entity/FakePlayerSoundMixin.java 1.21.5: Player.attack => 1.21.4: Player.attack
+patch dev/sqwat/vela/mixin/camera/BuiltinCameraMixin.java (Level level, => (net.minecraft.world.level.BlockGetter level,

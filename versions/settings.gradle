@@ -1,0 +1,17 @@
+// Vela for other game versions: one module per version folder (a folder with a gradle.properties), built from Vela's
+// src/ with that version's renames (port.txt), replaced files (its own src/) and dropped files (drop.txt). See docs/PORTING.md.
+//   ./gradlew -p versions :26.3:build
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.neoforged.net/releases' }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'vela-versions'
+// A folder with a wip.txt is a port still being written (it does not compile yet): it is left out unless -Pwip is given.
+def wip = providers.gradleProperty('wip').isPresent()
+file('.').eachDir { dir ->
+    if (new File(dir, 'gradle.properties').exists() && (wip || !new File(dir, 'wip.txt').exists())) include dir.name
+}

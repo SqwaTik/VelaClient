@@ -14,7 +14,7 @@ public final class FarewellScreen extends VelaScreen {
         g.fillGradient(0,0,width,height,0xFF111725,0xFF070A10);
         int center=width/2,top=height/2;
         VelaDraw.logo(g,center-22,top-65,44);
-        VelaDraw.centeredText(g,"Vela 26.2",center,top,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,20);
+        VelaDraw.centeredText(g,"Vela "+net.minecraft.SharedConstants.getCurrentVersion().name(),center,top,VelaTheme.TEXT,VelaDraw.Weight.SEMIBOLD,20);
         VelaDraw.centeredText(g,phrase,center,top+32,VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.REGULAR,9);
     }
     @Override public void tick(){if(!stopped&&System.nanoTime()-started>=650_000_000L){stopped=true;minecraft.stop();}}

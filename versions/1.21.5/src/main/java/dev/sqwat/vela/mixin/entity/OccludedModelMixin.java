@@ -1,0 +1,25 @@
+package dev.sqwat.vela.mixin.entity;
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.sqwat.vela.render.entity.OccludedRenderState;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.LivingEntity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+/** An occluded player skips model, armour, held items and cape; EntityRenderer.render still draws name tag and leash. */
+@Mixin(LivingEntityRenderer.class)
+abstract class OccludedModelMixin<T extends LivingEntity,S extends LivingEntityRenderState,M extends EntityModel<? super S>> extends EntityRenderer<T,S> {
+    private OccludedModelMixin(EntityRendererProvider.Context context){super(context);}
+    @Inject(method="render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",at=@At("HEAD"),cancellable=true)
+    private void vela$occludedModel(S state,PoseStack pose,MultiBufferSource buffers,int light,CallbackInfo ci){
+        if(!((OccludedRenderState)state).vela$occluded())return;
+        super.render(state,pose,buffers,light);
+        ci.cancel();
+    }
+}

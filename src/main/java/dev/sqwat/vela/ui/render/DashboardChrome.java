@@ -26,7 +26,7 @@ public final class DashboardChrome {
         c.border(x,y,w,h,9,VelaTheme.BORDER);
         c.image("logo",x+11,y+11,16,0xFFFFFFFF);
         c.text("Vela",x+34,y+10,10,VelaTheme.TEXT,SEMIBOLD);
-        c.text("Client 26.2",x+34,y+23,20f/3,VelaTheme.TEXT_MUTED,MEDIUM);
+        c.text("Client "+net.minecraft.SharedConstants.getCurrentVersion().name(),x+34,y+23,20f/3,VelaTheme.TEXT_MUTED,MEDIUM);
         c.line(x,y+40,side,0xFF1A2030);
         for(int i=0;i<SECTIONS.length;i++){
             if(i==SECONDARY)c.line(x+10,l.navigation(i).y()-7,side-20,0xFF1A2030);
@@ -40,8 +40,9 @@ public final class DashboardChrome {
         c.line(x,y+h-23,side,0xFF1A2030);
         // The version opens the changelog (VelaDashboardScreen); it brightens on hover.
         float version=Math.max(0,Math.min(1,versionHover));
-        if(version>.01f)c.round(x+side/2f-24,y+h-19,48,14,7,VelaTheme.mix(VelaTheme.SIDEBAR,0xFF1C2333,version));
-        c.centered("v"+dev.sqwat.vela.ui.Changelog.current(),x+side/2,y+h-15,20f/3,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,version),REGULAR);
+        float versionWidth=versionWidth(c,side);
+        if(version>.01f)c.round(x+(side-versionWidth)/2f,y+h-19,versionWidth,14,7,VelaTheme.mix(VelaTheme.SIDEBAR,0xFF1C2333,version));
+        c.centered(fit(c,versionLabel(),versionWidth-10,20f/3),x+side/2,y+h-15,20f/3,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,version),REGULAR);
 
         c.text(SECTIONS[section],x+side+11,y+14,10,VelaTheme.TEXT,MEDIUM);
 
@@ -60,6 +61,9 @@ public final class DashboardChrome {
         c.centered(title,center,top,28f/3,VelaTheme.TEXT_SECONDARY,MEDIUM);
         c.centered(detail,center,top+17,8,VelaTheme.TEXT_MUTED,REGULAR);
     }
+    private static String versionLabel(){return "v"+dev.sqwat.vela.ui.Changelog.current();}
+    /** The version pill fits its text ("v0.2.1+1.21.11-neoforge" on the ports), up to the sidebar's width. */
+    public static float versionWidth(UiCanvas c,float side){return Math.min(side-12,c.textWidth(versionLabel(),20f/3,REGULAR)+14);}
     private static String fit(UiCanvas c,String value,float max,float size){
         if(c.textWidth(value,size,REGULAR)<=max)return value;
         int end=value.length();while(end>0&&c.textWidth(value.substring(0,end)+"…",size,REGULAR)>max)end=value.offsetByCodePoints(end,-1);

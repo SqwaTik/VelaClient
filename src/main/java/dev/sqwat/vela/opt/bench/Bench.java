@@ -305,8 +305,12 @@ public class Bench {
 			// the render scale blurs the world, so the numbers alone never turn it on: it is offered by eye only where the GPU holds
 			// the frame back, which a forest of see-through leaves shows and the flat scene does not
 			if (scale != null && option("render_scale_percent") instanceof OptOptions.Distance percent) {
+				var auto = option("render_scale_auto") instanceof OptOptions.Toggle toggle ? toggle : null;
 				main(mc, () -> {
 					percent.set().accept(50);
+					if (auto != null) {
+						auto.set().accept(false);
+					}
 					return null;
 				});
 				double ratio = abba(mc, new Test(scale.key(), forest.key()), scale, Component.translatable("velaopt.option.render_scale"), 0, 1, 96);
@@ -314,10 +318,13 @@ public class Bench {
 				main(mc, () -> {
 					set(scale, saved.get(scale.key()));
 					set(percent, saved.get(percent.key()));
+					if (auto != null) {
+						set(auto, saved.get(auto.key()));
+					}
 					return null;
 				});
 				if (ratio <= 1 / (1 + MIN_GAIN)) {
-					pick(mc, saved, List.of("render_scale", "render_scale_percent"), forest, "velaopt.bench.render_scale", picks);
+					pick(mc, saved, List.of("render_scale", "render_scale_auto", "render_scale_target", "render_scale_percent"), forest, "velaopt.bench.render_scale", picks);
 				}
 			}
 			if (option("far_leaves") != null) {

@@ -17,7 +17,8 @@ import java.util.function.Supplier;
 // the options screens' view of the features: groups of switches and sliders, built from the feature registry
 @UtilityClass
 public class OptOptions {
-	public final String VERSION = Platform.loader().version("velaopt");
+	// velaopt ships inside Vela, so it carries Vela's version; never null, the screen and F3 print it
+	public final String VERSION = java.util.Objects.requireNonNullElse(Platform.loader().version("velaclient"), "");
 
 	public sealed interface Option permits Toggle, Distance {
 		String key();

@@ -14,7 +14,7 @@ mappings when the target is obfuscated, i.e. 1.21.11 and older), and:
 Manual fixes go to tools/port/<version>.renames (old=new per line: a class `net.minecraft.a.Old=net.minecraft.b.New`, or a member
 `net.minecraft.a.Owner#oldName=newName`); they win over the automatic matches. See docs/PORTING.md.
 """
-import argparse, gzip, hashlib, json, re, shutil, struct, sys, urllib.request, zipfile
+import argparse, fnmatch, gzip, hashlib, json, re, shutil, struct, sys, urllib.request, zipfile
 from collections import defaultdict
 from pathlib import Path
 
@@ -564,11 +564,13 @@ def locate(files, token):
 
 def class_forms(old, new):
     """Spellings of a class in Java source and in mixin strings: a.b.Outer.Inner, a.b.Outer$Inner, a/b/Outer$Inner."""
-    return [(old.replace('/', '.').replace('$', '.'), new.replace('/', '.').replace('$', '.')),
-            (old.replace('/', '.'), new.replace('/', '.')), (old, new)]
+    java = (old.replace('/', '.').replace('$', '.'), new.replace('/', '.').replace('$', '.'))
+    # a top-level class that became a nested one keeps the Java spelling (a.b.Outer.Inner) in source
+    return [java] + ([(old.replace('/', '.'), new.replace('/', '.'))] if '$' in old else []) + [(old, new)]
 
-def rewrite(text, class_renames, member_renames):
-    """class_renames: [(old, new)] internal names; member_renames: [(kind, old_name, new_name)] for this file."""
+def rewrite(text, class_renames, member_renames, gone=()):
+    """class_renames: [(old, new)] internal names; member_renames: [(kind, old_name, new_name)] for this file;
+    gone: dotted packages that no longer exist in the target (their `import a.*;` lines are removed)."""
     changes = 0
     # simple names first, by how the file imports the old class: `import a.Old;` -> Old, `import a.Outer;` -> Outer.Inner
     for old, new in class_renames:
@@ -587,11 +589,16 @@ def rewrite(text, class_renames, member_renames):
             if wild and re.search(word, text[wild.end():]):
                 body, n = re.subn(word, sn[-1], text[wild.end():]); changes += n
                 text = text[:wild.end()] + 'import ' + new.replace('/', '.').replace('$', '.') + ';\n' + body
+    for g in gone:
+        text, n = re.subn(r'^import\s+' + re.escape(g) + r'\.\*\s*;[^\n]*\n', '', text, flags=re.M); changes += n
     pairs = sorted({p for o, n in class_renames for p in class_forms(o, n)}, key=lambda p: -len(p[0]))
     if pairs:
         pat = re.compile(r'(?<![\w$.])(?:' + '|'.join(re.escape(a) for a, _ in pairs) + r')(?![\w$])')
         table = dict(pairs)
         text, k = pat.subn(lambda m: table[m.group()], text); changes += k
+        # descriptors in mixin strings ("(ILa/b/Old;)V"): the L sits right before the name, so the guard above skips them
+        desc = re.compile(r'L(' + '|'.join(re.escape(o) for o, _ in class_renames) + r')(?=;)')
+        text, k = desc.subn(lambda m: 'L' + dict(class_renames)[m.group(1)], text); changes += k
     for kind, old, new in member_renames:
         w = re.escape(old)
         if kind == 'methods':
@@ -697,6 +704,17 @@ def main():
         lines.append('')
     (out / 'report.md').write_bytes(('\n'.join(lines) + '\n').encode())
     (out / 'renames.txt').write_bytes(''.join(f'{dotted(o)}={dotted(n)}\n' for o, n in sorted(class_renames.items())).encode())
+    # port.txt: what `rewrite` applies when a version module is built (versions/<module>/port.txt)
+    plan = [f'# Vela {source} -> {a.target}, written by tools/port_mappings.py {a.target}. Do not edit: fix tools/port/{a.target}.renames and run it again.']
+    plan += [f'class {dotted(o)}={dotted(n)}' for o, n in sorted(class_renames.items())]
+    have = {c.rsplit('/', 1)[0] for c in dst.c}
+    gone = sorted({o.rsplit('/', 1)[0].replace('/', '.') for o in class_renames if o.rsplit('/', 1)[0] not in have})
+    plan += [f'gone {g}' for g in gone]
+    for f, rs in sorted(per_file.items()):
+        root = next((r for r in roots if f.is_relative_to(r)), None)
+        if root:
+            plan += [f'member {f.relative_to(root).as_posix()} {k} {o}={n}' for k, o, n in sorted(rs)]
+    (out / 'port.txt').write_bytes(('\n'.join(plan) + '\n').encode())
     (out / 'report.json').write_bytes(json.dumps({s: [{'what': t, 'detail': d, 'at': l} for t, d, l in rows[s]] for s in order}, indent=1).encode())
     if a.apply:
         dest = out / 'src'
@@ -710,11 +728,175 @@ def main():
                 if f.suffix != '.java':
                     shutil.copyfile(f, to); continue
                 text = f.read_text('utf-8')
-                new, k = rewrite(text, sorted(class_renames.items()), sorted(per_file.get(f, ())))
+                new, k = rewrite(text, sorted(class_renames.items()), sorted(per_file.get(f, ())), gone)
                 changed += new != text
                 to.write_bytes(new.replace('\r\n', '\n').encode())
         print(f'rewritten sources: {dest} ({changed} files changed)', file=sys.stderr)
     print(f'{out / "report.md"}: {len(class_renames)} classes and {len(rows["members renamed"])} members renamed, {manual_count} to port by hand')
 
+# ---------------------------------------------------------------- version modules
+
+SOURCE_SETS = [('main', 'java'), ('main', 'resources'), ('test', 'java'), ('test', 'resources'), ('gametest', 'java'), ('gametest', 'resources')]
+
+def substitute(text, old, new):
+    """Replaces a plain string or a compiled regex everywhere; returns the text and the number of replacements."""
+    if isinstance(old, str): return text.replace(old, new), text.count(old)
+    return old.subn(new, text)
+
+
+def read_layer(module):
+    """One version layer's rules: port.txt (written by the report), then manual.txt (same format, hand-made), drop.txt."""
+    classes, members, gone, patches, unpatch = [], defaultdict(list), [], defaultdict(list), []
+    lines = [l for p in (module / 'port.txt', module / 'manual.txt') if p.exists() for l in p.read_text('utf-8').splitlines()]
+    for line in lines:
+        if line.startswith('gone '):
+            gone.append(line[5:].strip())
+        elif line.startswith('patch '):  # patch <path|*> <old text> => <new text>: replace every occurrence after the renames
+            path, rest = line[6:].split(' ', 1); o, n = rest.split(' => ', 1); patches[path].append((o, n))
+        elif line.startswith('unpatch '):  # unpatch <path|*> <old text>: a lower layer's patch with this old text is not applied
+            path, o = line[8:].split(' ', 1); unpatch.append((path, o))
+        elif line.startswith('patchre '):  # patchre <path|*> <regex> => <replacement>: same, as a regular expression
+            path, rest = line[8:].split(' ', 1); o, n = rest.split(' => ', 1); patches[path].append((re.compile(o), n))
+        elif line.startswith('class '):
+            o, n = line[6:].split('=', 1); classes.append((o.replace('.', '/'), n.replace('.', '/')))
+        elif line.startswith('member '):
+            _, path, kind, on = line.split(' ', 3); o, n = on.split('=', 1); members[path].append((kind, o, n))
+        elif line.startswith('unmember '):  # unmember <path> <kind> <old>=<new>: a generated member rename that hits Vela's own names
+            _, path, kind, on = line.split(' ', 3); o, n = on.split('=', 1)
+            if (kind, o, n) not in members[path]: sys.exit(f'{module.name}: unmember matches no member rule: {line}')
+            members[path].remove((kind, o, n))
+    drops = module / 'drop.txt'
+    globs = [l.strip() for l in drops.read_text('utf-8').splitlines() if l.strip() and not l.startswith('#')] if drops.exists() else []
+    everywhere = patches.pop('*', [])
+    return dict(module=module, classes=classes, members=members, gone=gone, patches=patches, globs=globs, unpatch=unpatch,
+                everywhere=everywhere, hits=[0] * len(everywhere))
+
+def layers_of(module):
+    """The module's layers, lowest first: a base.txt names the layers it builds on, one per line, lowest first (26.3-neoforge:
+    26.3, then the shared neoforge layer). Each of them may have a base.txt of its own; a layer shows up once."""
+    base = module / 'base.txt'
+    below = []
+    for name in base.read_text('utf-8').split() if base.exists() else ():
+        below += [m for m in layers_of(module.parent / name) if m not in below]
+    return below + [module]
+
+def rewrite_main(argv):
+    """The sources a version module compiles: Vela's src/ with the module's port.txt applied, minus the files the module
+    replaces (its own src/ at the same path) or drops (drop.txt globs, e.g. dev/sqwat/vela/render/vk/**). Mixin configs lose
+    the mixins whose class is gone. A module with a base.txt sits on another module: that module's rules apply first, its
+    own files are copied in with the upper layers' rules applied, and the upper layers replace or drop files of either.
+    Needs no downloads; Gradle runs it before compiling a module."""
+    ap = argparse.ArgumentParser(prog='port_mappings.py rewrite', description=rewrite_main.__doc__)
+    ap.add_argument('module', help='version module folder, e.g. versions/26.3-fabric')
+    ap.add_argument('into', help='output folder (gets main/java, main/resources, test/java ...)')
+    a = ap.parse_args(argv)
+    module, into = Path(a.module).resolve(), Path(a.into).resolve()
+    layers = [read_layer(m) for m in layers_of(module)]
+    for i, layer in enumerate(layers):  # an upper layer's `unpatch` lines take patches out of the layers below it
+        for path, o in layer['unpatch']:
+            hit = 0
+            for low in layers[:i]:
+                if path == '*':
+                    keep = [(k, (po, pn)) for k, (po, pn) in enumerate(low['everywhere']) if getattr(po, 'pattern', po) != o]
+                    hit += len(low['everywhere']) - len(keep)
+                    low['everywhere'] = [x for _, x in keep]; low['hits'] = [0] * len(keep)
+                else:
+                    before = low['patches'].get(path, [])
+                    after = [(po, pn) for po, pn in before if getattr(po, 'pattern', po) != o]
+                    hit += len(before) - len(after)
+                    if path in low['patches']:
+                        if after: low['patches'][path] = after
+                        else: del low['patches'][path]
+            if not hit: sys.exit(f'{layer["module"].name}: unpatch for {path} matches no lower patch: {o}')
+    written, changed = set(), 0
+    def put(to, data):
+        nonlocal changed
+        written.add(to)
+        if to.exists() and to.read_bytes() == data: return
+        to.parent.mkdir(parents=True, exist_ok=True); to.write_bytes(data); changed += 1
+    # sources: Vela's src/ (every layer's rules), then each lower layer's own src/ (the rules of the layers above it);
+    # the module's own src/ is compiled as it is. A file is taken from the highest source that has it.
+    sources = [(ROOT, layers)] + [(layer['module'], layers[i + 1:]) for i, layer in enumerate(layers[:-1])]
+    for sset, kind in SOURCE_SETS:
+        for k, (base, rules) in enumerate(sources):
+            src = base / 'src' / sset / kind
+            if not src.is_dir(): continue
+            higher = [m / 'src' / sset / kind for m, _ in sources[k + 1:]] + [module / 'src' / sset / kind]
+            for f in src.rglob('*'):
+                rel = f.relative_to(src).as_posix()
+                if not f.is_file(): continue
+                if any((h / rel).exists() for h in higher) or any(fnmatch.fnmatchcase(rel, g) for layer in rules for g in layer['globs']):
+                    for layer in layers[:-1]: layer['patches'].pop(rel, None)  # a lower layer's patches for a file replaced or dropped above
+                    continue
+                data = f.read_bytes()
+                if f.suffix == '.java':
+                    text = data.decode('utf-8').replace('\r\n', '\n')
+                    for layer in rules:
+                        text = rewrite(text, layer['classes'], layer['members'].get(rel, ()), layer['gone'])[0]
+                        for o, n in layer['patches'].pop(rel, ()):
+                            text, hit = substitute(text, o, n)
+                            if not hit: sys.exit(f'{layer["module"].name}: patch for {rel} does not match: {getattr(o, "pattern", o)}')
+                        for i, (o, n) in enumerate(layer['everywhere']):  # `patch * ...`: every compiled file
+                            text, hit = substitute(text, o, n); layer['hits'][i] += hit
+                    data = text.encode('utf-8')
+                elif any(rel in layer['patches'] for layer in rules):
+                    # a resource (fabric.mod.json ...) gets its own patches, not the renames
+                    text = data.decode('utf-8').replace('\r\n', '\n')
+                    for layer in rules:
+                        for o, n in layer['patches'].pop(rel, ()):
+                            text, hit = substitute(text, o, n)
+                            if not hit: sys.exit(f'{layer["module"].name}: patch for {rel} does not match: {getattr(o, "pattern", o)}')
+                    data = text.encode('utf-8')
+                put(into / sset / kind / rel, data)
+    # root mixin configs: keep the mixins whose class this module still compiles
+    props = module / 'gradle.properties'
+    release = re.search(r'^java_release=(\d+)', props.read_text('utf-8'), re.M) if props.is_file() else None
+    for sset in ('main', 'gametest'):
+        res = into / sset / 'resources'
+        for cfg in res.glob('*.json') if res.is_dir() else ():
+            if not cfg.name.endswith('mixins.json'): continue
+            if cfg not in written: continue  # left over from an earlier run and dropped since
+            d = json.loads(cfg.read_text('utf-8'))
+            # a JAVA_25 config fails to load on a version that runs on Java 21 (NeoForge starts the game on java_release)
+            level = re.fullmatch(r'JAVA_(\d+)', d.get('compatibilityLevel', ''))
+            if release and level and int(level[1]) > int(release[1]): d['compatibilityLevel'] = f'JAVA_{release[1]}'
+            pkg = d.get('package', '').replace('.', '/')
+            # written this run, not merely left over from an earlier one (a file dropped since is deleted only at the end)
+            has = lambda e: (into / sset / 'java' / f'{pkg}/{e.replace(".", "/")}.java') in written or (module / 'src' / sset / 'java' / f'{pkg}/{e.replace(".", "/")}.java').exists()
+            for side in ('mixins', 'client', 'server'):
+                if side in d: d[side] = [e for e in d[side] if has(e)]
+            # every layer's own mixins in this config's package join the client side
+            listed = {e for side in ('mixins', 'client', 'server') for e in d.get(side, ())}
+            for m in layers_of(module):
+                own_pkg = m / 'src' / sset / 'java' / pkg
+                for f in sorted(own_pkg.rglob('*.java')) if pkg and own_pkg.is_dir() else ():
+                    e = f.relative_to(own_pkg).with_suffix('').as_posix().replace('/', '.')
+                    if e not in listed and has(e) and '@Mixin(' in f.read_text('utf-8'): d.setdefault('client', []).append(e); listed.add(e)
+            put(cfg, (json.dumps(d, indent=2, ensure_ascii=False) + '\n').encode('utf-8'))
+    # fabric.mod.json lists only the mixin configs this module still has (drop.txt may drop one, e.g. vela-opt.mixins.json)
+    fmj = into / 'main' / 'resources' / 'fabric.mod.json'
+    if fmj in written:
+        text = fmj.read_text('utf-8')
+        gone_cfgs = [n for n in re.findall(r'"([\w.-]*mixins[\w.-]*\.json)"', text)
+                     if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
+        for n in gone_cfgs: text = re.sub(r',\s*"' + re.escape(n) + '"|"' + re.escape(n) + r'",\s*', '', text)
+        if gone_cfgs: put(fmj, text.encode('utf-8'))
+    # neoforge.mods.toml too: a [[mixins]] entry for a dropped config stops FML
+    toml = into / 'main' / 'resources' / 'META-INF' / 'neoforge.mods.toml'
+    if toml in written:
+        text = toml.read_text('utf-8')
+        gone = [n for n in re.findall(r'config\s*=\s*"([\w.-]+\.json)"', text)
+                if (into / 'main' / 'resources' / n) not in written and not (module / 'src' / 'main' / 'resources' / n).exists()]
+        for n in gone: text = re.sub(r'\[\[mixins\]\]\s*config\s*=\s*"' + re.escape(n) + r'"[ \t]*\n(\s*\n)?', '', text)
+        if gone: put(toml, text.encode('utf-8'))
+    for layer in layers:
+        if layer['patches']: sys.exit(f'{layer["module"].name}: patches for files that are not compiled: {", ".join(layer["patches"])}')
+        # a lower layer's `patch *` may only have matched files an upper layer drops (checked when that layer is built)
+        for (o, _), h in zip(layer['everywhere'], layer['hits']) if layer is layers[-1] else ():
+            if not h: sys.exit(f'{layer["module"].name}: patch for * matches no file: {getattr(o, "pattern", o)}')
+    for f in into.rglob('*') if into.is_dir() else ():
+        if f.is_file() and f not in written: f.unlink()
+    print(f'{module.name}: {len(written)} files, {changed} written', file=sys.stderr)
+
 if __name__ == '__main__':
-    main()
+    rewrite_main(sys.argv[2:]) if sys.argv[1:2] == ['rewrite'] else main()

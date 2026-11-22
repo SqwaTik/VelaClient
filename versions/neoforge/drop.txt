@@ -1,0 +1,8 @@
+# NeoForge has its own mod list (Mods button, config screen), so the bundled Mod Menu stays out
+com/terraformersmc/**
+mixins.modmenu.json
+assets/modmenu/**
+dev/sqwat/vela/core/VelaModMenu.java
+# Fabric only: the loader picks NeoPlatform here (see src/.../opt/Platform.java); fabric.mod.json gives way to neoforge.mods.toml
+dev/sqwat/vela/opt/platform/FabricPlatform.java
+fabric.mod.json

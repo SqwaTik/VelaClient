@@ -10,6 +10,7 @@
     "screen.StreamerChatWrapMixin",
     "hud.CrosshairMixin",
     "entity.ItemHighlightMixin",
+    "entity.HeadSkinLogMixin",
     "entity.SelfTagMixin",
     "entity.HitColorMixin",
     "entity.HitColorArmorMixin",

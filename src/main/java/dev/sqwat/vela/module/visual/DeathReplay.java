@@ -38,6 +38,8 @@ public final class DeathReplay {
     private static boolean autoOrbit=true;
     private static long lastFrame;
     private static Vec3 cameraPos;private static float cameraYaw,cameraPitch;
+    /** Added to every recorded position: zero in the world it was recorded in, else it moves the replay next to the player. */
+    private static double offsetX,offsetY,offsetZ;
     private DeathReplay(){}
 
     public static void open(Recording r){Minecraft.getInstance().gui.setScreen(new dev.sqwat.vela.ui.screen.DeathRecapScreen(r,Minecraft.getInstance().gui.screen()));}
@@ -64,6 +66,7 @@ public final class DeathReplay {
         // The replay ends one second after the death; nothing after that is interesting.
         endIndex=r.frames().size()-1;
         for(int i=0;i<r.frames().size();i++)if(r.frames().get(i).tick()>r.deathTick()+20){endIndex=Math.max(1,i-1);break;}
+        relocate(r,mc);
         lastSeen.clear();
         for(var actor:r.actors().keySet()){
             int[] seen=new int[r.frames().size()];int last=-1;
@@ -83,6 +86,20 @@ public final class DeathReplay {
             level.addEntity(ghost);
         }
     }
+    /**
+     * A replay from another world or dimension, or one recorded out of render distance, plays around the player instead:
+     * ghosts in unloaded chunks would be neither ticked nor drawn.
+     */
+    private static void relocate(Recording r,Minecraft mc){
+        offsetX=offsetY=offsetZ=0;
+        Snap origin=null;
+        for(var frame:r.frames()){origin=frame.snaps().get(r.self());if(origin!=null)break;}
+        if(origin==null||mc.player==null)return;
+        boolean sameWorld=r.world().equals(dev.sqwat.vela.marker.MarkerRuntime.world(mc))&&r.dimension().equals(dev.sqwat.vela.marker.MarkerRuntime.dimension(mc));
+        double reach=Math.max(2,mc.options.getEffectiveRenderDistance()-1)*16;
+        if(sameWorld&&mc.player.distanceToSqr(origin.x(),origin.y(),origin.z())<=reach*reach)return;
+        offsetX=mc.player.getX()-origin.x();offsetY=mc.player.getY()-origin.y();offsetZ=mc.player.getZ()-origin.z();
+    }
     private static Entity create(Actor actor){
         if(actor.player())return new Ghost(level,new GameProfile(UUID.randomUUID(),actor.name()),skin(actor));
         try{return actor.type().create(level,EntitySpawnReason.LOAD);}catch(RuntimeException unsupported){return null;}
@@ -97,7 +114,7 @@ public final class DeathReplay {
     }
     public static void stop(){
         if(level!=null)for(var ghost:ghosts.values())level.removeEntity(ghost.getId(),Entity.RemovalReason.DISCARDED);
-        ghosts.clear();ghostSet.clear();ghostWalks.clear();lastSeen.clear();recording=null;hud=false;level=null;cameraPos=null;
+        ghosts.clear();ghostSet.clear();ghostWalks.clear();lastSeen.clear();recording=null;hud=false;level=null;cameraPos=null;offsetX=offsetY=offsetZ=0;
     }
 
     public static float length(){return recording==null?0:recording.frames().get(endIndex).tick()-recording.firstTick();}
@@ -142,7 +159,7 @@ public final class DeathReplay {
         boolean hidden=a==null||actor.self()&&view==View.SELF||actor.uuid().equals(recording.killer())&&view==View.KILLER;
         ghost.setInvisible(hidden);
         if(a==null)return;
-        double x=Mth.lerp(f,a.x(),b.x()),y=Mth.lerp(f,a.y(),b.y()),z=Mth.lerp(f,a.z(),b.z());
+        double x=Mth.lerp(f,a.x(),b.x())+offsetX,y=Mth.lerp(f,a.y(),b.y())+offsetY,z=Mth.lerp(f,a.z(),b.z())+offsetZ;
         float yaw=Mth.rotLerp(f,a.yRot(),b.yRot()),pitch=Mth.lerp(f,a.xRot(),b.xRot());
         ghost.setPos(x,y,z);ghost.xo=ghost.xOld=x;ghost.yo=ghost.yOld=y;ghost.zo=ghost.zOld=z;
         ghost.setYRot(yaw);ghost.yRotO=yaw;ghost.setXRot(pitch);ghost.xRotO=pitch;

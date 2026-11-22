@@ -309,7 +309,7 @@ public final class DeathRecapScreen extends VelaScreen {
     }
 
     // ---- Library ----
-    private void openLibrary(){library=ReplayFiles.list(recording.world(),recording.dimension());modal=Modal.LIBRARY;}
+    private void openLibrary(){library=ReplayFiles.list(null,null);modal=Modal.LIBRARY;}
     private void libraryWindow(GuiGraphicsExtractor g,int mx,int my){
         int w=340,h=Math.min(height-40,280);var r=new Rect((width-w)/2,(height-h)/2,w,h);modalRect=r;
         var content=UiKit.window(g,r,"Сохранённые повторы","Только для этого мира и измерения");
@@ -335,7 +335,7 @@ public final class DeathRecapScreen extends VelaScreen {
             VelaDraw.text(g,detail,row.x()+10,row.y()+18,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7.5f);
             var delete=new Rect(row.x()+row.width()-24,row.y()+8,16,16);
             UiKit.iconAction(g,delete,"trash",10,controls.animate("ld"+i,delete.contains(mx,my)?1:0),VelaTheme.DANGER);
-            actions.add(Map.entry(delete,()->{ReplayFiles.delete(saved);library=ReplayFiles.list(recording.world(),recording.dimension());}));
+            actions.add(Map.entry(delete,()->{ReplayFiles.delete(saved);library=ReplayFiles.list(null,null);}));
             actions.add(Map.entry(row,()->open(saved)));
             y+=36;
         }

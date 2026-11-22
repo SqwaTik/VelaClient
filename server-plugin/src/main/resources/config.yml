@@ -51,7 +51,6 @@ functions:
   crosshair: false  # Crosshair: Настраиваемый прицел с индикацией перезарядки / Custom crosshair with attack cooldown
   custom_hotbar: false  # Custom Hotbar: Стеклянный хотбар в стиле клиента / Glass hotbar in the client style
   dash_trail: false  # DashTrail: Частицы, лента или спираль за движущимся игроком / Particles, ribbon or spiral behind a moving player
-  explosion_wave: false  # Explosion Wave: Ударная волна от взрывов по земле, огибает препятствия / Explosion shockwave along the ground that flows around obstacles
   hit_bubbles: false  # Hit Bubbles: Преломляющая волна в месте удара / Refracting wave where you hit
   hit_color: false  # Hit Color: Цветовая вспышка на игроках и мобах при получении урона / Color flash on players and mobs when they take damage
   hp_counter: false  # HP Counter: Всплывающие числа урона и лечения игроков и мобов / Floating damage and healing numbers for players and mobs

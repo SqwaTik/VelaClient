@@ -14,12 +14,12 @@ class PingerThresholdTest {
         assertFalse(Pinger.shouldWarn(21,20));
         assertFalse(Pinger.shouldWarn(Double.NaN,20));
     }
-    /** Regression: the armour warning was re-shown every tick and never went away. */
-    @Test void warnsOnceThenOnlyOnFurtherDrop(){
-        assertTrue(Pinger.due(18,Double.NaN,5));   // first crossing
-        assertFalse(Pinger.due(18,18,5));          // same value next tick: no new warning
-        assertFalse(Pinger.due(14,18,5));          // small further loss
-        assertTrue(Pinger.due(13,18,5));           // 5 % further down
-        assertFalse(Pinger.due(5.5,6,2));assertTrue(Pinger.due(4,6,2));
+    /** Regression: the warning repeated on every further loss; now it fires once and re-arms only after recovery. */
+    @Test void rearmsOnlyClearlyAboveTheThreshold(){
+        assertFalse(Pinger.rearms(6,6,2));         // at the threshold
+        assertFalse(Pinger.rearms(7.5,6,2));       // regeneration just above it
+        assertTrue(Pinger.rearms(8.5,6,2));        // healed by more than a heart
+        assertFalse(Pinger.rearms(24,20,5));assertTrue(Pinger.rearms(26,20,5));
+        assertFalse(Pinger.rearms(Double.NaN,20,5));
     }
 }

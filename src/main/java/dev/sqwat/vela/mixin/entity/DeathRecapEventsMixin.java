@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-/** Feeds Death Recap with what the server already told the client: who hit the player, totem pops, the death message. TAIL runs on the main thread. */
+/** Feeds Death Recap with what the server already told the client: who hit the player, totem pops, the death message. Every hook runs on the main thread, after the packet's thread hop. */
 @Mixin(ClientPacketListener.class)
 abstract class DeathRecapEventsMixin {
     @Inject(method="handleDamageEvent",at=@At("TAIL"))
@@ -23,7 +23,8 @@ abstract class DeathRecapEventsMixin {
         var recap=DeathRecap.current();var mc=Minecraft.getInstance();
         if(recap!=null&&mc.level!=null&&packet.getEventId()==35&&packet.getEntity(mc.level)==mc.player)recap.totem();
     }
-    @Inject(method="handlePlayerCombatKill",at=@At("TAIL"))
+    // After the thread hop and before the death screen is built (see DeathRecap.killed).
+    @Inject(method="handlePlayerCombatKill",at=@At(value="INVOKE",target="Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V",shift=At.Shift.AFTER))
     private void vela$killed(ClientboundPlayerCombatKillPacket packet,CallbackInfo ci){
         var recap=DeathRecap.current();var player=Minecraft.getInstance().player;
         if(recap!=null&&player!=null&&packet.playerId()==player.getId())recap.killed(packet.message());

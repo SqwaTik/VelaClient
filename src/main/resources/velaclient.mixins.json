@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "dev.sqwat.vela.mixin",
+  "plugin": "dev.sqwat.vela.core.compat.VelaMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": [
     "perf.TerrainAllocationMapMixin",
@@ -13,7 +14,6 @@
     "entity.HitColorMixin",
     "entity.HitColorArmorMixin",
     "hud.HealthCounterMixin",
-    "entity.ExplosionWaveMixin",
     "world.AmbienceSkyMixin",
     "world.AtmosphereFogMixin",
     "world.ShaderProjectionMixin",

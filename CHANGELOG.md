@@ -24,10 +24,17 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Vela Launcher installs every build: when you create an instance you pick Fabric or NeoForge and a Minecraft version (26.3, 26.2, 1.21.11, 1.21.5, 1.21.4). The launcher installs the right loader and Java, puts the matching Vela build in, and every screen (home, mods, settings) shows that instance's version and loader. Modrinth search and modpack import and export follow the instance too.
 - Minecraft 1.21.x and NeoForge builds: servers can now switch Vela functions off with a chat message there too; fast models work on 1.21.x, while the map atlas, distant chunk simplification and fast glyphs stay 26.x only.
 
+### Improved
+- Death recordings: all worlds and servers in one list. The "This world / All worlds" switch is gone; a replay from another world plays next to you.
+- Explosion Wave has been removed.
+
 ### Fixed
 - Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.
 - The loading screen, the menu header and the farewell screen show the Minecraft version that is running instead of always 26.2, and the mod description in the mod list names the right version.
 - The render optimization screen no longer crashes the game when it is opened (on every version and loader).
+- Death Recap now records deaths in PvP: the server reports the death before the health update, so the recording used to stop without a death and no replay was offered.
+- Pinger warns once when health or a piece of armour reaches the set threshold, not on every further hit. It warns again only after healing or repair brings the value back above the threshold, or another piece is put on.
+- Compatibility with Sodium (and its forks) and ImmediatelyFast: Vela's own mixins that touch the same code are left out while those mods are installed, so the game no longer crashes at start. Any other clashing mixin can be switched off in config/velaclient-mixins.properties (name=false).
 
 ## 0.2.0 — 2026-10-27
 

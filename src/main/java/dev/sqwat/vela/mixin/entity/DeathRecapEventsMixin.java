@@ -23,8 +23,9 @@ abstract class DeathRecapEventsMixin {
         var recap=DeathRecap.current();var mc=Minecraft.getInstance();
         if(recap!=null&&mc.level!=null&&packet.getEventId()==35&&packet.getEntity(mc.level)==mc.player)recap.totem();
     }
-    // After the thread hop and before the death screen is built (see DeathRecap.killed).
-    @Inject(method="handlePlayerCombatKill",at=@At(value="INVOKE",target="Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V",shift=At.Shift.AFTER))
+    // After the thread hop and before the death screen is built (see DeathRecap.killed). Matched by name only: its
+    // last parameter is a PacketProcessor on 26.x and a BlockableEventLoop on 1.21.4/1.21.5.
+    @Inject(method="handlePlayerCombatKill",at=@At(value="INVOKE",target="Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread",shift=At.Shift.AFTER))
     private void vela$killed(ClientboundPlayerCombatKillPacket packet,CallbackInfo ci){
         var recap=DeathRecap.current();var player=Minecraft.getInstance().player;
         if(recap!=null&&player!=null&&packet.playerId()==player.getId())recap.killed(packet.message());

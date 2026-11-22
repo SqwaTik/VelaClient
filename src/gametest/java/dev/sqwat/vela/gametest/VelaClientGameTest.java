@@ -32,6 +32,8 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         System.out.println("[Vela gametest] window "+windowSize);
         // -PpigScene alone: only the pigs, so a run takes about a minute instead of the whole suite.
         if(Boolean.getBoolean("vela.pigScene")){pigScene(context);return;}
+        // -PplayerScene alone: 300 armoured players against 300 identically dressed zombies.
+        if(Boolean.getBoolean("vela.playerScene")){playerScene(context);return;}
 
         // 2. Vela screens render without errors.
         // Every dashboard section renders (module cards, markers, friends, configs).
@@ -377,6 +379,51 @@ public final class VelaClientGameTest implements FabricClientGameTest {
             pigRounds(context,"server frozen");
             world.getServer().runCommand("tick unfreeze");
         }
+    }
+    private static void playerScene(ClientGameTestContext context){
+        context.runOnClient(mc->mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED));
+        try(var world=context.worldBuilder().setUseConsistentSettings(true).create()){
+            try{world.getConnection().waitForChunksRender(true,ClientGameTestContext.DEFAULT_TIMEOUT);}
+            catch(AssertionError slow){context.waitTicks(200);}
+            for(var rule:List.of("advance_time false","advance_weather false","spawn_mobs false","max_entity_cramming 0"))world.getServer().runCommand("gamerule "+rule);
+            world.getServer().runCommand("time set noon");
+            int y=context.computeOnClient(mc->mc.player.blockPosition().getY());
+            world.getServer().runCommand("fill -40 "+(y-1)+" -10 40 "+(y-1)+" 70 minecraft:grass_block");
+            world.getServer().runCommand("gamemode spectator @a");
+            world.getServer().runCommand("tp @a 0.5 "+(y+4)+" -8 0 10");
+            context.waitTicks(40);
+            // Players exist only on the client here (like players on a server), with the default skins.
+            context.runOnClient(mc->{for(int i=0;i<300;i++){
+                var p=new net.minecraft.client.player.RemotePlayer(mc.level,new com.mojang.authlib.GameProfile(java.util.UUID.nameUUIDFromBytes(("vela"+i).getBytes()),"Vela"+i));
+                p.setId(-1000-i);
+                p.snapTo(-29.5+(i%20)*3,y,-4+(i/20)*4,180,0);
+                equip(p);
+                mc.level.addEntity(p);
+            }});
+            context.waitTicks(40);
+            context.takeScreenshot("vela-players");
+            context.runOnClient(mc->opt(true,true));
+            context.waitTicks(30);int allOn=median(context,4);
+            context.runOnClient(mc->{dev.sqwat.vela.opt.feature.Features.NO_ENTITY_SORT.value=false;dev.sqwat.vela.opt.feature.Features.refresh();});
+            context.waitTicks(30);int sortOn=median(context,4);
+            context.runOnClient(mc->{dev.sqwat.vela.opt.feature.Features.NO_ENTITY_SORT.value=true;opt(false,false);});
+            context.waitTicks(30);int allOff=median(context,4);
+            context.runOnClient(mc->{opt(true,true);for(int i=0;i<300;i++)mc.level.removeEntity(-1000-i,net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);});
+            for(int i=0;i<300;i++)world.getServer().runCommand("summon zombie "+(-29.5+(i%20)*3)+" "+y+" "+(-4+(i/20)*4)+" {NoAI:1b,Rotation:[180f,0f],"
+                +"equipment:{head:{id:diamond_helmet},chest:{id:netherite_chestplate},legs:{id:diamond_leggings},feet:{id:iron_boots},mainhand:{id:netherite_sword},offhand:{id:totem_of_undying}}}");
+            context.waitTicks(60);
+            context.takeScreenshot("vela-zombies");
+            int zombies=median(context,4);
+            System.out.println("[Vela gametest] Player scene (300): players all on "+allOn+" FPS, players sort on "+sortOn+" FPS, players all off "+allOff+" FPS, zombies all on "+zombies+" FPS");
+        }
+    }
+    private static void equip(net.minecraft.world.entity.LivingEntity e){
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_HELMET));
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_CHESTPLATE));
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_LEGGINGS));
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_SWORD));
+        e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.TOTEM_OF_UNDYING));
     }
     private static void opt(boolean master,boolean threads){opt(master,threads,false);}
     private static void opt(boolean master,boolean threads,boolean farPerTick){

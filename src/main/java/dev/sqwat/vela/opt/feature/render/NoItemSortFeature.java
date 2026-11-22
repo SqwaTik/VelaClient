@@ -9,7 +9,7 @@ import dev.sqwat.vela.opt.feature.FeatureGroup;
 	key = "no_item_sort",
 	visual = true,
 	group = FeatureGroup.RENDER,
-	mixins = "gl.BufferSourceMixin",
+	mixins = "entity.FeatureGroupSortMixin",
 	bench = BenchView.ITEMS
 )
 public class NoItemSortFeature extends Feature {

@@ -79,6 +79,7 @@
     "entity.ItemEntityRestMixin",
     "entity.ModelPartChildrenMixin",
     "entity.ClientEntityCollisionsMixin",
+    "entity.FeatureGroupSortMixin",
     "entity.ClientEntityCollidersTrackMixin",
     "gl.BufferBuilderRawMixin",
     "gl.ByteBufferBuilderAccessor",

@@ -51,7 +51,7 @@ public class ParallelModelHook {
 	}
 
 	private boolean eligible(ModelFeatureRenderer.Submit<?> s) {
-		return s.sheetedDecalPose() == null && s.renderType().format() == ParallelModels.FORMAT && !s.renderType().sortOnUpload()
+		return s.sheetedDecalPose() == null && s.renderType().format() == ParallelModels.FORMAT && !UploadSort.sorted(s.renderType())
 				&& !AnimFreeze.freezes(s.state(), s.pose().pose());
 	}
 

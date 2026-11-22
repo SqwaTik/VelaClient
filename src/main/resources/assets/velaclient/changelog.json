@@ -100,6 +100,10 @@
             {
               "en": "1.21.4, 1.21.5 and NeoForge builds: Death Recap now hooks the death packet on these versions, and the builds no longer fail on removed features.",
               "ru": "Сборки 1.21.4, 1.21.5 и NeoForge: Death Recap теперь перехватывает пакет смерти на этих версиях, а сборки больше не падают на удалённых функциях."
+            },
+            {
+              "en": "The \"No entity sorting\" and \"No item sorting\" optimizations work again: in 26.2 they hooked a method that no longer exists and did nothing. Crowds of players are now as cheap to draw as mobs (300 armoured players: 119 FPS against 55 without the optimizations).",
+              "ru": "Оптимизации «Без сортировки сущностей» и «Без сортировки предметов» снова работают: в 26.2 они цеплялись за несуществующий метод и ничего не делали. Толпы игроков теперь рисуются так же дёшево, как мобы (300 игроков в броне: 119 FPS против 55 без оптимизаций)."
             }
           ]
         }

@@ -31,6 +31,7 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 - Lyrics: only text that is exactly this song and timed is shown. Plain untimed text, songs whose title only contains the name, and copies of unknown length that no other source confirms are no longer shown.
 - Launcher: 26.3 (and other Java 25 versions) no longer hang before the window opens. The launcher no longer records the start-up AOT cache, which froze the game on first launch.
 - 1.21.4, 1.21.5 and NeoForge builds: Death Recap now hooks the death packet on these versions, and the builds no longer fail on removed features.
+- The "No entity sorting" and "No item sorting" optimizations work again: in 26.2 they hooked a method that no longer exists and did nothing. Crowds of players are now as cheap to draw as mobs (300 armoured players: 119 FPS against 55 without the optimizations).
 
 ## 0.2.0 — 2026-10-27
 

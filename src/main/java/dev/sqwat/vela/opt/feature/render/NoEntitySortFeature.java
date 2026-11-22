@@ -8,7 +8,7 @@ import dev.sqwat.vela.opt.feature.FeatureGroup;
 @FeatureData(
 	key = "no_entity_sort",
 	group = FeatureGroup.RENDER,
-	mixins = "gl.BufferSourceMixin",
+	mixins = "entity.FeatureGroupSortMixin",
 	bench = BenchView.CROWD
 )
 public class NoEntitySortFeature extends Feature {

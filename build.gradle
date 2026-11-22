@@ -97,6 +97,8 @@ tasks.matching { it.name == 'runClientGameTest' }.configureEach {
     if (project.hasProperty('farScene')) jvmArgs '-Dvela.farScene=true'
     // ./gradlew verifyClient -Pvulkan runs the client on the Vulkan backend instead of OpenGL.
     if (project.hasProperty('vulkan')) args '--graphicsBackend', 'vulkan'
+    // -PwithMods=<folder> starts the client next to other mods' jars, to find mixin clashes (core.compat.VelaMixinPlugin).
+    if (project.hasProperty('withMods')) jvmArgs "-Dfabric.addMods=${file(project.property('withMods')).absolutePath}"
     if (project.hasProperty('jfr')) jvmArgs "-XX:StartFlightRecording=filename=${file('build/gametest.jfr').absolutePath},settings=profile"
 }
 

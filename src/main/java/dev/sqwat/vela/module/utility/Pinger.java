@@ -32,24 +32,29 @@ public final class Pinger extends ClientModule {
         armorPercent.visibleWhen(armor::value);healthHp.visibleWhen(health::value);
     }
 
-    /** Per armour slot: the stack last warned about and the percent at that warning (MAX: not warned). */
+    /** Per armour slot: the item last seen there and whether its warning was already shown. */
     private final ItemStack[] warnedStack=new ItemStack[4];
-    private final int[] warnedPercent={Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
-    private float warnedHp=Float.MAX_VALUE;
+    private final boolean[] warnedArmor=new boolean[4];
+    private boolean warnedHealth;
     private boolean showing;
-    static final int ARMOR_STEP=5;
-    static final float HEALTH_STEP=2;
+    /** How far above the threshold the value must come back before the warning can fire again (5 %, one heart). */
+    static final int ARMOR_REARM=5;
+    static final float HEALTH_REARM=2;
 
     @Override protected void onDisable(){warningUntil=0;reset();if(showing){dev.sqwat.vela.ui.Notifications.clearHud();showing=false;}}
-    private void reset(){java.util.Arrays.fill(warnedStack,null);java.util.Arrays.fill(warnedPercent,Integer.MAX_VALUE);warnedHp=Float.MAX_VALUE;}
+    private void reset(){java.util.Arrays.fill(warnedStack,null);java.util.Arrays.fill(warnedArmor,false);warnedHealth=false;}
     public static boolean shouldWarn(double current,double threshold){return Double.isFinite(current)&&current>=0&&current<=threshold;}
-    /** A new warning is due when nothing was warned yet ({@code lastWarned} = NaN) or the value fell another {@code step}. */
-    public static boolean due(double current,double lastWarned,double step){return Double.isNaN(lastWarned)||current<=lastWarned-step;}
+    /**
+     * Whether a shown warning may fire again: only once the value is back clearly above the threshold. Without the
+     * margin, regeneration around the threshold (5.5 → 6.5 → 5.8 HP) warned again on every swing.
+     */
+    public static boolean rearms(double current,double threshold,double margin){return Double.isFinite(current)&&current>threshold+margin;}
 
     /**
-     * Shows a warning only when something changed: a piece newly below the threshold, a further drop of 5%
-     * (2 HP for health), or a different piece equipped. Otherwise the notification and the red edge expire on their
-     * own; repairing or removing the item resets it. Previously it was re-shown every tick and never disappeared.
+     * One warning per crossing: when health or a piece of armour reaches the set threshold. Further losses below it
+     * stay silent (the HUD value still updates); the warning fires again only after the value recovers above the
+     * threshold (healing, repair) or another piece is put on. Servers resend the armour stack on every point of
+     * damage, so the piece is compared by item, not by instance; comparing instances re-warned on every hit.
      */
     @Override public void onClientTick(){
         var player=Minecraft.getInstance().player;
@@ -58,18 +63,19 @@ public final class Pinger extends ClientModule {
         boolean fresh=false;
         for(int i=0;i<ARMOR.length;i++){
             ItemStack stack=player.getItemBySlot(ARMOR[i]);
-            if(!armor.value()||stack.isEmpty()||!stack.isDamageableItem()){warnedStack[i]=null;warnedPercent[i]=Integer.MAX_VALUE;continue;}
-            if(stack!=warnedStack[i]){warnedStack[i]=stack;warnedPercent[i]=Integer.MAX_VALUE;}
+            if(!armor.value()||stack.isEmpty()||!stack.isDamageableItem()){warnedStack[i]=null;warnedArmor[i]=false;continue;}
+            if(warnedStack[i]==null||!ItemStack.isSameItem(stack,warnedStack[i]))warnedArmor[i]=false;
+            warnedStack[i]=stack;
             int percent=Math.max(0,Math.round(100f*(stack.getMaxDamage()-stack.getDamageValue())/stack.getMaxDamage()));
-            if(!shouldWarn(percent,armorPercent.value())){warnedPercent[i]=Integer.MAX_VALUE;continue;}
+            if(!shouldWarn(percent,armorPercent.value())){if(rearms(percent,armorPercent.value(),ARMOR_REARM))warnedArmor[i]=false;continue;}
             crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("armor",stack,percent+"%",percent/100f,1-percent/armorPercent.value().floatValue()));
-            if(due(percent,warnedPercent[i]==Integer.MAX_VALUE?Double.NaN:warnedPercent[i],ARMOR_STEP)){warnedPercent[i]=percent;fresh=true;}
+            if(!warnedArmor[i]){warnedArmor[i]=true;fresh=true;}
         }
         float hp=player.getHealth();
         if(health.value()&&shouldWarn(hp,healthHp.value())){
             crossed.add(new dev.sqwat.vela.ui.Notifications.HudValue("heart",ItemStack.EMPTY,formatHp(hp)+" HP",hp/Math.max(1,player.getMaxHealth()),1-hp/healthHp.value().floatValue()));
-            if(due(hp,warnedHp==Float.MAX_VALUE?Double.NaN:warnedHp,HEALTH_STEP)){warnedHp=hp;fresh=true;}
-        }else warnedHp=Float.MAX_VALUE;
+            if(!warnedHealth){warnedHealth=true;fresh=true;}
+        }else if(!health.value()||rearms(hp,healthHp.value(),HEALTH_REARM))warnedHealth=false;
         severity=0;for(var value:crossed)severity=Math.max(severity,value.severity());
         if(fresh){dev.sqwat.vela.ui.Notifications.showHudValues(crossed);showing=true;warningUntil=System.nanoTime()+3_500_000_000L;}
         else if(crossed.isEmpty()&&showing){warningUntil=0;dev.sqwat.vela.ui.Notifications.clearHud();showing=false;}

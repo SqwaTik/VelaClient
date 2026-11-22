@@ -236,13 +236,12 @@ public final class HudLayoutService {
      */
     private final class EffectModules {
         final Object source=modules.all();
-        final ClientModule jump,bubbles,counter,wave,target,trail,kill,brew,particles,ambient,trajectories,mace,loot,pinger,near=modules.byId("near");
+        final ClientModule jump,bubbles,counter,target,trail,kill,brew,particles,ambient,trajectories,mace,loot,pinger,near=modules.byId("near");
         final dev.sqwat.vela.module.setting.Setting<?> nearMode=setting(near,"mode");
         EffectModules(){
             jump=modules.byId("jump_circle");
             bubbles=modules.byId("hit_bubbles");
             counter=modules.byId("hp_counter");
-            wave=modules.byId("explosion_wave");
             target=modules.byId("target_esp");
             trail=modules.byId("dash_trail");
             kill=modules.byId("kill_effect");
@@ -279,7 +278,6 @@ public final class HudLayoutService {
         if(e.jump instanceof dev.sqwat.vela.module.visual.JumpCircle jump&&jump.enabled())jump.draw(g);
         if(e.bubbles instanceof dev.sqwat.vela.module.visual.HitBubbles bubbles&&bubbles.enabled())bubbles.draw(g);
         if(e.counter instanceof dev.sqwat.vela.module.visual.HpCounter counter&&counter.enabled())counter.draw(g);
-        if(e.wave instanceof dev.sqwat.vela.module.visual.ExplosionWave wave&&wave.enabled())wave.draw(g);
         if(e.target instanceof dev.sqwat.vela.module.visual.TargetESP target&&target.enabled())target.draw(g);
         if(e.trail instanceof dev.sqwat.vela.module.visual.DashTrail trail&&trail.enabled())trail.draw(g);
         if(e.kill instanceof dev.sqwat.vela.module.visual.KillEffect kill&&kill.enabled())kill.draw(g);

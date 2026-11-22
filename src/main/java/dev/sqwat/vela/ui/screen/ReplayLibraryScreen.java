@@ -27,8 +27,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Every Death Recap recording in one place: the last death (even unsaved) and all saved replays. Replays of the world
- * and dimension you are in play right away; the others say where they are from. The folder is one click away. Opens from the module settings, its key and the death screen.
+ * Every Death Recap recording in one place, from every world and server: the last death (even unsaved) and all saved
+ * replays. A replay from another world plays next to the player (DeathReplay moves it there). The folder is one click
+ * away. Opens from the module settings, its key and the death screen.
  */
 public final class ReplayLibraryScreen extends VelaScreen {
     private static final int ROW=38;
@@ -37,7 +38,6 @@ public final class ReplayLibraryScreen extends VelaScreen {
     private final FrameClock clock=new FrameClock();
     private final List<Map.Entry<Rect,Runnable>> actions=new ArrayList<>();
     private List<ReplayFiles.Saved> saved=List.of();
-    private boolean everywhere;
     private float scroll,targetScroll,maxScroll,entrance;
     private Rect list=new Rect(0,0,0,0);
 
@@ -66,13 +66,7 @@ public final class ReplayLibraryScreen extends VelaScreen {
         UiKit.iconAction(g,close,"x",10,controls.animate("close",close.contains(mx,my)?1:0),VelaTheme.TEXT);
         actions.add(Map.entry(close,this::onClose));
 
-        // Filter and folder, one row of chips.
-        int x=content.x(),y=content.y();
-        for(boolean all:new boolean[]{false,true}){
-            String label=all?"Все миры":"Этот мир";var chip=new Rect(x,y,UiKit.chipWidth(label),UiKit.CHIP_H);
-            UiKit.chip(g,x,y,label,controls.animate("f"+all,everywhere==all?1:0),controls.animate("fh"+all,chip.contains(mx,my)?1:0),false);
-            actions.add(Map.entry(chip,()->{everywhere=all;targetScroll=0;}));x+=chip.width()+4;
-        }
+        int y=content.y();
         String folderLabel="Открыть папку";int fw=UiKit.chipWidth(folderLabel);
         var folder=new Rect(content.x()+content.width()-fw,y,fw,UiKit.CHIP_H);
         UiKit.chip(g,folder.x(),y,folderLabel,0,controls.animate("folder",folder.contains(mx,my)?1:0),false);
@@ -82,10 +76,10 @@ public final class ReplayLibraryScreen extends VelaScreen {
         var rows=new ArrayList<Runnable>();
         var recap=DeathRecap.current();
         boolean last=recap!=null&&recap.hasRecording()&&minecraft.level!=null;
-        var shown=saved.stream().filter(s->everywhere||here(s)).toList();
+        var shown=saved;
         int count=(last?1:0)+shown.size();
         if(count==0){
-            UiKit.empty(g,list,"save",everywhere?"Записей пока нет":"В этом мире записей нет",
+            UiKit.empty(g,list,"save","Записей пока нет",
                 minecraft.level==null?"Зайдите в мир, чтобы смотреть повторы":"После смерти нажмите «Повтор смерти», затем «Сохранить»");
             return;
         }
@@ -108,14 +102,14 @@ public final class ReplayLibraryScreen extends VelaScreen {
             for(var s:shown){
                 var row=rowRect(i);int index=i++;
                 if(!visible(row))continue;
-                boolean over=row.contains(mx,my)&&list.contains(mx,my),playable=here(s);
+                boolean over=row.contains(mx,my)&&list.contains(mx,my),playable=minecraft.level!=null;
                 UiKit.card(g,row,controls.animate("r"+index,over?1:0),0);
                 int right=row.x()+row.width()-8;
                 var delete=new Rect(right-18,row.y()+(ROW-18)/2,18,18);right=delete.x()-4;
                 UiKit.iconAction(g,delete,"trash",10,controls.animate("d"+index,delete.contains(mx,my)?1:0),VelaTheme.DANGER);
                 if(over)actions.add(Map.entry(delete,()->{ReplayFiles.delete(s);reload();}));
                 VelaDraw.text(g,VelaDraw.ellipsize(s.title(),right-row.x()-14,VelaDraw.Weight.MEDIUM,8.5f),row.x()+10,row.y()+7,playable?VelaTheme.TEXT:VelaTheme.TEXT_SECONDARY,VelaDraw.Weight.MEDIUM,8.5f);
-                String where=playable?Lang.tr(viewLabel(s.options().view())):Lang.tr("другой мир — смотреть там")+" · "+s.world();
+                String where=Lang.tr(viewLabel(s.options().view()))+(here(s)||s.world().isEmpty()?"":" · "+s.world());
                 String detail=fmt.format(Instant.ofEpochMilli(s.recordedAt()).atZone(ZoneId.systemDefault()))+" · "+where;
                 VelaDraw.text(g,VelaDraw.ellipsize(detail,right-row.x()-14,VelaDraw.Weight.REGULAR,7.5f),row.x()+10,row.y()+21,VelaTheme.TEXT_MUTED,VelaDraw.Weight.REGULAR,7.5f);
                 if(over)actions.add(Map.entry(row,()->open(s)));
@@ -127,10 +121,7 @@ public final class ReplayLibraryScreen extends VelaScreen {
     private static String viewLabel(DeathReplay.View view){return switch(view){case ORBIT->"Свободная камера";case SELF->"Моими глазами";case KILLER->"Глазами убийцы";};}
 
     private void open(ReplayFiles.Saved s){
-        if(!here(s)){
-            Notifications.show(Lang.tr("Повтор из другого мира"),minecraft.level==null?Lang.tr("Зайдите в мир, чтобы смотреть повторы"):Lang.tr("Зайдите в тот мир и измерение, чтобы посмотреть"),"save");
-            return;
-        }
+        if(minecraft.level==null){Notifications.show(Lang.tr("Повтор недоступен"),Lang.tr("Зайдите в мир, чтобы смотреть повторы"),"save");return;}
         try{minecraft.gui.setScreen(new DeathRecapScreen(ReplayFiles.load(s),this,s.options()));}
         catch(Exception error){
             org.slf4j.LoggerFactory.getLogger("Vela/Recap").warn("Cannot open replay",error);

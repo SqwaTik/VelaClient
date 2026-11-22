@@ -57,6 +57,8 @@ public final class DeathRecap extends ClientModule {
     private float lastTotal=-1;
     private String usingItem;private int usingCount;
     private int tick,deathTick=-1;private Object player;private boolean keyHeld;
+    /** The server said the player died (combat kill packet); its health update can come a tick later or never, on PvP servers that respawn at once. */
+    private boolean serverDeath;
     private UUID lastAttacker;private String lastAttackerName;private Component deathMessage;
     private Recording recording;
 
@@ -82,7 +84,7 @@ public final class DeathRecap extends ClientModule {
         });
     }
     @Override protected void onDisable(){reset();recording=null;DeathReplay.stop();}
-    private void reset(){lastTotal=-1;frames.clear();events.clear();actors.clear();lastGear.clear();hits.clear();deathTick=-1;lastAttacker=null;lastAttackerName=null;deathMessage=null;}
+    private void reset(){lastTotal=-1;frames.clear();events.clear();actors.clear();lastGear.clear();hits.clear();deathTick=-1;serverDeath=false;lastAttacker=null;lastAttackerName=null;deathMessage=null;}
 
     /** The newest finished recording, finishing a pending one early if the player asks for it right after dying. */
     public Recording recording(){if(deathTick>=0)finish();return recording;}
@@ -117,14 +119,15 @@ public final class DeathRecap extends ClientModule {
         int keep=seconds.value().intValue()*20+AFTER_DEATH;
         while(frames.size()>keep)frames.removeFirst();
         while(!events.isEmpty()&&events.getFirst().tick()<frames.getFirst().tick())events.removeFirst();
-        boolean dead=self.isDeadOrDying();
+        boolean dead=self.isDeadOrDying()||serverDeath;
         if(dead&&deathTick<0)deathTick=tick;
         if(deathTick>=0&&(tick-deathTick>=AFTER_DEATH||!dead))finish();
     }
-    /** The last death, or else the newest replay saved in this world and dimension. */
+    /** The last death, or else the newest replay saved in this world and dimension, or else the newest one anywhere. */
     private void openLatest(Minecraft mc){
         if(recording!=null){DeathReplay.open(recording);return;}
         var saved=ReplayFiles.list(dev.sqwat.vela.marker.MarkerRuntime.world(mc),dev.sqwat.vela.marker.MarkerRuntime.dimension(mc));
+        if(saved.isEmpty())saved=ReplayFiles.list(null,null);
         if(saved.isEmpty())return;
         try{mc.gui.setScreen(new dev.sqwat.vela.ui.screen.DeathRecapScreen(ReplayFiles.load(saved.getFirst()),null,saved.getFirst().options()));}
         catch(Exception error){org.slf4j.LoggerFactory.getLogger("Vela/Recap").warn("Cannot open replay",error);}
@@ -204,6 +207,7 @@ public final class DeathRecap extends ClientModule {
         var self=frames.getLast().snaps().keySet().stream().filter(u->actors.get(u)!=null&&actors.get(u).self()).findFirst().orElse(null);
         var mc=Minecraft.getInstance();
         String world=mc.level==null?"":dev.sqwat.vela.marker.MarkerRuntime.world(mc),dimension=mc.level==null?"":dev.sqwat.vela.marker.MarkerRuntime.dimension(mc);
+        serverDeath=false;
         recording=new Recording(List.copyOf(frames),Map.copyOf(actors),List.copyOf(events),self,lastAttacker,lastAttackerName,deathMessage,deathTick,System.currentTimeMillis(),world,dimension);
         deathTick=-1;
     }
@@ -211,5 +215,9 @@ public final class DeathRecap extends ClientModule {
     // Packet hooks (mixin.entity.DeathRecapEventsMixin), main thread.
     public void damaged(int causeId,String type){hits.addLast(new PendingHit(tick,causeId,type));}
     public void totem(){events.addLast(new Event(tick,Kind.TOTEM,"Тотем бессмертия","",0,null));}
-    public void killed(Component message){deathMessage=message;}
+    /**
+     * Runs before the death screen opens: vanilla sends the kill packet a tick before the health update, so without
+     * marking the death here the screen was built with no recording and PvP deaths had no replay button.
+     */
+    public void killed(Component message){deathMessage=message;serverDeath=true;if(deathTick<0&&!frames.isEmpty())deathTick=tick;}
 }

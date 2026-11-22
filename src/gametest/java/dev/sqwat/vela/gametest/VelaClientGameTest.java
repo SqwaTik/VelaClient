@@ -257,19 +257,6 @@ public final class VelaClientGameTest implements FabricClientGameTest {
                 context.runOnClient(mc->VelaClient.services().modules().byId("trajectories").setEnabled(true));
                 context.waitTicks(20);context.takeScreenshot("vela-wet-pickaxe-trajectories");
                 context.runOnClient(mc->{VelaClient.services().modules().byId("trajectories").setEnabled(false);VelaClient.services().modules().byId("shaders").setEnabled(false);});
-                // Explosion wave: two blasts close to each other, the front merges and flows around a wall.
-                world.getServer().runCommand("execute at @p run fill ~3 ~ ~2 ~3 ~2 ~4 minecraft:stone");
-                context.runOnClient(mc->{
-                    VelaClient.services().modules().byId("explosion_wave").setEnabled(true);
-                    mc.player.setXRot(25);
-                    var at=mc.player.position();
-                    dev.sqwat.vela.module.visual.ExplosionWave.exploded(at.add(4,0,11));
-                    dev.sqwat.vela.module.visual.ExplosionWave.exploded(at.add(-3,0,13));
-                });
-                context.waitTicks(6);context.takeScreenshot("vela-explosion-wave");
-                context.waitTicks(4);context.takeScreenshot("vela-explosion-wave-late");
-                context.waitTicks(60);
-                context.runOnClient(mc->VelaClient.services().modules().byId("explosion_wave").setEnabled(false));
                 // Crosshair without the client colour, Vela hitboxes on F3+B.
                 context.runOnClient(mc->{
                     var crosshair=VelaClient.services().modules().byId("crosshair");crosshair.setEnabled(true);

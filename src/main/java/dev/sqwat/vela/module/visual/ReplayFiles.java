@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * Saved Death Recap replays in config/velaclient/replays, one gzip'd NBT file each. Entity state is stored per actor in
  * columns (one array per field) and equipment as indices into a small item palette, so a 10 s replay is tens of KB.
- * A replay plays back in the level the player is in, so it is offered only in the same world and dimension.
+ * A replay plays back in the level the player is in; one from another world is moved next to the player (DeathReplay).
  */
 public final class ReplayFiles {
     public static final int LIMIT=50;

@@ -74,7 +74,8 @@ public final class VelaDashboardScreen extends DashboardPanels {
             hovers[entry.ordinal()]=animate("nav-"+entry.name(),hit.contains(mouseX,mouseY),dt);
         }
         searchHit=chrome.search();gearHit=chrome.settings();contentHit=chrome.content();actionHit=new Rect(0,0,0,0);
-        versionHit=new Rect(l.x+l.sidebar/2-24,l.y+l.h-19,48,14);
+        int versionWidth=Math.round(dev.sqwat.vela.ui.render.DashboardChrome.versionWidth(canvas,l.sidebar));
+        versionHit=new Rect(l.x+(l.sidebar-versionWidth)/2,l.y+l.h-19,versionWidth,14);
         dev.sqwat.vela.ui.render.DashboardChrome.versionHover=animate("version",versionHit.contains(mouseX,mouseY),dt);
         dev.sqwat.vela.ui.render.DashboardChrome.draw(canvas,chrome,section.ordinal(),section.description(),null,searchFocused,hovers,gearHit.contains(mouseX,mouseY),VelaTheme.PRIMARY);
         drawerButton(g,gearHit,"settings",false);

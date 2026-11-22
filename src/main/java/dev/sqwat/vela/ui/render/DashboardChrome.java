@@ -40,8 +40,9 @@ public final class DashboardChrome {
         c.line(x,y+h-23,side,0xFF1A2030);
         // The version opens the changelog (VelaDashboardScreen); it brightens on hover.
         float version=Math.max(0,Math.min(1,versionHover));
-        if(version>.01f)c.round(x+side/2f-24,y+h-19,48,14,7,VelaTheme.mix(VelaTheme.SIDEBAR,0xFF1C2333,version));
-        c.centered("v"+dev.sqwat.vela.ui.Changelog.current(),x+side/2,y+h-15,20f/3,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,version),REGULAR);
+        float versionWidth=versionWidth(c,side);
+        if(version>.01f)c.round(x+(side-versionWidth)/2f,y+h-19,versionWidth,14,7,VelaTheme.mix(VelaTheme.SIDEBAR,0xFF1C2333,version));
+        c.centered(fit(c,versionLabel(),versionWidth-10,20f/3),x+side/2,y+h-15,20f/3,VelaTheme.mix(VelaTheme.TEXT_MUTED,VelaTheme.TEXT,version),REGULAR);
 
         c.text(SECTIONS[section],x+side+11,y+14,10,VelaTheme.TEXT,MEDIUM);
 
@@ -60,6 +61,9 @@ public final class DashboardChrome {
         c.centered(title,center,top,28f/3,VelaTheme.TEXT_SECONDARY,MEDIUM);
         c.centered(detail,center,top+17,8,VelaTheme.TEXT_MUTED,REGULAR);
     }
+    private static String versionLabel(){return "v"+dev.sqwat.vela.ui.Changelog.current();}
+    /** The version pill fits its text ("v0.2.1+1.21.11-neoforge" on the ports), up to the sidebar's width. */
+    public static float versionWidth(UiCanvas c,float side){return Math.min(side-12,c.textWidth(versionLabel(),20f/3,REGULAR)+14);}
     private static String fit(UiCanvas c,String value,float max,float size){
         if(c.textWidth(value,size,REGULAR)<=max)return value;
         int end=value.length();while(end>0&&c.textWidth(value.substring(0,end)+"…",size,REGULAR)>max)end=value.offsetByCodePoints(end,-1);

@@ -180,6 +180,9 @@ patchre dev/sqwat/vela/opt/mixin/entity/ItemLayerAccessor.java \s*@Accessor\("lo
 patch dev/sqwat/vela/opt/mixin/entity/ItemStackRenderStateMixin.java (layer.velaopt$localTransform().properties() & Matrix4fc.PROPERTY_IDENTITY) == 0 => false
 patch dev/sqwat/vela/opt/mixin/gl/MinecraftFrameMixin.java method = "renderFrame" => method = "runTick"
 patch dev/sqwat/vela/opt/mixin/gl/MinecraftTimerMixin.java method = "renderFrame" => method = "runTick"
+# endProfile returns the frame's profile here: a void wrapper misses it, and vanilla then ends a profile Vela never began
+patch dev/sqwat/vela/opt/mixin/gl/MinecraftTimerMixin.java TimerQuery;endProfile()V"), require = 0) => TimerQuery;endProfile()Lcom/mojang/blaze3d/systems/TimerQuery$FrameProfile;"))
+patchre dev/sqwat/vela/opt/mixin/gl/MinecraftTimerMixin.java private void velaopt\$ownTimersEnd\(TimerQuery query, Operation<Void> original\) \{\s*if \(!GpuTimers\.supported\(\)\) \{\s*original\.call\(query\);\s*\} => private TimerQuery.FrameProfile velaopt$ownTimersEnd(TimerQuery query, Operation<TimerQuery.FrameProfile> original) {\n\t\treturn GpuTimers.supported() ? null : original.call(query);
 patch dev/sqwat/vela/opt/mixin/particle/ParticleMixin.java method = "getLightCoords" => method = "getLightColor"
 # 1.21.11: the lightmap is updated by LightTexture at the start of renderLevel
 patch dev/sqwat/vela/opt/mixin/gl/GameRendererTimerMixin.java @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Lightmap;render")) => @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LightTexture;updateLightTexture"))

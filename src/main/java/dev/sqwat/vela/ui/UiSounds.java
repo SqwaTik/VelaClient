@@ -7,24 +7,24 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 
 /**
- * Interface sounds in two profiles. "Ритм" (default) is cut from the first half second of an instrumental (two drum
+ * Interface sounds in two profiles. "Ритм" is cut from the first half second of an instrumental (two drum
  * hits): every click, in Vela's screens and on vanilla buttons alike, plays one of those two hits picked at random with
  * the pitch varied by up to 8%, so repeated clicks are never identical; a 40 ms tick follows sliders. The clips must be
  * audio-only Ogg Vorbis: one with the mp3's cover art left in as a video stream does not decode, and the profile was
- * silent. "Классика" is the earlier Kenney set.
+ * silent. "Классика" (default) is the earlier Kenney set.
  */
 public final class UiSounds {
     private UiSounds() {}
     public enum Event { OPEN,CLOSE,TAB,EXPAND,TOGGLE,FAVORITE,SLIDER }
     public static final String RHYTHM="Ритм",CLASSIC="Классика";
-    public static final List<String> PRESETS=List.of(RHYTHM,CLASSIC);
+    public static final List<String> PRESETS=List.of(CLASSIC,RHYTHM);
     private static long lastPlayed;
     private static final java.util.Random RANDOM=new java.util.Random();
 
-    /** The profile to use; "Classic" from earlier versions maps to its new name, the removed soft profile to Ритм. */
+    /** The profile to use; "Classic" from earlier versions maps to its new name, the removed soft profile to Классика. */
     public static String preset(String saved){
         if(PRESETS.contains(saved))return saved;
-        return "Classic".equals(saved)?CLASSIC:RHYTHM;
+        return CLASSIC;
     }
     public static String next(String saved){return PRESETS.get((PRESETS.indexOf(preset(saved))+1)%PRESETS.size());}
 

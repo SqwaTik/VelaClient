@@ -42,11 +42,14 @@ public class RenderScale {
 			log.error("Render scale shader did not compile; turned off until restart");
 			on = false;
 		}
+		int percent = on ? Features.RENDER_SCALE.scale() : 100;
+		// the automatic scale at full resolution draws as if it were off
+		on &= percent < 100;
 		RenderTarget main = HudGpu.mainTarget(mc);
 		int w = main.width, h = main.height;
 		if (on) {
-			w = Math.max(1, w * Features.RENDER_SCALE.percent / 100);
-			h = Math.max(1, h * Features.RENDER_SCALE.percent / 100);
+			w = Math.max(1, w * percent / 100);
+			h = Math.max(1, h * percent / 100);
 		}
 		// the entity outlines are drawn alongside the main target, so they take its size
 		RenderTarget outline = ((LevelRendererScaleAccessor) mc.levelRenderer).velaopt$entityOutlineTarget();

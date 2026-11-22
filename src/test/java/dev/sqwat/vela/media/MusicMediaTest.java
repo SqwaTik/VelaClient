@@ -128,16 +128,21 @@ class MusicMediaTest {
         // The player first reported another length: nothing fits until the real one comes.
         assertNull(LyricsService.pick(java.util.List.of(shortVersion),queries,300));
     }
-    @Test void plainTextIsShownOnlyWhenNothingIsTimed(){
+    @Test void plainOrUnconfirmedTextIsNeverShown(){
         var plain=new LyricsService.Candidate("Band","Song",190,"","one line\ntwo line\nthree line\n\nfour line\nfive line\nsix line\nseven line",false);
         var queries=java.util.List.of(new Lyrics.Query("Band","Song"));
         assertNull(LyricsService.pick(java.util.List.of(plain),queries,191));
-        var shown=LyricsService.plainPick(java.util.List.of(plain),queries,191);
-        assertFalse(shown.lyrics().synced());
-        assertEquals("one line",shown.lyrics().lines().getFirst().text());
-        // Artist and title entered the wrong way round still count; another song's text is not borrowed.
-        assertNotNull(LyricsService.plainPick(java.util.List.of(new LyricsService.Candidate("Song","Band",190,"",plain.plain,false)),queries,191));
-        assertNull(LyricsService.plainPick(java.util.List.of(plain),java.util.List.of(new Lyrics.Query("Band","Other")),191));
+        // Timed, but its length is unknown: alone it may be another version; a second copy timed alike confirms it.
+        var unknown=new LyricsService.Candidate("Band","Song",0,timedSong(0,"line"),false);
+        assertNull(LyricsService.pick(java.util.List.of(unknown),queries,191));
+        var other=new LyricsService.Candidate("Band","Song",0,timedSong(60,"line"),false);
+        assertNotNull(LyricsService.pick(java.util.List.of(unknown,other),queries,191));
+        // The song's own length not known yet: the same rule.
+        var known=new LyricsService.Candidate("Band","Song",190,timedSong(0,"line"),false);
+        assertNull(LyricsService.pick(java.util.List.of(known),queries,0));
+        // A title that only contains the song's is another song.
+        assertNull(LyricsService.pick(java.util.List.of(new LyricsService.Candidate("Band","Lovely Song Day",190,timedSong(0,"line"),false)),
+            java.util.List.of(new Lyrics.Query("Band","Love")),191));
     }
     @Test void mangledRussianTextIsRepaired(){
         String russian="Мой свэг nerf";

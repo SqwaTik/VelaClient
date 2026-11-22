@@ -100,15 +100,26 @@ public final class CoverLookup {
         }catch(java.security.NoSuchAlgorithmException error){throw new IllegalStateException(error);}
     }
 
-    /** The song's own cover, else its album's (by name), else none. */
+    /** The song's own cover, else its album's (by name), else its YouTube upload's art, else none. */
     private static byte[] find(String artist,String title,String album)throws Exception{
-        byte[] song=findSong(artist,title);
-        if(song!=null)return song;
+        Exception failed=null;
+        try{byte[] song=findSong(artist,title);if(song!=null)return song;}
+        catch(Exception error){failed=error;}
         String a=Lyrics.cleanArtist(artist);
-        if(a.isEmpty())return null;
-        String url=album.isBlank()?null:deezerAlbum(a,album);
-        if(url==null&&!album.isBlank())url=itunesAlbum(a,album);
-        return url==null?null:download(url);
+        if(!a.isEmpty()&&!album.isBlank()){
+            try{
+                String url=deezerAlbum(a,album);
+                if(url==null)url=itunesAlbum(a,album);
+                if(url!=null)return download(url);
+            }catch(Exception error){if(failed==null)failed=error;}
+        }
+        // In no catalogue (or none could be reached): the YouTube upload of this song, or this video or stream.
+        try{
+            String id=youtubeId(artist,title);
+            if(id!=null)return square(download("https://i.ytimg.com/vi/"+id+"/hqdefault.jpg"));
+        }catch(Exception error){if(failed==null)failed=error;}
+        if(failed!=null)throw failed;
+        return null;
     }
     private static byte[] findSong(String artist,String title)throws Exception{
         // A title alone matches other songs too: only artist + title queries, unless the song names no artist at all.
@@ -123,10 +134,10 @@ public final class CoverLookup {
         }
         // Deezer, iTunes and NetEase race: the first one with this song wins, the others are not waited for.
         var winner=new java.util.concurrent.CompletableFuture<String>();
-        var left=new java.util.concurrent.atomic.AtomicInteger(3);
+        var left=new java.util.concurrent.atomic.AtomicInteger(SOURCES);
         var failure=new java.util.concurrent.atomic.AtomicReference<Exception>();
         var all=queries;
-        for(int source=0;source<3;source++){int which=source;Thread.ofVirtual().name("Vela cover "+which).start(()->{
+        for(int source=0;source<SOURCES;source++){int which=source;Thread.ofVirtual().name("Vela cover "+which).start(()->{
             try{
                 for(var query:all){
                     if(winner.isDone())return;
@@ -137,7 +148,8 @@ public final class CoverLookup {
                         String url=switch(which){
                             case 0->deezer(query.artist(),query.title(),match);
                             case 1->itunes(query.artist(),query.title(),match);
-                            default->netease(query.artist(),query.title(),match);
+                            case 2->netease(query.artist(),query.title(),match);
+                            default->qq(query.artist(),query.title(),match);
                         };
                         if(url!=null){winner.complete(url);return;}
                     }catch(InterruptedException error){Thread.currentThread().interrupt();return;}
@@ -150,14 +162,47 @@ public final class CoverLookup {
         if(failure.get()!=null)throw failure.get();
         return null;
     }
+    private static final int SOURCES=4;
     /** The thumbnail of the YouTube video with this title from this channel: what the video shows in its tab. */
     private static byte[] youtube(String channel,String title)throws Exception{
+        String id=youtubeId(channel,title);
+        // The 16:9 "medium" thumbnail: the larger ones are 4:3 with black bars.
+        return id==null?null:download("https://i.ytimg.com/vi/"+id+"/mqdefault.jpg");
+    }
+    private static String youtubeId(String channel,String title)throws Exception{
         var response=HTTP.send(HttpRequest.newBuilder(URI.create("https://www.youtube.com/results?search_query="+URLEncoder.encode((channel+" "+title).trim(),StandardCharsets.UTF_8)))
                 .timeout(Duration.ofSeconds(8)).header("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64)").header("Accept-Language","ru,en").GET().build(),HttpResponse.BodyHandlers.ofString());
         if(response.statusCode()!=200)throw new java.io.IOException("youtube "+response.statusCode());
-        String id=pickVideo(response.body(),channel,title);
-        // The 16:9 "medium" thumbnail: the larger ones are 4:3 with black bars.
-        return id==null?null:download("https://i.ytimg.com/vi/"+id+"/mqdefault.jpg");
+        return pickVideo(response.body(),channel,title);
+    }
+    private static final String QQ="https://c.y.qq.com/";
+    /** QQ Music: the album cover of the first search hit that is this song (its album id names the picture). */
+    private static String qq(String search,String title,String artist)throws Exception{
+        String q=(search.isEmpty()?"":search+" ")+title;
+        var response=HTTP.send(HttpRequest.newBuilder(URI.create(QQ+"soso/fcgi-bin/client_search_cp?format=json&p=1&n=10&w="+URLEncoder.encode(q,StandardCharsets.UTF_8)))
+            .timeout(Duration.ofSeconds(8)).header("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64)").header("Referer","https://y.qq.com/").GET().build(),HttpResponse.BodyHandlers.ofString());
+        if(response.statusCode()!=200)throw new java.io.IOException("qq "+response.statusCode());
+        return pickQq(JsonParser.parseString(response.body()).getAsJsonObject(),artist,title);
+    }
+    /** The 300 px cover of the first QQ search hit with this title, one of whose artists is the song's; else null. */
+    static String pickQq(JsonObject search,String artist,String title){
+        try{
+            for(var e:search.getAsJsonObject("data").getAsJsonObject("song").getAsJsonArray("list")){
+                if(!e.isJsonObject())continue;
+                var o=e.getAsJsonObject();
+                if(!same(text(o,"songname"),title))continue;
+                if(!artist.isEmpty()){
+                    boolean mine=false;
+                    if(o.has("singer")&&o.get("singer").isJsonArray())for(var a:o.getAsJsonArray("singer"))
+                        if(a.isJsonObject()&&sameArtist(text(a.getAsJsonObject(),"name"),artist))mine=true;
+                    if(!mine)continue;
+                }
+                String album=text(o,"albummid");
+                // A single without an album has no picture of its own here: the next hit may have one.
+                if(album.matches("[0-9A-Za-z]{8,20}"))return "https://y.gtimg.cn/music/photo_new/T002R300x300M000"+album+".jpg";
+            }
+        }catch(RuntimeException error){return null;}
+        return null;
     }
     private static final java.util.regex.Pattern VIDEO=java.util.regex.Pattern.compile("\"videoRenderer\":\\{\"videoId\":\"([\\w-]{11})\"");
     private static final java.util.regex.Pattern RUN=java.util.regex.Pattern.compile("\"runs\":\\[\\{\"text\":\"((?:[^\"\\\\]|\\\\.)*)\"");
@@ -333,6 +378,17 @@ public final class CoverLookup {
     }
     private static String text(JsonObject json,String key){
         var value=json.get(key);return value==null||value.isJsonNull()?"":value.getAsString();
+    }
+    /** The square middle of a 4:3 YouTube thumbnail, where a "Topic" upload shows the cover; null stays null. */
+    private static byte[] square(byte[] png)throws Exception{
+        if(png==null)return null;
+        var image=javax.imageio.ImageIO.read(new ByteArrayInputStream(png));
+        if(image==null)return null;
+        // hqdefault is 480x360 with the 16:9 picture between black bars: the square is cut from the picture's height.
+        int w=image.getWidth(),h=image.getHeight(),side=Math.min(w,Math.min(h,w*9/16));
+        var out=new ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image.getSubimage((w-side)/2,(h-side)/2,side,side),"png",out);
+        return out.toByteArray();
     }
     /** Minecraft textures read only PNG; Deezer sends JPEG. */
     private static byte[] png(byte[] image)throws Exception{

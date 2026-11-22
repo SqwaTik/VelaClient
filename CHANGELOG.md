@@ -18,12 +18,17 @@ Generated from `src/main/resources/assets/velaclient/changelog.json`, which is a
 ### Improved
 - Death recordings: all worlds and servers in one list. The "This world / All worlds" switch is gone; a replay from another world plays next to you.
 - Explosion Wave has been removed.
+- Music covers: QQ Music joins the cover search, and a song missing from every catalogue now gets the cover from its YouTube upload. One source being down no longer leaves the song without a picture.
+- 1.21.4 and 1.21.5: distant mobs and players are drawn without armour, held items and skin layers (entity LOD), as on 26.x.
 
 ### Fixed
 - Offline accounts and players on offline-mode servers no longer turn into Steve or Alex: Vela loads the Mojang skin that belongs to the nickname. A skin set in Vela Launcher still comes first.
 - Death Recap now records deaths in PvP: the server reports the death before the health update, so the recording used to stop without a death and no replay was offered.
 - Pinger warns once when health or a piece of armour reaches the set threshold, not on every further hit. It warns again only after healing or repair brings the value back above the threshold, or another piece is put on.
 - Compatibility with Sodium (and its forks) and ImmediatelyFast: Vela's own mixins that touch the same code are left out while those mods are installed, so the game no longer crashes at start. Any other clashing mixin can be switched off in config/velaclient-mixins.properties (name=false).
+- Lyrics: only text that is exactly this song and timed is shown. Plain untimed text, songs whose title only contains the name, and copies of unknown length that no other source confirms are no longer shown.
+- Launcher: 26.3 (and other Java 25 versions) no longer hang before the window opens. The launcher no longer records the start-up AOT cache, which froze the game on first launch.
+- 1.21.4, 1.21.5 and NeoForge builds: Death Recap now hooks the death packet on these versions, and the builds no longer fail on removed features.
 
 ## 0.2.0 — 2026-10-27
 

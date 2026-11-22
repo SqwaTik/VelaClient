@@ -327,6 +327,66 @@ public final class VelaClientGameTest implements FabricClientGameTest {
         }
         // 8. Optional (-PfarScene): real terrain to the horizon at render distance 24, for distant-chunk work.
         if(Boolean.getBoolean("vela.farScene"))farScene(context);
+        // 9. Optional (-PpigScene): 10,000 walking pigs in view, for entity tick, render and worker-thread work.
+        if(Boolean.getBoolean("vela.pigScene"))pigScene(context);
+    }
+
+    private static int median(ClientGameTestContext context,int samples){
+        var fps=new ArrayList<Integer>();
+        for(int i=0;i<samples;i++){context.waitTicks(20);fps.add(context.computeOnClient(Minecraft::getFps));}
+        Collections.sort(fps);
+        return fps.get(fps.size()/2);
+    }
+    private static void pigScene(ClientGameTestContext context){
+        try(var world=context.worldBuilder().setUseConsistentSettings(true).create()){
+            try{world.getConnection().waitForChunksRender(true,ClientGameTestContext.DEFAULT_TIMEOUT);}
+            catch(AssertionError slow){context.waitTicks(200);}
+            for(var rule:List.of("advance_time false","advance_weather false","spawn_mobs false","max_entity_cramming 0"))world.getServer().runCommand("gamerule "+rule);
+            world.getServer().runCommand("time set noon");
+            var ground=context.computeOnClient(mc->mc.player.blockPosition());
+            int y=ground.getY();
+            // A 100 x 100 field, one pig per block, all with their AI: they wander, turn and animate like a real farm.
+            world.getServer().runCommand("fill -52 "+(y-1)+" -52 51 "+(y-1)+" 51 minecraft:grass_block");
+            for(int x=-50;x<50;x++)for(int z=-50;z<50;z++)world.getServer().runCommand("summon pig "+x+" "+y+" "+z);
+            world.getServer().runCommand("gamemode spectator @a");
+            world.getServer().runCommand("tp @a 0.5 "+(y+28)+" -62.5 0 35");
+            context.waitTicks(200);
+            int pigs=context.computeOnClient(mc->{int n=0;for(var e:mc.level.entitiesForRendering())if(e.getType().getDescriptionId().endsWith(".pig"))n++;return n;});
+            context.takeScreenshot("vela-pigs");
+            int on=median(context,10);
+            System.out.println("[Vela gametest] Pig scene: "+pigs+" pigs on the client, median "+on+" FPS with the optimizations");
+            pigRounds(context,"pigs walking");
+            // The same pigs with the server's ticking frozen: what is left is the client's own render cost.
+            world.getServer().runCommand("tick freeze");
+            context.waitTicks(60);
+            pigRounds(context,"server frozen");
+            world.getServer().runCommand("tick unfreeze");
+        }
+    }
+    private static void opt(boolean master,boolean threads){
+        dev.sqwat.vela.opt.OptConfig.enabled=master;
+        dev.sqwat.vela.opt.feature.Features.PARALLEL_MODELS.value=threads;
+        dev.sqwat.vela.opt.feature.Features.PARALLEL_PARTICLES.value=threads;
+        dev.sqwat.vela.opt.feature.Features.refresh();
+    }
+    /** Everything on, only the worker threads off, everything off; twice, the best median of each. */
+    private static void pigRounds(ClientGameTestContext context,String label){
+        boolean models=context.computeOnClient(mc->dev.sqwat.vela.opt.feature.Features.PARALLEL_MODELS.value);
+        boolean particles=context.computeOnClient(mc->dev.sqwat.vela.opt.feature.Features.PARALLEL_PARTICLES.value);
+        int[] best={-1,-1,-1};
+        String[] names={"all on","multithreading off","all off"};
+        for(int round=0;round<2;round++)for(int state=0;state<3;state++){
+            final int st=state;
+            context.runOnClient(mc->opt(st!=2,st==0));
+            context.waitTicks(80);
+            best[state]=Math.max(best[state],median(context,6));
+        }
+        String threads=context.computeOnClient(mc->{opt(true,true);
+            return "parallel_models="+dev.sqwat.vela.opt.feature.Features.PARALLEL_MODELS.on+", parallel_particles="+dev.sqwat.vela.opt.feature.Features.PARALLEL_PARTICLES.on;});
+        context.runOnClient(mc->{dev.sqwat.vela.opt.feature.Features.PARALLEL_MODELS.value=models;dev.sqwat.vela.opt.feature.Features.PARALLEL_PARTICLES.value=particles;dev.sqwat.vela.opt.feature.Features.refresh();});
+        var line=new StringBuilder("[Vela gametest] Pig scene ("+label+", "+threads+"):");
+        for(int k=0;k<3;k++)line.append(' ').append(names[k]).append(' ').append(best[k]).append(" FPS").append(k<2?",":"");
+        System.out.println(line);
     }
 
     private static void farScene(ClientGameTestContext context){

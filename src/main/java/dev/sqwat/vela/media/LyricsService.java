@@ -27,8 +27,9 @@ import java.util.regex.Pattern;
  * Music (many Russian and Asian songs, some timed word by word) and QQ Music (a large catalogue, Russian rap included). Every text they offer is kept as a candidate; which one is shown is decided locally, and again
  * whenever the song's length changes: title and artist agree, its length is within {@link #LENGTH_SLACK_S} of the
  * playing one (another version is off by seconds and every line comes late), and its stamps cover the song (see
- * {@link Lyrics#plausible}); of those, the one whose timing most of the others agree with. The first good candidate shows at once, without waiting for the slower source. Plain text
- * without times is shown only when no source has the song timed, paced over the song by syllables. Candidates are kept on
+ * {@link Lyrics#plausible}); of those, the one whose timing most of the others agree with. The first good candidate shows at once, without waiting for the slower source. A copy
+ * whose length is not known (or while the song's is not) is shown only when another source's copy agrees with its
+ * timing. Text without times, or not exactly this song, is never shown: no text beats wrong text. Candidates are kept on
  * disk, so a song heard before has its text instantly, without the network. A source that is down (LRCLIB answers
  * "server busy" at times) is asked again a few times in a row, and a song left without fitting text is looked up again
  * a little later, so an outage does not leave it without text for the rest of the session.
@@ -89,8 +90,6 @@ public final class LyricsService {
             if(version==pickVersion&&seconds==pickSeconds&&pick!=null)return pick;
             pickVersion=version;pickSeconds=seconds;
             Result best=pick(found,queries,seconds);
-            // Plain text only once every source answered without timed text: a timed copy may still be on its way.
-            if(best==null&&done)best=plainPick(found,queries,seconds);
             if(best==null)best=done?Result.MISSING:Result.LOADING;
             return pick=best;
         }
@@ -139,7 +138,7 @@ public final class LyricsService {
                     if(timed(pick(search.found,search.queries,0)))break;
                 }
                 // A miss is not kept: the sources may get the text later.
-                if(pick(search.found,search.queries,0)!=null||plainPick(search.found,search.queries,0)!=null)writeDisk(key,search.found);
+                if(!search.found.isEmpty()&&search.found.stream().anyMatch(c->!c.lrc.isBlank()||c.instrumental))writeDisk(key,search.found);
             }catch(Exception error){
                 LOG.debug("Lyrics lookup failed",error);
             }finally{
@@ -176,27 +175,14 @@ public final class LyricsService {
                 Long off=agreement(keys.get(i),keys.get(j));
                 if(off!=null&&Math.abs(off)<=AGREE_MS)votes++;
             }
+            // Length unknown on either side: nothing shows it is this version, so another copy must agree with it.
+            if((seconds<=0||c.seconds<=0)&&votes==0)continue;
             boolean words=wordTimed(c.lyrics());
             double off=seconds>0&&c.seconds>0?Math.abs(c.seconds-seconds):0;
             boolean better=votes!=pickVotes?votes>pickVotes:words!=pickWords?words:off<pickOff;
             if(better){pick=c;pickVotes=votes;pickWords=words;pickOff=off;}
         }
-        return new Result(State.FOUND,pick.lyrics());
-    }
-    /**
-     * Plain text of this song when no source has it timed: its lines are paced over the song by their syllables
-     * ({@link Lyrics#parsePlain}). Rough, but a song with text everywhere except timed is better shown than blank.
-     * The copy closest in length wins.
-     */
-    static Result plainPick(List<Candidate> candidates,List<Lyrics.Query> queries,long seconds){
-        Candidate best=null;double bestOff=Double.MAX_VALUE;
-        for(var c:candidates){
-            if(c.instrumental||c.plain.isBlank()||queries.stream().noneMatch(q->matches(c,q,seconds)))continue;
-            if(Lyrics.parsePlain(c.plain).lines().stream().filter(l->!l.text().isEmpty()).count()<6)continue;
-            double off=seconds>0&&c.seconds>0?Math.abs(c.seconds-seconds):0;
-            if(off<bestOff){best=c;bestOff=off;}
-        }
-        return best==null?null:new Result(State.FOUND,Lyrics.parsePlain(best.plain));
+        return pick==null?null:new Result(State.FOUND,pick.lyrics());
     }
     /**
      * Russian text that went through a wrong code page on the way (UTF-8 bytes read as
@@ -263,12 +249,15 @@ public final class LyricsService {
         var r=pick(lrclibCandidates(hits),List.of(query),seconds);
         return r!=null&&r.state==State.FOUND&&r.lyrics.synced()?r:null;
     }
-    /** Same title, same artist (when known), and the same length within the slack (when both are known). */
+    /**
+     * Same title (not merely containing it: "Love" is not "Lovely Day"), same artist (when known), and the same length
+     * within the slack (when both are known).
+     */
     static boolean matches(Candidate c,Lyrics.Query query,long seconds){
-        boolean named=CoverLookup.similar(Lyrics.cleanTitle(c.title),query.title())
+        boolean named=CoverLookup.same(c.title,query.title())
             &&(query.artist().isEmpty()||CoverLookup.similar(c.artist,query.artist()));
         // Some LRCLIB entries have the artist and the title the wrong way round ("Song" by "Band").
-        boolean swapped=!query.artist().isEmpty()&&CoverLookup.similar(Lyrics.cleanTitle(c.artist),query.title())&&CoverLookup.similar(c.title,query.artist());
+        boolean swapped=!query.artist().isEmpty()&&CoverLookup.same(c.artist,query.title())&&CoverLookup.similar(c.title,query.artist());
         if(!named&&!swapped)return false;
         if(seconds>0&&c.seconds>0&&Math.abs(c.seconds-seconds)>LENGTH_SLACK_S)return false;
         // Without the song's length the title alone is too weak a match: an artist must agree.

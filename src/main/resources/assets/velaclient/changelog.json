@@ -51,6 +51,14 @@
             {
               "en": "Explosion Wave has been removed.",
               "ru": "Explosion Wave удалена."
+            },
+            {
+              "en": "Music covers: QQ Music joins the cover search, and a song missing from every catalogue now gets the cover from its YouTube upload. One source being down no longer leaves the song without a picture.",
+              "ru": "Обложки музыки: к поиску добавлена QQ Music, а песня, которой нет ни в одном каталоге, получает обложку из своей загрузки на YouTube. Если один источник недоступен, песня больше не остаётся без картинки."
+            },
+            {
+              "en": "1.21.4 and 1.21.5: distant mobs and players are drawn without armour, held items and skin layers (entity LOD), as on 26.x.",
+              "ru": "1.21.4 и 1.21.5: дальние мобы и игроки рисуются без брони, предметов в руках и слоёв скина (LOD сущностей), как на 26.x."
             }
           ]
         },
@@ -72,6 +80,18 @@
             {
               "en": "Compatibility with Sodium (and its forks) and ImmediatelyFast: Vela's own mixins that touch the same code are left out while those mods are installed, so the game no longer crashes at start. Any other clashing mixin can be switched off in config/velaclient-mixins.properties (name=false).",
               "ru": "Совместимость с Sodium (и его форками) и ImmediatelyFast: миксины Vela, которые меняют тот же код, не подключаются, пока эти моды установлены, и игра больше не вылетает при запуске. Любой другой конфликтующий миксин можно выключить в config/velaclient-mixins.properties (имя=false)."
+            },
+            {
+              "en": "Lyrics: only text that is exactly this song and timed is shown. Plain untimed text, songs whose title only contains the name, and copies of unknown length that no other source confirms are no longer shown.",
+              "ru": "Текст песен: показывается только точный текст именно этой песни с таймингом. Текст без таймингов, песни, название которых лишь содержит искомое, и копии неизвестной длины, которые не подтверждает другой источник, больше не показываются."
+            },
+            {
+              "en": "Launcher: 26.3 (and other Java 25 versions) no longer hang before the window opens. The launcher no longer records the start-up AOT cache, which froze the game on first launch.",
+              "ru": "Лаунчер: 26.3 (и другие версии на Java 25) больше не зависают до открытия окна. Лаунчер больше не записывает AOT-кэш запуска, из-за которого игра замирала при первом старте."
+            },
+            {
+              "en": "1.21.4, 1.21.5 and NeoForge builds: Death Recap now hooks the death packet on these versions, and the builds no longer fail on removed features.",
+              "ru": "Сборки 1.21.4, 1.21.5 и NeoForge: Death Recap теперь перехватывает пакет смерти на этих версиях, а сборки больше не падают на удалённых функциях."
             }
           ]
         }

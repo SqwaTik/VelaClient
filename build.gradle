@@ -95,6 +95,8 @@ tasks.matching { it.name == 'runClientGameTest' }.configureEach {
     if (project.hasProperty('crowdScene')) jvmArgs '-Dvela.crowdScene=true'
     // -PfarScene: a generated world to the horizon at render distance 24, for distant-chunk work.
     if (project.hasProperty('farScene')) jvmArgs '-Dvela.farScene=true'
+    // -PpigScene: 10,000 pigs with their AI in view, with and without the optimizations.
+    if (project.hasProperty('pigScene')) jvmArgs '-Dvela.pigScene=true'
     // ./gradlew verifyClient -Pvulkan runs the client on the Vulkan backend instead of OpenGL.
     if (project.hasProperty('vulkan')) args '--graphicsBackend', 'vulkan'
     // -PwithMods=<folder> starts the client next to other mods' jars, to find mixin clashes (core.compat.VelaMixinPlugin).

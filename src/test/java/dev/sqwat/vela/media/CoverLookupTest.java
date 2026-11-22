@@ -29,4 +29,15 @@ class CoverLookupTest {
         assertEquals("ddddddddddd",CoverLookup.pickVideo(page,"","Say \"Hi\""));
         assertNull(CoverLookup.pickVideo(page,"","Nothing like it"));
     }
+
+    @Test
+    void qqHitsMatchTitleAndOneOfTheArtists(){
+        var json=com.google.gson.JsonParser.parseString(("{'data':{'song':{'list':["
+            +"{'songname':'PABLo (Explicit)','albummid':'','singer':[{'name':'MORGENSHTERN'}]},"
+            +"{'songname':'PABLo','albummid':'111JF01C40lhiK','singer':[{'name':'Someone Else'}]},"
+            +"{'songname':'PABLo (Explicit)','albummid':'000JF01C40lhiK','singer':[{'name':'Morgenshtern'},{'name':'Lil Pump'}]}]}}}").replace('\'','"')).getAsJsonObject();
+        assertEquals("https://y.gtimg.cn/music/photo_new/T002R300x300M000000JF01C40lhiK.jpg",CoverLookup.pickQq(json,"MORGENSHTERN","PABLO"));
+        assertNull(CoverLookup.pickQq(json,"MORGENSHTERN","Cadillac"));
+        assertNull(CoverLookup.pickQq(com.google.gson.JsonParser.parseString("{\"code\":0}").getAsJsonObject(),"a","b"));
+    }
 }
